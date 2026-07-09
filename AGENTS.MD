@@ -9,6 +9,9 @@
     - **English**: Code, code comments, AI-related files (Skills, AGENTS.md, prompt templates, etc.).
     - **Ukrainian**: Project documentation (located in `docs/`).
 
+## Tool Usage Rules
+- **`edit` Tool**: The `path` parameter must always be at the top level of the tool call. The `edits` array must only contain objects with `oldText` and `newText`. Do not nest `path` inside `edits`.
+
 ## Project Context
 - **Documentation Structure**:
     - `docs/vision/`: High-level project vision and principles.
