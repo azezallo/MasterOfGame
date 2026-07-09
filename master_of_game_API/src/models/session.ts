@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 export const SessionMetadataSchema = z.object({
   sessionId: z.string().uuid(),
-  playerId: z.string(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   version: z.number().default(1),
