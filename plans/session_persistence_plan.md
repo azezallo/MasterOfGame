@@ -23,7 +23,7 @@
 - [x] Впровадити механізм атомічного запису через `runTransaction`.
 
 ### Етап 3: Створення Service Layer (Persistence Service)
-- [ ] Реалізувати `PersistenceService`:
+- [x] Реалізувати `PersistenceService`:
     - `createSession(player_id)`: Генерування `session_id`, створення файлу `.db`, первинна ініціалізація.
     - `get_session_state(session_id)`: Агрегація даних з усіх таблиць у єдиний об'єкт стану.
     - `save_session_state(session_id, state)`: Розбиття об'єкта стану на частини та паралельний запис у відповідні таблиці.

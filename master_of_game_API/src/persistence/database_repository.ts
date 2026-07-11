@@ -44,6 +44,16 @@ export class DatabaseRepository {
         version INTEGER DEFAULT 1
       );
 
+      CREATE TABLE IF NOT EXISTS player_state (
+        session_id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        experience REAL NOT NULL,
+        health REAL NOT NULL,
+        mana REAL NOT NULL,
+        attributes TEXT
+      );
+
       CREATE TABLE IF NOT EXISTS inventory (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         item_id TEXT NOT NULL,
@@ -72,66 +82,31 @@ export class DatabaseRepository {
     }
   }
 
-  // Inventory Methods
-  public async saveItem(item: { itemId: string; quantity: number; metadata?: Record<string, any> }): Promise<number> {
-    if (!this.db || !this.sessionId) throw new Error('Database not initialized');
-    
-    const stmt = this.db.prepare(`
-      INSERT INTO inventory (item_id, quantity, metadata)
-      VALUES (?, ?, ?)
-    `);
-    
-    const metadataStr = item.metadata ? JSON.stringify(item.metadata) : null;
-    return stmt.run(item.itemId, item.quantity, metadataStr).lastInsertRowid;
-  }
+  public loadPlayerState(db?: Database): any | null {
+    const targetDb = db || this.db;
+    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
 
-  public async loadItems(): Promise<any[]> {
-    if (!this.db || !this.sessionId) throw new Error('Database not initialized');
-    
-    const stmt = this.db.prepare(`SELECT * FROM inventory`);
-    const rows = stmt.all();
-    
-    return rows.map(row => ({
-      id: row.id,
-      itemId: row.item_id,
-      quantity: row.quantity,
-      metadata: row.metadata ? JSON.parse(row.metadata) : null
-    }));
-  }
-
-  public async loadItem(itemId: string): Promise<any | null> {
-    if (!this.db || !this.sessionId) throw new Error('Database not initialized');
-
-    const stmt = this.db.prepare(`SELECT * FROM inventory WHERE item_id = ?`);
-    const row = stmt.get(itemId);
+    const stmt = targetDb.prepare(`SELECT * FROM player_state WHERE session_id = ?`);
+    const row = stmt.get(this.sessionId);
 
     if (!row) return null;
 
     return {
-      id: row.id,
-      itemId: row.item_id,
-      quantity: row.quantity,
-      metadata: row.metadata ? JSON.parse(row.metadata) : null
+      name: row.name,
+      level: row.level,
+      experience: row.experience,
+      health: row.health,
+      mana: row.mana,
+      attributes: row.attributes ? JSON.parse(row.attributes) : {},
     };
   }
 
-  public async updateItem(itemId: string, quantity: number, metadata?: Record<string, any>): Promise<void> {
-    if (!this.db || !this.sessionId) throw new Error('Database not initialized');
+  // Inventory Methods
+  public saveNPC(npc: { entityId: string; type: string; position: { x: number; y: number; z: number }; data?: Record<string, any> }, db?: Database): number {
+    const targetDb = db || this.db;
+    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
 
-    const stmt = this.db.prepare(`
-      UPDATE inventory SET quantity = ?, metadata = ?
-      WHERE item_id = ?
-    `);
-
-    const metadataStr = metadata ? JSON.stringify(metadata) : null;
-    stmt.run(quantity, metadataStr, itemId);
-  }
-
-  // NPC Methods
-  public async saveNPC(npc: { entityId: string; type: string; position: { x: number; y: number; z: number }; data?: Record<string, any> }): Promise<number> {
-    if (!this.db || !this.sessionId) throw new Error('Database not initialized');
-
-    const stmt = this.db.prepare(`
+    const stmt = targetDb.prepare(`
       INSERT INTO npcs (entity_id, type, position_x, position_y, position_z, data)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
@@ -147,10 +122,11 @@ export class DatabaseRepository {
     ).lastInsertRowid;
   }
 
-  public async loadNPCs(): Promise<any[]> {
-    if (!this.db || !this.sessionId) throw new Error('Database not initialized');
+  public loadNPCs(db?: Database): any[] {
+    const targetDb = db || this.db;
+    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
 
-    const stmt = this.db.prepare(`SELECT * FROM npcs`);
+    const stmt = targetDb.prepare(`SELECT * FROM npcs`);
     const rows = stmt.all();
 
     return rows.map(row => ({
@@ -166,10 +142,11 @@ export class DatabaseRepository {
     }));
   }
 
-  public async loadNPC(entityId: string): Promise<any | null> {
-    if (!this.db || !this.sessionId) throw new Error('Database not initialized');
+  public loadNPC(entityId: string, db?: Database): any | null {
+    const targetDb = db || this.db;
+    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
 
-    const stmt = this.db.prepare(`SELECT * FROM npcs WHERE entity_id = ?`);
+    const stmt = targetDb.prepare(`SELECT * FROM npcs WHERE entity_id = ?`);
     const row = stmt.get(entityId);
 
     if (!row) return null;
@@ -188,10 +165,11 @@ export class DatabaseRepository {
   }
 
   // Metadata Methods
-  public async saveMetadata(metadata: SessionMetadata): Promise<void> {
-    if (!this.db || !this.sessionId) throw new Error('Database not initialized');
+  public saveMetadata(metadata: SessionMetadata, db?: Database): void {
+    const targetDb = db || this.db;
+    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
 
-    const stmt = this.db.prepare(`
+    const stmt = targetDb.prepare(`
       INSERT INTO session_metadata (session_id, created_at, updated_at, version)
       VALUES (?, ?, ?, ?)
       ON CONFLICT(session_id) DO UPDATE SET
@@ -208,10 +186,11 @@ export class DatabaseRepository {
     );
   }
 
-  public async loadMetadata(): Promise<SessionMetadata | null> {
-    if (!this.db || !this.sessionId) throw new Error('Database not initialized');
+  public loadMetadata(db?: Database): SessionMetadata | null {
+    const targetDb = db || this.db;
+    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
 
-    const stmt = this.db.prepare(`SELECT * FROM session_metadata WHERE session_id = ?`);
+    const stmt = targetDb.prepare(`SELECT * FROM session_metadata WHERE session_id = ?`);
     const row = stmt.get(this.sessionId);
 
     if (!row) return null;
@@ -239,5 +218,33 @@ export class DatabaseRepository {
       this.db.prepare('ROLLBACK').run();
       throw error;
     }
+  }
+
+  public savePlayerState(state: { name: string; level: number; experience: number; health: number; mana: number; attributes: Record<string, number> }, db?: Database): void {
+    const targetDb = db || this.db;
+    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
+
+    const stmt = targetDb.prepare(`
+      INSERT INTO player_state (session_id, name, level, experience, health, mana, attributes)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(session_id) DO UPDATE SET
+        name = excluded.name,
+        level = excluded.level,
+        experience = excluded.experience,
+        health = excluded.health,
+        mana = excluded.mana,
+        attributes = excluded.attributes
+    `);
+
+    const attributesStr = state.attributes ? JSON.stringify(state.attributes) : null;
+    stmt.run(
+      this.sessionId,
+      state.name,
+      state.level,
+      state.experience,
+      state.health,
+      state.mana,
+      attributesStr
+    );
   }
 }
