@@ -8,9 +8,11 @@
 - **Language Policy**: 
     - **English**: Code, code comments, AI-related files (Skills, AGENTS.md, prompt templates, etc.).
     - **Ukrainian**: Project documentation (located in `docs/`).
+- **Scope Limitation**: Your primary role is **planning and documentation**. You are responsible for creating architecture designs, detailed specifications, and execution plans. **Do not implement production code** unless specifically instructed for a small, isolated task. Your goal is to provide the blueprint; the execution belongs to the implementation phase.
 
 ## Tool Usage Rules
 - **`edit` Tool**: The `path` parameter must always be at the top level of the tool call. The `edits` array must only contain objects with `oldText` and `newText`. Do not nest `path` inside `edits`.
+- **Atomic Edits**: To minimize errors and prevent validation failures, do not update large files in a single call. Update files incrementally, one functional element or logical block at a time. Ensure `oldText` is as small as possible while remaining unique.
 
 ## Project Context
 - **Documentation Structure**:
