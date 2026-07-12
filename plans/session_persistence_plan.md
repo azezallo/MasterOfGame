@@ -16,19 +16,19 @@
 
 ### Етап 2: Створення Data Access Layer (Repositories)
 - [x] Реалізувати `DatabaseRepository`:
-    - Метод `initializeDB(playerId, sessionId)`: Створення файлу `.db` у структурі папок `saves/{playerId}/{sessionId}.db` та ініціалізація таблиць (`inventory`, `npcs`, `session_metadata`).
-    - Методи для `inventory`: `saveItem`, `loadItem`, `updateItem`, `loadItems`.
-    - Методи для `npcs`: `saveNPC`, `loadNPC`, `loadNPCs`.
+    - Метод `initializeDB(session_id)`: Створення файлу `.db` та ініціалізація таблиць (`inventory`, `npcs`, `session_metadata`).
+    - Методи для `inventory`: `saveItem`, `loadItem`, `updateItem`.
+    - Методи для `npcs`: `saveNPC`, `loadNPC`.
     - Методи для `sessionMetadata`: `saveMetadata`, `loadMetadata`.
-- [x] Впровадити механізм атомічного запису через `runTransaction`.
+- [x] Впровадити механізм атомічного запису.
 
 ### Етап 3: Створення Service Layer (Persistence Service)
 - [x] Реалізувати `PersistenceService`:
     - `createSession(player_id)`: Генерування `session_id`, створення файлу `.db`, первинна ініціалізація.
-    - `get_session_state(session_id)`: Агрегація даних з усіх таблиць у єдиний об'єкт стану.
+    - `get_session_state(session_id)`: Агрегація даних з усіх таблиць у единий об'єкт стану.
     - `save_session_state(session_id, state)`: Розбиття об'єкта стану на частини та паралельний запис у відповідні таблиці.
 
 ### Етап 4: Тестування
-- [ ] Створити модульні тести для `DatabaseRepository` (перевірка SQL-запитів, валідації JSON).
-- [ ] Створити інтеграційні тести для `PersistenceService` (повний цикл створення сесії та збереження стану).
-- [ ] Тест валідації JSON даних перед збереженням.
+- [x] Створити модульні тести для `DatabaseRepository` (перевірка SQL-запитів, валідації JSON).
+- [x] Створити інтеграційні тести для `PersistenceService` (повний цикл створення сесії та збереження стану).
+- [x] Тест валідації JSON даних перед збереженням.

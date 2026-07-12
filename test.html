@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Dark Fantasy UI Design System</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 12mm;
+            background-color: #120e0a;
+            @bottom-right {
+                content: counter(page);
+                color: #8c765c;
+                font-family: 'Georgia', serif;
+                font-size: 9pt;
+            }
+            @bottom-left {
+                content: "Dark Fantasy RPG UI System";
+                color: #8c765c;
+                font-family: 'Georgia', serif;
+                font-size: 9pt;
+            }
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #120e0a;
+            color: #ddcfba;
+            font-family: 'Georgia', serif;
+            font-size: 10pt;
+            line-height: 1.5;
+        }
+
+        .header {
+            border-bottom: 2px solid #5a4531;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #d1a153;
+            font-size: 22pt;
+            margin: 0 0 5px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .header p {
+            color: #8c765c;
+            font-style: italic;
+            margin: 0;
+            font-size: 11pt;
+        }
+
+        h2 {
+            color: #e6c280;
+            font-size: 14pt;
+            border-left: 3px solid #d1a153;
+            padding-left: 8px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            page-break-after: avoid;
+        }
+
+        p {
+            margin-top: 0;
+            margin-bottom: 12px;
+            color: #c4b49e;
+        }
+
+        .code-box {
+            background-color: #1a140f;
+            border: 1px solid #3d2f21;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 8.5pt;
+            color: #a7c080;
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+
+        /* UI Showcase Container */
+        .preview-container {
+            background-color: #1a130b;
+            border: 2px solid #4a3622;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 2px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            page-break-inside: avoid;
+        }
+
+        /* --- THE DESIGN SYSTEM CSS --- */
+        .rpg-label {
+            display: block;
+            color: #d1a153;
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 10.5pt;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .rpg-form-group {
+            margin-bottom: 20px;
+        }
+
+        /* Text Area / Parchment style */
+        .rpg-parchment {
+            background-color: #ebdcb9;
+            color: #2b1d0c;
+            border: 3px double #6e4f31;
+            padding: 15px;
+            font-family: 'Georgia', serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            box-shadow: inset 0 0 15px rgba(90,60,30,0.4), 0 4px 10px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+        
+        .rpg-parchment h3 {
+            margin-top: 0;
+            color: #5c1e0c;
+            border-bottom: 1px dashed #9e7a56;
+            padding-bottom: 5px;
+        }
+
+        /* Buttons */
+        .rpg-btn {
+            background: linear-gradient(to bottom, #4a3b2c, #261c12);
+            color: #ebdcb9;
+            border: 1px solid #73593f;
+            padding: 10px 20px;
+            font-family: 'Georgia', serif;
+            font-size: 10pt;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+            margin-right: 10px;
+            display: inline-block;
+        }
+
+        /* Inputs & Selects */
+        .rpg-input, .rpg-select {
+            width: 100%;
+            background-color: #241b12;
+            color: #f5ebd5;
+            border: 1px solid #5c442e;
+            padding: 8px 12px;
+            font-family: 'Georgia', serif;
+            font-size: 10pt;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        /* Custom Checkbox and Radio Simulation for Layout Preview */
+        .rpg-mock-option {
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: 10.5pt;
+        }
+
+        .rpg-box-indicator {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            background-color: #241b12;
+            border: 1px solid #6e5237;
+            margin-right: 8px;
+            vertical-align: middle;
+            position: relative;
+        }
+        
+        .rpg-box-indicator.checked::after {
+            content: "✦";
+            position: absolute;
+            color: #d1a153;
+            font-size: 10pt;
+            top: -4px;
+            left: 1px;
+        }
+
+        .rpg-circle-indicator {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            background-color: #241b12;
+            border: 1px solid #6e5237;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+            position: relative;
+        }
+
+        .rpg-circle-indicator.checked::after {
+            content: "";
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: #d1a153;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Dark Fantasy RPG UI Design System</h1>
+        <p>Класичний середньовічний стиль (Старий пергамент, іржаве залізо та вогонь)</p>
+    </div>
+
+    <p>Цей документ містить готову дизайн-систему на чистому HTML/CSS для текстової рольової гри. Всі елементи адаптовані під атмосферу темного середньовіччя з використанням глибоких тіней, ефекту затертого металу, пергаментних вставок та золотавих акцентів багаття.</p>
+
+    <h2>1. Жива демонстрація інтерфейсу</h2>
+    <div class="preview-container">
+        
+        <div class="rpg-parchment">
+            <h3>Глава I: Стара Таверна</h3>
+            <p>Старі дубові двері зі скрипом відчиняються. Крізь густий дим ти бачиш силуети відвідувачів. Стеля почорніла від кіптяви свічок, а під ногами рипить брудна солома. За барною стійкою сидить одноокий чоловік, що пильно розглядає твій гаманець...</p>
+        </div>
+
+        <div class="rpg-form-group">
+            <span class="rpg-label">Що ти скажеш корчмареві?</span>
+            <input type="text" class="rpg-input" value="Налий мені найкращого елю...">
+        </div>
+
+        <div class="rpg-form-group">
+            <span class="rpg-label">Обери дію (Сортування)</span>
+            <div class="rpg-select">Покласти руку на руків'я меча</div>
+        </div>
+
+        <div class="rpg-form-group">
+            <span class="rpg-label">Екіпірування (Checkbox)</span>
+            <div class="rpg-mock-option"><span class="rpg-box-indicator checked"></span> Сталевий нагрудник (+5 Захист)</div>
+            <div class="rpg-mock-option"><span class="rpg-box-indicator"></span> Старий смолоскип (Горить)</div>
+        </div>
+
+        <div class="rpg-form-group">
+            <span class="rpg-label">Шлях розвитку (Radio)</span>
+            <div class="rpg-mock-option"><span class="rpg-circle-indicator checked"></span> Шлях Воїна (Сила та Стійкість)</div>
+            <div class="rpg-mock-option"><span class="rpg-circle-indicator"></span> Шлях Мага (Окультні знання)</div>
+        </div>
+
+        <div class="rpg-form-group" style="margin-bottom: 0; margin-top: 15px;">
+            <div class="rpg-btn">Атакувати</div>
+            <div class="rpg-btn" style="border-color: #a13d2d; color: #ff9d80;">Відступити</div>
+        </div>
+
+    </div>
+
+    <h2>2. Готовий CSS Код для проєкту</h2>
+    <p>Нижче наведено базові стилі, які ти можеш вставити у свій <code>style.css</code> файл для повної стилізації стандартних HTML-тегів під дарк-фентезі:</p>
+
+    <div class="code-box">/* Головна тема гри */
+body {
+    background-color: #120e0a;
+    color: #ddcfba;
+    font-family: 'Georgia', serif;
+}
+
+/* Текстова зона / Пергамент */
+.story-zone {
+    background: #ebdcb9;
+    color: #2b1d0c;
+    border: 3px double #6e4f31;
+    padding: 20px;
+    box-shadow: inset 0 0 20px rgba(90,60,30,0.5), 0 4px 15px rgba(0,0,0,0.6);
+}
+
+/* Кнопки з ефектом залізної ковки та полум'я */
+.btn-rpg {
+    background: linear-gradient(to bottom, #4a3b2c, #261c12);
+    color: #ebdcb9;
+    border: 1px solid #73593f;
+    padding: 10px 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-rpg:hover {
+    border-color: #d1a153;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(209, 161, 83, 0.4);
+}
+
+/* Інпути та Селекти */
+input[type="text"], select {
+    background-color: #241b12;
+    color: #f5ebd5;
+    border: 1px solid #5c442e;
+    padding: 10px;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+}
+
+input[type="text"]:focus {
+    border-color: #d1a153;
+    outline: none;
+}
+
+/* Кастомізація Чекбоксів (Базова логіка) */
+input[type="checkbox"] {
+    accent-color: #d1a153;
+}</div>
+
+</body>
+</html>

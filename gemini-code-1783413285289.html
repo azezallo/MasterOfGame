@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Fantasy UI - Chat & Text Variations V2</title>
+    <style>
+        /* Базові налаштування темної теми гри */
+        body {
+            background-color: #0c0907;
+            color: #ddcfba;
+            font-family: 'Georgia', serif;
+            margin: 20px;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .game-container {
+            max-width: 700px;
+            width: 100%;
+        }
+
+        /* --- ОНОВЛЕНА ЗОНА ТЕКСТУ (У ВЫГЛЯДІ ЧАТУ) --- */
+        .chat-zone {
+            background-color: #16110c; /* Темніший, комфортний для очей фон */
+            border: 2px solid #4a3622;
+            border-image: linear-gradient(to bottom, #6e5237, #2b1d0c) 1;
+            padding: 20px;
+            height: 450px;
+            overflow-y: auto;
+            box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.9);
+            margin-bottom: 20px;
+        }
+
+        /* Окреме повідомлення/блок у чаті */
+        .chat-message {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #3d2e1f;
+        }
+
+        .chat-message:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        /* --- ВАРІАЦІЇ ТЕКСТУ (КОНТРАСТНІ КОЛЬОРИ) --- */
+        
+        /* 1. Заголовок глави / події */
+        .rpg-title {
+            color: #f0c27b; /* Яскраве тьмяне золото */
+            font-size: 1.4em;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        /* 2. Описовий текст (Контрастний світло-бежевий) */
+        .rpg-desc {
+            color: #e3d5c1; 
+            line-height: 1.6;
+            margin: 0 0 10px 0;
+            font-size: 1.05em;
+        }
+
+        /* 3. Пряма мова персонажів */
+        .rpg-speech {
+            color: #a4c2f4; /* М'який синій/срібний відтінок для виділення мови */
+            font-style: italic;
+            margin: 5px 0 5px 15px;
+            padding-left: 10px;
+            border-left: 2px solid #4f6a96;
+        }
+        .rpg-speaker {
+            color: #6fa8dc;
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        /* 4. Цитата (Стародавні написи, книги, думки) */
+        .rpg-quote {
+            background-color: #0f0c09;
+            border: 1px double #5c442e;
+            color: #b0a28f; /* Трохи затертий колір для старовини */
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        /* 5. Ігрові списки (Здобич, квести, вимоги) */
+        .rpg-list {
+            margin: 10px 0;
+            padding-left: 20px;
+            list-style-type: square;
+            color: #cbd5e1;
+        }
+        
+        .rpg-list li {
+            margin-bottom: 5px;
+        }
+        
+        /* Виділення важливих предметів/слів у тексті */
+        .highlight {
+            color: #ff7675; /* Колір крові / рубіну для небезпеки або квестів */
+            font-weight: bold;
+        }
+        .gold {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* --- ЕЛЕМЕНТИ ФОРМИ (ІНПУТ ТА КНОПКИ) --- */
+        .input-zone {
+            display: flex;
+            gap: 10px;
+        }
+
+        .rpg-input {
+            flex: 1;
+            background-color: #140f0b;
+            color: #f5ebd5;
+            border: 1px solid #5c442e;
+            padding: 12px;
+            font-family: 'Georgia', serif;
+            font-size: 1em;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .rpg-input:focus {
+            border-color: #f0c27b;
+            outline: none;
+        }
+
+        .rpg-btn {
+            background: linear-gradient(to bottom, #4a3b2c, #261c12);
+            color: #ebdcb9;
+            border: 1px solid #73593f;
+            padding: 0 20px;
+            font-family: 'Georgia', serif;
+            font-size: 0.9em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+            transition: all 0.2s ease;
+        }
+
+        .rpg-btn:hover {
+            border-color: #f0c27b;
+            color: #fff;
+            box-shadow: 0 0 8px rgba(240, 194, 123, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+
+    <div class="chat-zone">
+        
+        <div class="chat-message">
+            <h2 class="rpg-title">Акт I: Прокляте лісництво</h2>
+            <p class="rpg-desc">Осінній туман важкою ковдрою ліг на занедбані хащі. Згарище старого багаття ще трохи димить, але тепла від нього вже немає. На землі ви помічаєте свіжі сліди кігтів.</p>
+        </div>
+
+        <div class="chat-message">
+            <p class="rpg-desc">При обшуку старого намету ви знаходите обгорілий щоденник лісничого. На першій сторінці тремтячою рукою виведено застереження:</p>
+            <div class="rpg-quote">
+                "Вона приходить, коли гаснуть останні свічки. Не дивіться їй в очі, бо залізо вашої зброї перетвориться на іржу, а кров у жилах застигне..."
+            </div>
+        </div>
+
+        <div class="chat-message">
+            <p class="rpg-desc">Твій супутник, старий найманець Бронн, нервово стискає руків’я свого дворучного меча і шепоче:</p>
+            <div class="rpg-speech">
+                <span class="rpg-speaker">Бронн:</span> "Мені не подобається цей туман, друже. Нам варто негайно запалити <span class="highlight">Смолоскип</span>, інакше ми не помітимо її наближення."
+            </div>
+        </div>
+
+        <div class="chat-message">
+            <p class="rpg-desc">Ви вирішуєте оглянути свої запаси. Ваше поточне спорядження:</p>
+            <ul class="rpg-list">
+                <li>Затуплений залізний кинджал</li>
+                <li>Тріснутий шкіряний щит</li>
+                <li><span class="gold">35 золотих монет</span> у засмальцьованому гаманці</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="input-zone">
+        <input type="text" class="rpg-input" placeholder="Напишіть вашу дію (напр., 'Запалити смолоскип')...">
+        <button class="rpg-btn">Дія</button>
+    </div>
+
+</div>
+
+</body>
+</html>
