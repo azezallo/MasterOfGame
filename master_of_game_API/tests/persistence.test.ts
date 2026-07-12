@@ -10,6 +10,7 @@ describe('DatabaseRepository', () => {
   const testSessionId = 'test-session-uuid';
 
   beforeEach(async () => {
+    console.log('Repository instance:', repository);
     repository = new DatabaseRepository();
     await repository.initializeDB(testPlayerId, testSessionId);
     

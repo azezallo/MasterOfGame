@@ -82,26 +82,66 @@ export class DatabaseRepository {
     }
   }
 
-  public loadPlayerState(db?: Database): any | null {
+  // Inventory Methods
+  public saveItem(item: { itemId: string; quantity: number; metadata?: Record<string, any> }, db?: Database): number {
+    const targetDb = db || this.db;
+    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
+    
+    const stmt = targetDb.prepare(`
+      INSERT INTO inventory (item_id, quantity, metadata)
+      VALUES (?, ?, ?)
+    `);
+    
+    const metadataStr = item.metadata ? JSON.stringify(item.metadata) : null;
+    return stmt.run(item.itemId, item.quantity, metadataStr).lastInsertRowid;
+  }
+
+  public loadItems(db?: Database): any[] {
+    const targetDb = db || this.db;
+    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
+    
+    const stmt = targetDb.prepare(`SELECT * FROM inventory`);
+    const rows = stmt.all();
+    
+    return rows.map(row => ({
+      id: row.id,
+      itemId: row.item_id,
+      quantity: row.quantity,
+      metadata: row.metadata ? JSON.parse(row.metadata) : null
+    }));
+  }
+
+  public loadItem(itemId: string, db?: Database): any | null {
     const targetDb = db || this.db;
     if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
 
-    const stmt = targetDb.prepare(`SELECT * FROM player_state WHERE session_id = ?`);
-    const row = stmt.get(this.sessionId);
+    const stmt = targetDb.prepare(`SELECT * FROM inventory WHERE item_id = ?`);
+    const row = stmt.get(itemId);
 
     if (!row) return null;
 
     return {
-      name: row.name,
-      level: row.level,
-      experience: row.experience,
-      health: row.health,
-      mana: row.mana,
-      attributes: row.attributes ? JSON.parse(row.attributes) : {},
+      id: row.id,
+      itemId: row.item_id,
+      quantity: row.quantity,
+      metadata: row.metadata ? JSON.parse(row.metadata) : null
     };
   }
 
-  // Inventory Methods
+  public updateItem(itemId: string, quantity: number, metadata?: Record<string, any>, db?: Database): void {
+    const targetDb = db || this.db;
+    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
+
+    const stmt = targetDb.prepare(`
+      UPDATE inventory SET quantity = ?, metadata = ?
+      WHERE item_id = ?
+    `);
+
+    const metadataStr = metadata ? JSON.stringify(metadata) : null;
+    stmt.run(quantity, metadataStr, itemId);
+  }
+
+  // NPC Methods
   public saveNPC(npc: { entityId: string; type: string; position: { x: number; y: number; z: number }; data?: Record<string, any> }, db?: Database): number {
     const targetDb = db || this.db;
     if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
@@ -203,10 +243,6 @@ export class DatabaseRepository {
     };
   }
 
-  /**
-   * Executes a series of database operations within a single transaction.
-   * @param operations A function that receives the database instance and performs operations.
-   */
   public runTransaction(operations: (db: Database) => void): void {
     if (!this.db) throw new Error('Database not initialized');
 
@@ -246,5 +282,26 @@ export class DatabaseRepository {
       state.mana,
       attributesStr
     );
+  }
+
+  public loadPlayerState(db?: Database): any | null {
+    const targetDb = db || this.db;
+    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
+
+    const stmt = targetDb.prepare(`SELECT * FROM player_state WHERE session_id = ?`);
+    const row = stmt.get(this.sessionId);
+
+    if (!row) return null;
+
+    return {
+      playerId: this.playerId,
+      name: row.name,
+      level: row.level,
+      experience: row.experience,
+      health: row.health,
+      mana: row.mana,
+      attributes: row.attributes ? JSON.parse(row.attributes) : {},
+      inventory: [],
+    };
   }
 }
