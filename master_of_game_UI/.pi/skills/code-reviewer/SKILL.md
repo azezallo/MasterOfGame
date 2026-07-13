@@ -22,6 +22,8 @@ description: Performs rigorous code reviews to ensure adherence to project archi
 - **Feature-Based Architecture**: Чи організований код за фічами? Чи використовуються відповідні папки (`features/`, `components/ui/` тощо)?
 - **Layered Architecture (UI)**: Чи є чіткий поділ між Presentation Layer (UI Components), Logic Layer (Custom Hooks) та API & Data Access Layer?
 - **Separation of Concerns**: Чи не містить UI-компоненти прямі запити до API або складну бізнес-логіку?
+- **Design System Adherence**: Чи використовуються базові компоненти дизайн-системи з `src/components/ui/` для всіх стандартних елементів інтерфейсу (кнопки, інпути, селекти, чекбокси, радіо-кнопки, діалоги)?
+- **No Redundancy**: Чи відсутнє дублювання стилів або створення власних UI-компонентів, які вже існують у дизайн-системі?
 
 ### 2. Технічна якість
 - **Type Safety**: Чи використано TypeScript коректно? Чи є відсутні типи `any`?
