@@ -1,0 +1,53 @@
+---
+name: code-reviewer
+description: Performs rigorous code reviews to ensure adherence to project architecture, best practices, and specific plan requirements for the UI.
+---
+
+# Code Reviewer (UI)
+
+Цей скіл відповідає за контроль якості коду та відповідності архітектурним вимогам фронтенд-частини проєкту Master of Game. Він має бути активований після виконання будь-якого етапу розробки для перевірки результатів.
+
+## Роль та Методологія
+
+Коли цей скіл активний, я виконую рев'ю, базуючись на трьох джерелах істини:
+1. **Поточний план**: Визначає, що саме мало бути зроблено (наприклад, `master_of_game_UI/plans/design_system_plan.md`).
+2. **Архітектурні принципи**: Визначають, ЯК саме це мало бути зроблено (`master_of_game_UI/docs/architecture_principles_ui.md`).
+3. **Змінені файли**: Фактичний стан коду у директорії `master_of_game_UI`.
+
+## Процес рев'ю
+
+Я аналізую кожну зміну за наступними критеріями:
+
+### 1. Архітектурна відповідність
+- **Feature-Based Architecture**: Чи організований код за фічами? Чи використовуються відповідні папки (`features/`, `components/ui/` тощо)?
+- **Layered Architecture (UI)**: Чи є чіткий поділ між Presentation Layer (UI Components), Logic Layer (Custom Hooks) та API & Data Access Layer?
+- **Separation of Concerns**: Чи не містить UI-компоненти прямі запити до API або складну бізнес-логіку?
+
+### 2. Технічна якість
+- **Type Safety**: Чи використано TypeScript коректно? Чи є відсутні типи `any`?
+- **Validation**: Чи валідуються дані на рівні компонентів за допомогою **Zod**, де це необхідно?
+- **Styling Consistency**: Чи використовуються **CSS Modules**? Чи відповідають стилі тематиці "Dark Fantasy"?
+- **Error Handling**: Чи обробляються помилки під час виконання асинхронних запитів?
+- **Loading States**: Чи візуалізуються стани завантаження (Spinners/Skeletons)?
+
+### 3. Відповідність специфікації
+- Чи відповідає реалізація конкретному етапу плану у `master_of_game_UI/plans/`?
+- Чи всі вимоги з специфікацій у `master_of_game_UI/docs/features/specs/` були виконані?
+
+### 4. Чистота коду
+- Чи відповідає код стандартам іменування та чистоти (DRY, KISS)?
+- Чи немає надмірного дублювання стилів або логіки?
+- Чи є компоненти максимально "дурними" (Dumb Components), коли це можливо?
+
+## Звітність
+
+Після проведення рев'ю я надаю звіт у такому форматі:
+- **Статус**: [Пройдено / Потребує виправлення / Критична помилка]
+- **Виявлені проблеми**: Список конкретних порушень з поясненнями.
+- **Рекомендації**: Конкретні поради щодо виправлення коду.
+- **Висновок**: Чи можна вважати етап завершеним.
+
+## References
+- Принципи архітектури UI: [master_of_game_UI/docs/architecture_principles_ui.md](master_of_game_UI/docs/architecture_principles_ui.md)
+- Плани: [master_of_game_UI/plans/](master_of_game_UI/plans/)
+- Специфікації: [../docs/features/specs/](../docs/features/specs/)

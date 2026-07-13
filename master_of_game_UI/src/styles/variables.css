@@ -1,0 +1,47 @@
+:root {
+  /* Colors - Dark Fantasy Theme */
+  --color-bg: #0c0907;
+  --color-bg-chat: #16110c;
+  --color-bg-preview: #1a130b;
+  
+  --color-text: #ddcfba;
+  --color-text-main: #e3d5c1;
+  --color-text-muted: #c4b49e;
+  --color-text-dim: #8c765c;
+  
+  --color-gold: #f0c27b;
+  --color-gold-dim: #d1a153;
+  --color-gold-bright: #ffd700;
+  
+  --color-parchment-bg: #ebdcb9;
+  --color-parchment-text: #2b1d0c;
+  --color-parchment-border: #6e4f31;
+  
+  --color-iron-primary: #4a3b2c;
+  --color-iron-secondary: #261c12;
+  --color-iron-border: #73593f;
+  
+  --color-fire-red: #ff7675;
+  --color-fire-blood: #a13d2d;
+  
+  --color-speech-blue: #a4c2f4;
+  --color-speech-border: #4f6a96;
+  
+  --color-border-primary: #5a4531;
+  --color-border-secondary: #4a3622;
+  
+  --color-shadow-deep: rgba(0, 0, 0, 0.9);
+  --color-shadow-gold: rgba(209, 161, 83, 0.3);
+
+  /* Typography */
+  --font-main: 'Georgia', serif;
+  --font-mono: ui-monospace, Consolas, monospace;
+  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Global reset for body to match theme */
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-main);
+}

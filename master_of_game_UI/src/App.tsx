@@ -3,9 +3,12 @@ import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import './App.css'
+import { useDesignSystem } from './features/design-system/hooks/useDesignSystem'
+import { DesignSystemPopup } from './features/design-system/components/DesignSystemPopup'
 
 function App() {
   const [count, setCount] = useState(0)
+  const { isOpen, openPopup, closePopup } = useDesignSystem()
 
   return (
     <>
@@ -18,7 +21,7 @@ function App() {
         <div>
           <h1>Get started</h1>
           <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+            Edit <code src="src/App.tsx">src/App.tsx</code> and save to test <code src="src/App.tsx">HMR</code>
           </p>
         </div>
         <button
@@ -27,6 +30,23 @@ function App() {
           onClick={() => setCount((count) => count + 1)}
         >
           Count is {count}
+        </button>
+        <button
+          type="button"
+          className="design-system-trigger"
+          onClick={openPopup}
+          style={{
+            marginTop: '20px',
+            padding: '10px 20px',
+            backgroundColor: '#d4af37',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          Open Design System
         </button>
       </section>
 
@@ -115,6 +135,7 @@ function App() {
 
       <div className="ticks"></div>
       <section id="spacer"></section>
+      <DesignSystemPopup isOpen={isOpen} onClose={closePopup} />
     </>
   )
 }
