@@ -9,6 +9,8 @@ export const CONFIG = {
   PORT: process.env.PORT || 3000,
   NODE_ENV: process.env.NODE_ENV || 'development',
   SAVES_DIR: path.resolve(BASE_DIR, 'saves'),
+  DATABASE_PATH: process.env.DATABASE_PATH || 'saves/users.db',
+  SESSION_DURATION_SECONDS: parseInt(process.env.SESSION_DURATION_SECONDS || '3600', 10),
 };
 
 // Ensure saves directory exists

@@ -47,4 +47,4 @@ description: Performs rigorous code reviews to ensure adherence to project archi
 ## References
 - Архітектурні принципи: [docs/architecture_principles.md](docs/architecture_principles.md)
 - Плани: [plans/](plans/)
-- Специфікації: [docs/features/specs/](docs/features/specs/)
+- Специфікації: [../docs/features/specs/](../docs/features/specs/)

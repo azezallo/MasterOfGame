@@ -81,5 +81,5 @@ description: Expert assistant for Node.js/TypeScript backend development in the 
 
 ## References
 - Архітектурні принципи: [docs/architecture_principles.md](docs/architecture_principles.md)
-- Специфікації фіч: [docs/features/specs/](docs/features/specs/)
+- Специфікації фіч: [../docs/features/specs/](../docs/features/specs/)
 - Плани реалізації: [plans/](plans/)
