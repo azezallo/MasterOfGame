@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import authRoutes from './routes/auth.routes';
+import sessionRoutes from './routes/session.routes';
 import { AppError } from './errors/app.errors';
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.use(cookieParser());
 
 // Routes
 app.use('/auth', authRoutes);
+app.use('/sessions', sessionRoutes);
 
 // Global Error Handler
 app.use((err: any, req: any, res: any, next: any) => {

@@ -3,6 +3,8 @@ import { CONFIG } from '../config';
 import { SessionMetadata, PlayerState, WorldState, PlayerStateSchema, WorldStateSchema } from '../models/session';
 import { DatabaseRepository } from './database_repository';
 import { v4 as uuidv4 } from 'uuid';
+import { logger } from '../logger';
+import { SessionMetadataService } from '../services/session_metadata.service';
 
 export interface CombinedSessionState {
   playerState: PlayerState;
@@ -25,13 +27,10 @@ export class PersistenceService {
     const repo = new DatabaseRepository();
     await repo.initializeDB(playerId, sessionId);
     
-    const metadata: SessionMetadata = {
-      sessionId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      version: 1,
-    };
-
+    // Use SessionMetadataService to create initial metadata
+    const metadataService = new SessionMetadataService();
+    const metadata = await metadataService.createMetadata(playerId, sessionId);
+    
     repo.saveMetadata(metadata);
     
     PersistenceService.repos.set(sessionId, repo);
@@ -121,7 +120,12 @@ export class PersistenceService {
       }
 
       if (state.metadata) {
-        repo.saveMetadata(state.metadata, db);
+        // Ensure lastPlayedAt is updated if provided in state
+        const metadataToSave = {
+          ...state.metadata,
+          lastPlayedAt: state.metadata.lastPlayedAt || Math.floor(Date.now() / 1000)
+        };
+        repo.saveMetadata(metadataToSave, db);
       }
     });
   }
