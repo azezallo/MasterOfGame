@@ -12,7 +12,8 @@ const schema = `
   CREATE TABLE IF NOT EXISTS players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     login TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL
+    password_hash TEXT NOT NULL,
+    salt TEXT NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS sessions (
