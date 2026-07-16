@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from './DesignSystemPopup.module.css';
 import type { DesignSystemPopupProps } from '../types';
 import { Button } from '@/components/ui/button/Button';
@@ -7,9 +7,13 @@ import { Select } from '@/components/ui/input/Select';
 import { Checkbox } from '@/components/ui/checkbox/Checkbox';
 import { Radio } from '@/components/ui/radio/Radio';
 import { Dialogue } from '@/components/ui/dialog/Dialogue';
+import { Spinner } from '@/components/ui/spinner/Spinner';
+import { Modal } from '@/components/ui/modal/Modal';
 
 export const DesignSystemPopup: React.FC<DesignSystemPopupProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const mockMessages = [
     { id: '1', type: 'system', content: 'Система ініціалізована.' },
@@ -64,6 +68,19 @@ export const DesignSystemPopup: React.FC<DesignSystemPopupProps> = ({ isOpen, on
           <div style={{ marginTop: '20px', marginBottom: '20px' }}>
             <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>Dialogue System</h3>
             <Dialogue messages={mockMessages} onSendMessage={(content) => console.log(content)} />
+          </div>
+
+          <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>Loaders</h3>
+            <Spinner />
+          </div>
+
+          <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>Modals</h3>
+            <Button onClick={() => setIsModalOpen(true)}>Open Modal Preview</Button>
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Modal Preview">
+              <p>Це приклад модального вікна, яке використовує нашу дизайн-систему.</p>
+            </Modal>
           </div>
         </div>
         <div className={styles.designSystemFooter}>

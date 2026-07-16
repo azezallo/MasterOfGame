@@ -1,0 +1,79 @@
+.formWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 420px;
+  width: 90%;
+  margin: 0 auto;
+  padding: 8px;
+}
+
+.formFields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.1rem;
+  border-radius: 4px;
+}
+
+.errorMessage {
+  background-color: rgba(255, 0, 0, 0.1);
+  border: 1px solid #ff4d4d;
+  color: #ff4d4d;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.switchMode {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 0.9rem;
+  border-top: 1px solid #5a4531;
+  padding-top: 20px;
+  color: var(--color-text-main);
+}
+
+.switchButton {
+  background: none;
+  border: none;
+  color: var(--color-gold-dim);
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: bold;
+  padding: 0;
+  margin: 0 5px;
+  font-size: 0.9rem;
+}
+
+.switchButton:hover {
+  color: var(--color-gold-bright);
+}
+
+@media (max-width: 480px) {
+  .formWrapper {
+    gap: 12px;
+    padding: 4px;
+  }
+  
+  .formFields {
+    gap: 10px;
+  }
+
+  .submitButton {
+    padding: 12px;
+    font-size: 1rem;
+  }
+
+  .switchMode {
+    font-size: 0.85rem;
+  }
+}
