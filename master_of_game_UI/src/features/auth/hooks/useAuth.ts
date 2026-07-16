@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { RegisterSchema, LoginSchema } from '../types';
 import type { RegisterData, LoginData, AuthError, AuthMode } from '../types';
 import { authService } from '../services/auth.service';
+import { handleZodError } from '@/utils/zod';
 
 export const useAuth = () => {
   const [mode, setMode] = useState<AuthMode>('login');
@@ -34,9 +35,9 @@ export const useAuth = () => {
     setError(null);
     const result = RegisterSchema.safeParse(registerData);
     
-    if (!result.success) {
-      const firstError = result.error.issues[0];
-      setError({ message: firstError.message, field: firstError.path[0] as string });
+    const zodError = handleZodError(result);
+    if (zodError) {
+      setError(zodError);
       return;
     }
 
@@ -50,17 +51,17 @@ export const useAuth = () => {
       setMode('login');
     } catch (err) {
       setIsLoading(false);
-      setError({ message: 'Registration failed' });
+      setError({ message: 'Помилка реєстрації' });
     }
   };
 
   const handleLogin = async () => {
     setError(null);
     const result = LoginSchema.safeParse(loginData);
-
-    if (!result.success) {
-      const firstError = result.error.issues[0];
-      setError({ message: firstError.message, field: firstError.path[0] as string });
+    
+    const zodError = handleZodError(result);
+    if (zodError) {
+      setError(zodError);
       return;
     }
 
@@ -73,7 +74,7 @@ export const useAuth = () => {
       setError(null);
     } catch (err) {
       setIsLoading(false);
-      setError({ message: 'Login failed' });
+      setError({ message: 'Помилка входу' });
     }
   };
 
