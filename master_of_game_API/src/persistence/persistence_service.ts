@@ -1,6 +1,13 @@
 import { Database } from 'better-sqlite3';
 import { CONFIG } from '../config';
-import { SessionMetadata, PlayerState, WorldState, PlayerStateSchema, WorldStateSchema } from '../models/session';
+import {
+  SessionMetadata,
+  PlayerState,
+  WorldState,
+  PlayerStateSchema,
+  WorldStateSchema,
+  SessionMetadataSchema
+} from '../models/session';
 import { DatabaseRepository } from './database_repository';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../logger';
@@ -88,6 +95,7 @@ export class PersistenceService {
 
     let validatedPlayerState = null;
     let validatedWorldState = null;
+    let validatedMetadata = null;
 
     try {
       if (state.playerState) {
@@ -96,6 +104,10 @@ export class PersistenceService {
 
       if (state.worldState) {
         validatedWorldState = WorldStateSchema.parse(state.worldState);
+      }
+
+      if (state.metadata) {
+        validatedMetadata = SessionMetadataSchema.parse(state.metadata);
       }
     } catch (error) {
       throw new Error(`Validation failed for session ${sessionId}: ${error instanceof Error ? error.message : String(error)}`);
@@ -119,11 +131,10 @@ export class PersistenceService {
         }
       }
 
-      if (state.metadata) {
-        // Ensure lastPlayedAt is updated if provided in state
+      if (validatedMetadata) {
         const metadataToSave = {
-          ...state.metadata,
-          lastPlayedAt: state.metadata.lastPlayedAt || Math.floor(Date.now() / 1000)
+          ...validatedMetadata,
+          lastPlayedAt: validatedMetadata.lastPlayedAt || Math.floor(Date.now() / 1000)
         };
         repo.saveMetadata(metadataToSave, db);
       }

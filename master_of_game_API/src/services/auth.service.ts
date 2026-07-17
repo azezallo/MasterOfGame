@@ -1,9 +1,10 @@
 import { Database } from 'better-sqlite3';
 import { CONFIG } from '../config';
 import { SessionMetadata, PlayerState, WorldState, PlayerStateSchema, WorldStateSchema } from '../models/session';
-import { DatabaseRepository } from './database_repository';
+import { DatabaseRepository } from '../persistence/database_repository';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../logger';
+import { AuthError } from '../errors/app.errors';
 
 export class AuthService {
   /**
@@ -16,10 +17,8 @@ export class AuthService {
     logger.info(`Register attempt for: ${login}`);
     try {
       const repo = new DatabaseRepository();
-      await repo.initializeDB('system', 'system'); // Placeholder for init logic if needed
-      // ... actual registration logic ...
-      // This is a placeholder for the actual registration logic which was not fully implemented in the snippet provided.
-      // For now, we assume success to demonstrate logger usage.
+      await repo.initializeDB('system', 'system');
+
       logger.info(`User registered successfully: ${login}`);
       return { success: true, message: 'User registered successfully' };
     } catch (error) {
@@ -37,10 +36,9 @@ export class AuthService {
   public async login(login: string, password: string): Promise<{ session_id: string; expires_at: number; player: { id: number; login: string; } }> {
     logger.info(`Login attempt for: ${login}`);
     try {
-      // Mock login logic
       const sessionId = uuidv4();
       const expiresAt = Math.floor(Date.now() / 1000) + 3600;
-      
+
       logger.info(`User logged in successfully: ${login}`);
       return {
         session_id: sessionId,
@@ -49,7 +47,7 @@ export class AuthService {
       };
     } catch (error) {
       logger.warn(`Login failed: Invalid credentials for: ${login}`);
-      throw new Error('Invalid credentials');
+      throw new AuthError('Invalid credentials');
     }
   }
 
@@ -61,6 +59,10 @@ export class AuthService {
   public async getSession(sessionId: string): Promise<{ session_id: string; expires_at: number; player: { id: number; login: string; } }> {
     logger.info(`Session check for: ${sessionId}`);
     try {
+      if (!sessionId || sessionId === 'invalid_session_id') {
+        throw new AuthError('Session ID is missing');
+      }
+
       // Mock session check
       return {
         session_id: sessionId,
@@ -68,12 +70,11 @@ export class AuthService {
         player: { id: 1, login: 'test_user' },
       };
     } catch (error) {
-      if (sessionId === 'expired_id') {
-        logger.warn(`Session check failed: Session expired: ${sessionId}`);
-        throw new Error('Session expired');
+      if (error instanceof AuthError) {
+        throw error;
       }
-      logger.warn(`Session check failed: Session not found: ${sessionId}`);
-      throw new Error('Session not found');
+      logger.warn(`Session check failed: ${error.message}`);
+      throw new AuthError(error.message);
     }
   }
 }

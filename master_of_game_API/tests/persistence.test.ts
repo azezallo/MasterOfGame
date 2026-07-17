@@ -13,11 +13,13 @@ describe('DatabaseRepository', () => {
     console.log('Repository instance:', repository);
     repository = new DatabaseRepository();
     await repository.initializeDB(testPlayerId, testSessionId);
-    
+
     await repository.saveMetadata({
       sessionId: testSessionId,
+      gameName: 'TestGame',
+      characterName: 'TestCharacter',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      lastPlayedAt: Math.floor(Date.now() / 1000),
       version: 1,
     });
   });
@@ -39,8 +41,10 @@ describe('DatabaseRepository', () => {
   it('should save and load metadata', async () => {
     const metadata = {
       sessionId: testSessionId,
+      gameName: 'TestGame',
+      characterName: 'TestCharacter',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      lastPlayedAt: Math.floor(Date.now() / 1000),
       version: 1,
     };
 
@@ -49,6 +53,8 @@ describe('DatabaseRepository', () => {
 
     expect(loaded).not.toBeNull();
     expect(loaded?.sessionId).toBe(testSessionId);
+    expect(loaded?.gameName).toBe('TestGame');
+    expect(loaded?.characterName).toBe('TestCharacter');
     expect(loaded?.version).toBe(1);
   });
 

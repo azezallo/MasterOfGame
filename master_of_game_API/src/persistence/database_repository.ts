@@ -240,7 +240,6 @@ export class DatabaseRepository {
 
     if (!row) return null;
 
-**
     return {
       sessionId: row.session_id,
       gameName: row.game_name,

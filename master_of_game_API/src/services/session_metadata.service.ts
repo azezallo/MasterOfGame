@@ -1,6 +1,6 @@
 import { SessionMetadata } from '../models/session';
-import { PersistenceService } from './persistence_service';
-import { DatabaseRepository } from './database_repository';
+import { PersistenceService } from '../persistence/persistence_service';
+import { DatabaseRepository } from '../persistence/database_repository';
 import { CONFIG } from '../config';
 import fs from 'fs';
 import path from 'path';
@@ -10,9 +10,10 @@ export class SessionMetadataService {
   private static repos = new Map<string, DatabaseRepository>();
 
   /**
-   * Creates and saves initial metadata for a new session.
+   * Gets metadata for a specific session.
+   * Returns null if metadata does not exist in the database.
    */
-  public async createMetadata(playerId: string, sessionId: string): Promise<SessionMetadata> {
+  public async getMetadata(playerId: string, sessionId: string): Promise<SessionMetadata | null> {
     const repo = PersistenceService.repos.get(sessionId);
     
     if (repo) {
@@ -20,45 +21,44 @@ export class SessionMetadataService {
       if (metadata) return metadata;
     }
 
+    return null;
+  }
+
+  /**
+   * Creates and saves initial metadata for a new session.
+   * If player state is not found, it uses default values.
+   */
+  public async createMetadata(playerId: string, sessionId: string): Promise<SessionMetadata> {
     const dbPath = path.resolve(CONFIG.SAVES_DIR, playerId, `${sessionId}.db`);
+    
     if (fs.existsSync(dbPath)) {
       const tempRepo = new DatabaseRepository();
       await tempRepo.initializeDB(playerId, sessionId);
       
       const playerState = tempRepo.loadPlayerState();
+      let gameName = 'New Game';
+      let characterName = 'Hero';
+
       if (playerState) {
-        const metadata: SessionMetadata = {
-          sessionId,
-          gameName: 'New Game', // Placeholder, ideally from a request or file content
-          characterName: playerState.name,
-          createdAt: Math.floor(Date.now() / 1000),
-          lastPlayedAt: Math.floor(Date.now() / 1000),
-          version: 1,
-        };
-
-        tempRepo.saveMetadata(metadata);
-        PersistenceService.repos.set(sessionId, tempRepo);
-        return metadata;
+        gameName = playerState.name || 'New Game';
+        characterName = playerState.name || 'Hero';
       }
-      tempRepo.close();
+
+      const metadata: SessionMetadata = {
+        sessionId,
+        gameName,
+        characterName,
+        createdAt: Math.floor(Date.now() / 1000),
+        lastPlayedAt: Math.floor(Date.now() / 1000),
+        version: 1,
+      };
+
+      tempRepo.saveMetadata(metadata);
+      PersistenceService.repos.set(sessionId, tempRepo);
+      return metadata;
     }
 
-    throw new Error(`Metadata for session ${sessionId} could not be initialized.`);
-  }
-
-  /**
-   * Gets metadata for a specific session.
-   * Returns null if metadata does not exist in the database.
-   */
-  public async getMetadata(playerId: string, sessionId: string): Promise<SessionMetadata | null> {
-    const repo = PersistenceService.repos.get(sessionId);
-
-    if (repo) {
-      const metadata = repo.loadMetadata();
-      if (metadata) return metadata;
-    }
-
-    return null;
+    throw new Error(`Database for session ${sessionId} not found at ${dbPath}`);
   }
 
   /**

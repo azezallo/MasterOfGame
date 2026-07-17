@@ -70,9 +70,11 @@ describe('PersistenceService Integration Tests', () => {
       },
       metadata: {
         sessionId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Math.floor(Date.now() / 1000),
+        lastPlayedAt: Math.floor(Date.now() / 1000),
         version: 1,
+        gameName: 'TestGame',
+        characterName: 'TestCharacter',
       }
     };
 
