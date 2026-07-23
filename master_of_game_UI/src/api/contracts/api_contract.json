@@ -1,0 +1,102 @@
+{
+  "modules": {
+    "auth": {
+      "endpoints": [
+        {
+          "path": "/auth/register",
+          "method": "POST",
+          "description": "Register a new user",
+          "request": {
+            "body": {
+              "login": "string",
+              "password": "string"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "message": "string"
+          }
+        },
+        {
+          "path": "/auth/login",
+          "method": "POST",
+          "description": "Authenticate user and return session cookie",
+          "request": {
+            "body": {
+              "login": "string",
+              "password": "string"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "message": "string",
+            "player": "Player"
+          }
+        },
+        {
+          "path": "/auth/me",
+          "method": "GET",
+          "description": "Get current user information",
+          "request": {},
+          "response": {
+            "success": "boolean",
+            "message": "string",
+            "player": "Player"
+          }
+        }
+      ],
+      "types": {
+        "Player": {
+          "id": "number",
+          "login": "string"
+        }
+      }
+    },
+    "sessions": {
+      "endpoints": [
+        {
+          "path": "/sessions",
+          "method": "GET",
+          "description": "Get available sessions for the user",
+          "request": {},
+          "response": {
+            "success": "boolean",
+            "data": "Array<SessionMetadata>"
+          }
+        },
+        {
+          "path": "/sessions",
+          "method": "POST",
+          "description": "Create a new session",
+          "request": {
+            "body": {
+              "gameName": "string",
+              "characterName": "string"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "data": "SessionData"
+          }
+        }
+      ],
+      "types": {
+        "SessionMetadata": {
+          "sessionId": "string",
+          "gameName": "string",
+          "characterName": "string",
+          "createdAt": "number",
+          "lastPlayedAt": "number",
+          "version": "number"
+        },
+        "SessionData": {
+          "session_id": "string",
+          "game_name": "string",
+          "character_name": "string",
+          "created_at": "number",
+          "last_played_at": "number"
+        }
+      }
+    }
+  }
+}

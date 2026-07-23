@@ -1,6 +1,13 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PersistenceService } from '../src/persistence/persistence_service';
 import { SessionMetadataService } from '../src/services/session_metadata.service';
+import fs from 'fs';
+import path from 'path';
+import { CONFIG } from '../src/config';
+
+// Define a unique subdirectory for this test file to allow for parallel test execution
+const TEST_SUBDIR = 'session_selection';
+const TEST_SAVES_DIR = path.resolve(CONFIG.SAVES_DIR, TEST_SUBDIR);
 
 describe('Session Selection Integration Tests', () => {
   let persistence: PersistenceService;
@@ -12,10 +19,39 @@ describe('Session Selection Integration Tests', () => {
     persistence = new PersistenceService();
     metadataService = new SessionMetadataService();
 
-    console.log('--- Creating 3 sessions ---');
+    // Ensure the unique subdirectory exists
+    if (!fs.existsSync(TEST_SAVES_DIR)) {
+      fs.mkdirSync(TEST_SAVES_DIR, { recursive: true });
+    }
+
+    // Override CONFIG.SAVES_DIR for this test suite
+    (CONFIG as any).SAVES_DIR = TEST_SAVES_DIR;
+
+    console.log(`--- Creating 3 sessions in ${TEST_SUBDIR} ---`);
     for (let i = 0; i < 3; i++) {
       const id = await persistence.createSession(playerId, `Game ${i}`, `Hero ${i}`);
       sessionIds.push(id);
+    }
+  });
+
+  afterAll(async () => {
+    // Close all database connections
+    PersistenceService.repos.forEach((repo) => {
+      repo.close();
+    });
+    PersistenceService.repos.clear();
+
+    // Wait a bit for connections to release
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Cleanup only the specific subdirectory for this test suite
+    if (fs.existsSync(TEST_SAVES_DIR)) {
+      try {
+        // Use recursive delete to clear only the test saves directory for this test
+        fs.rmSync(TEST_SAVES_DIR, { recursive: true, force: true });
+      } catch (e) {
+        console.error(`Failed to cleanup test saves directory ${TEST_SAVES_DIR}: ${e}`);
+      }
     }
   });
 
