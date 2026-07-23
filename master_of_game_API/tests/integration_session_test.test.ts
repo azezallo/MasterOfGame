@@ -14,7 +14,7 @@ describe('Session Selection Integration Tests', () => {
 
     console.log('--- Creating 3 sessions ---');
     for (let i = 0; i < 3; i++) {
-      const id = await persistence.createSession(playerId);
+      const id = await persistence.createSession(playerId, `Game ${i}`, `Hero ${i}`);
       sessionIds.push(id);
     }
   });

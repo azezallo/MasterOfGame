@@ -4,11 +4,10 @@ import { DatabaseRepository } from '../persistence/database_repository';
 import { CONFIG } from '../config';
 import fs from 'fs';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { logger } from '../logger';
+import { PersistenceError } from '../errors/app_errors';
 
 export class SessionMetadataService {
-  private static repos = new Map<string, DatabaseRepository>();
-
   /**
    * Gets metadata for a specific session.
    * Returns null if metadata does not exist in the database.
@@ -26,22 +25,22 @@ export class SessionMetadataService {
 
   /**
    * Creates and saves initial metadata for a new session.
-   * If player state is not found, it uses default values.
+   * @param playerId The unique identifier for the player.
+   * @param sessionId The unique identifier for the session.
+   * @param gameName The name of the game.
+   * @param characterName The name of the character.
+   * @returns The created metadata.
    */
-  public async createMetadata(playerId: string, sessionId: string): Promise<SessionMetadata> {
+  public async createMetadata(playerId: string, sessionId: string, gameName: string, characterName: string): Promise<SessionMetadata> {
     const dbPath = path.resolve(CONFIG.SAVES_DIR, playerId, `${sessionId}.db`);
     
     if (fs.existsSync(dbPath)) {
-      const tempRepo = new DatabaseRepository();
-      await tempRepo.initializeDB(playerId, sessionId);
+      let repo = PersistenceService.repos.get(sessionId);
       
-      const playerState = tempRepo.loadPlayerState();
-      let gameName = 'New Game';
-      let characterName = 'Hero';
-
-      if (playerState) {
-        gameName = playerState.name || 'New Game';
-        characterName = playerState.name || 'Hero';
+      if (!repo) {
+        repo = new DatabaseRepository();
+        await repo.initializeDB(playerId, sessionId);
+        PersistenceService.repos.set(sessionId, repo);
       }
 
       const metadata: SessionMetadata = {
@@ -53,12 +52,13 @@ export class SessionMetadataService {
         version: 1,
       };
 
-      tempRepo.saveMetadata(metadata);
-      PersistenceService.repos.set(sessionId, tempRepo);
+      repo.saveMetadata(metadata);
+      logger.info(`Metadata created for session ${sessionId}`);
       return metadata;
     }
 
-    throw new Error(`Database for session ${sessionId} not found at ${dbPath}`);
+    logger.error(`Database for session ${sessionId} not found at ${dbPath}`);
+    throw new PersistenceError(`Database for session ${sessionId} not found at ${dbPath}`);
   }
 
   /**

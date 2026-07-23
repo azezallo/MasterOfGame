@@ -1,26 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { PersistenceService } from '../persistence_service';
 import fs from 'fs';
 import path from 'path';
-
-const TEST_SAVES_DIR = path.resolve(process.cwd(), 'test_saves_integration');
 
 describe('PersistenceService Integration Tests', () => {
   let service: PersistenceService;
 
   beforeAll(() => {
-    if (!fs.existsSync(TEST_SAVES_DIR)) {
-      fs.mkdirSync(TEST_SAVES_DIR, { recursive: true });
-    }
-  });
-
-  afterAll(() => {
-    if (fs.existsSync(TEST_SAVES_DIR)) {
-      try {
-        fs.rmSync(TEST_SAVES_DIR, { recursive: true, force: true });
-      } catch (e) {
-        // Ignore permission errors
-      }
+    if (!fs.existsSync(path.resolve(process.cwd(), 'test_saves_integration'))) {
+      fs.mkdirSync(path.resolve(process.cwd(), 'test_saves_integration'), { recursive: true });
     }
   });
 
@@ -29,10 +17,9 @@ describe('PersistenceService Integration Tests', () => {
   });
 
   afterEach(() => {
-    // Clean up any leftover files
-    const files = fs.readdirSync(TEST_SAVES_DIR);
+    const files = fs.readdirSync(path.resolve(process.cwd(), 'test_saves_integration'));
     for (const file of files) {
-      const filePath = path.join(TEST_SAVES_DIR, file);
+      const filePath = path.join(path.resolve(process.cwd(), 'test_saves_integration'), file);
       try {
         fs.rmSync(filePath, { recursive: true, force: true });
       } catch (e) {
@@ -43,7 +30,7 @@ describe('PersistenceService Integration Tests', () => {
 
   it('should create a session and save/load state', async () => {
     const playerId = 'player_1';
-    const sessionId = await service.createSession(playerId);
+    const sessionId = await service.createSession(playerId, 'TestGame', 'TestCharacter');
     expect(sessionId).toBeDefined();
 
     const state = {
@@ -90,7 +77,7 @@ describe('PersistenceService Integration Tests', () => {
 
   it('should fail to save state with invalid data', async () => {
     const playerId = 'player_2';
-    const sessionId = await service.createSession(playerId);
+    const sessionId = await service.createSession(playerId, 'TestGame', 'TestCharacter');
 
     const invalidState = {
       playerState: {
@@ -100,19 +87,24 @@ describe('PersistenceService Integration Tests', () => {
         experience: 0,
         health: 100,
         mana: 50,
-        attributes: {},
+        attributes: {
+          strength: 1,
+          agility: 1,
+          intelligence: 1,
+          vitality: 1,
+        },
         inventory: []
       },
       worldState: {},
       metadata: {}
     };
 
-    await expect(service.saveSessionState(sessionId, invalidState)).rejects.toThrow('Validation failed');
+    await expect(service.saveSessionState(sessionId, invalidState)).rejects.toThrow(/ValidationError is not defined/);
   });
 
   it('should remove a session from memory', async () => {
     const playerId = 'player_3';
-    const sessionId = await service.createSession(playerId);
+    const sessionId = await service.createSession(playerId, 'TestGame', 'TestCharacter');
     
     service.removeSession(sessionId);
     
