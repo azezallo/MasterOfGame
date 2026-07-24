@@ -1,0 +1,43 @@
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem;
+  background-color: var(--color-bg-preview);
+  border: 2px solid var(--color-iron-border);
+  border-radius: 4px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.formTitle {
+  color: var(--color-gold);
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-iron-border);
+  padding-bottom: 0.5rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inputGroup label {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.submitButton {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+/* Special styling for Parchment look if needed */
+.parchmentWrapper {
+  background-color: var(--color-parchment-bg);
+  color: var(--color-parchment-text);
+  padding: 1rem;
+  border-radius: 2px;
+}

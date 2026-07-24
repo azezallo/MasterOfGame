@@ -1,0 +1,41 @@
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+  background: rgba(20, 20, 20, 0.9);
+  border: 2px solid #4a4a4a;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  color: #dcdcdc;
+}
+
+.tableHeader {
+  border-bottom: 2px solid #c5a059;
+  padding: 1rem;
+  font-weight: bold;
+  color: #f4d03f;
+}
+
+.tableRow {
+  border-bottom: 1px solid #333;
+  cursor: pointer;
+}
+
+.tableCell {
+  padding: 1rem;
+}
+
+.lastUpdate {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+}
+
+.heroName {
+  color: #e0e0e0;
+  font-weight: bold;
+}
