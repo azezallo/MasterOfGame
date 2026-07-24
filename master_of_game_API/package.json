@@ -1,18 +1,5 @@
 {
-  "name": "master_of_game_api",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "dev": "tsx watch ./src/index.ts",
-    "test": "vitest",
-    "build": "tsc",
-    "start": "node dist/index.js"
-  },
-  "keywords": [],
   "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "better-sqlite3": "^12.11.1",
     "cookie-parser": "^1.4.7",
@@ -22,12 +9,28 @@
     "uuid": "^14.0.1",
     "zod": "^4.4.3"
   },
+  "description": "",
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.1.1",
     "@types/uuid": "^10.0.0",
+    "cross-env": "^10.1.0",
+    "supertest": "^7.2.2",
     "tsx": "^4.23.0",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
-  }
+  },
+  "keywords": [],
+  "license": "ISC",
+  "main": "index.js",
+  "name": "master_of_game_api",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch ./src/index.ts",
+    "start": "node dist/index.js",
+    "test": "cross-env NODE_ENV=test vitest",
+    "test:integration": "cross-env NODE_ENV=test vitest tests/integration_session_test.test.ts"
+  },
+  "type": "commonjs",
+  "version": "1.0.0"
 }

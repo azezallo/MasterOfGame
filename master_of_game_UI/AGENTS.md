@@ -23,6 +23,11 @@
     - `../docs/features/specs/`: Detailed specifications for individual features.
 - **Architecture**: Focused on a clean separation of concerns with a shared understanding of the API contracts.
 
+## Project Navigation
+- **Exploration**: When exploring the project structure, do not use `ls -R` as it produces too much noise.
+- **Recommended Command**: Use `tree -I "node_modules|.git|dist|build|.next|venv|.cache|__pycache__" -L 3` to get a clear overview of the project structure.
+- **Focus**: Always focus on the core logic folders (e.g., `src/`, `docs/`, `plans/`).
+
 ## Workflow
 1. Analyze the request.
 2. Check existing documentation and files.

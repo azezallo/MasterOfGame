@@ -1,0 +1,40 @@
+.cardContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 2px solid var(--color-iron-border);
+  border-radius: 8px;
+  background-color: var(--color-bg-preview);
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.cardTitle {
+  font-size: 1.5rem;
+  color: var(--color-gold);
+  margin: 0;
+}
+
+.cardInfo {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  background: rgba(197, 160, 89, 0.2);
+  border: 1px solid var(--color-gold-dim);
+  margin-top: 0.5rem;
+}
+
+.lastPlayed {
+  margin-top: 0.5rem;
+  font-style: italic;
+}

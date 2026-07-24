@@ -39,8 +39,10 @@ export class DatabaseRepository {
     const schema = `
       CREATE TABLE IF NOT EXISTS session_metadata (
         session_id TEXT PRIMARY KEY,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
+        game_name TEXT NOT NULL,
+        character_name TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        last_played_at INTEGER NOT NULL,
         version INTEGER DEFAULT 1
       );
 
@@ -210,18 +212,21 @@ export class DatabaseRepository {
     if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
 
     const stmt = targetDb.prepare(`
-      INSERT INTO session_metadata (session_id, created_at, updated_at, version)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO session_metadata (session_id, game_name, character_name, created_at, last_played_at, version)
+      VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(session_id) DO UPDATE SET
-        created_at = excluded.created_at,
-        updated_at = excluded.updated_at,
+        game_name = excluded.game_name,
+        character_name = excluded.character_name,
+        last_played_at = excluded.last_played_at,
         version = excluded.version
     `);
 
     stmt.run(
       metadata.sessionId,
+      metadata.gameName,
+      metadata.characterName,
       metadata.createdAt,
-      metadata.updatedAt,
+      metadata.lastPlayedAt,
       metadata.version
     );
   }
@@ -237,8 +242,10 @@ export class DatabaseRepository {
 
     return {
       sessionId: row.session_id,
+      gameName: row.game_name,
+      characterName: row.character_name,
       createdAt: row.created_at,
-      updatedAt: row.updated_at,
+      lastPlayedAt: row.last_played_at,
       version: row.version,
     };
   }

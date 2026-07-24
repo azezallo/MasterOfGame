@@ -20,12 +20,18 @@ export const authMiddleware = async (req: AuthenticatedRequest, res: Response, n
 
   try {
     const sessionData = await authService.getSession(sessionId);
+    if (!sessionData) {
+      return next(new AuthError('Session ID is missing'));
+    }
     req.user = {
       id: sessionData.player.id,
       login: sessionData.player.login,
     };
     next();
   } catch (error) {
-    next(error as AuthError);
+    if (error instanceof AuthError) {
+      return next(error);
+    }
+    return next(new AuthError(error instanceof Error ? error.message : 'Authentication failed'));
   }
 };

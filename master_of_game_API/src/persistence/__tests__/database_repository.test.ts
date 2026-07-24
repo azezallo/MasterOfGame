@@ -101,8 +101,10 @@ describe('DatabaseRepository', () => {
   it('should save and load metadata', () => {
     const metadata = {
       sessionId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      gameName: 'TestGame',
+      characterName: 'TestCharacter',
+      createdAt: Math.floor(Date.now() / 1000), // Виправлено: використовуємо timestamp
+      lastPlayedAt: Math.floor(Date.now() / 1000),
       version: 1,
     };
     repo.saveMetadata(metadata);
@@ -110,15 +112,19 @@ describe('DatabaseRepository', () => {
     const loadedMetadata = repo.loadMetadata();
     expect(loadedMetadata).not.toBeNull();
     expect(loadedMetadata?.sessionId).toBe(sessionId);
+    expect(loadedMetadata?.gameName).toBe('TestGame');
+    expect(loadedMetadata?.characterName).toBe('TestCharacter');
     expect(loadedMetadata?.version).toBe(1);
   });
 
   it('should handle transactions atomically', () => {
-    // First, ensure we have some data to rollback from if needed
+    // Initial save
     repo.saveMetadata({
       sessionId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      gameName: 'TestGame',
+      characterName: 'TestCharacter',
+      createdAt: Math.floor(Date.now() / 1000), // Виправлено: використовуємо timestamp
+      lastPlayedAt: Math.floor(Date.now() / 1000),
       version: 1,
     });
 
@@ -126,8 +132,10 @@ describe('DatabaseRepository', () => {
       repo.runTransaction((db) => {
         repo.saveMetadata({
           sessionId,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          gameName: 'TestGame',
+          characterName: 'TestCharacter',
+          createdAt: Math.floor(Date.now() / 1000),
+          lastPlayedAt: Math.floor(Date.now() / 1000),
           version: 2,
         });
         throw new Error('Simulated failure');

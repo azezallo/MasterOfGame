@@ -1,0 +1,26 @@
+.card {
+  background: rgba(30, 30, 30, 0.8);
+  border: 2px solid #c5a059; /* Gold accent */
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  color: #e0e0e0;
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: #f4d03f; /* Brighter gold on hover */
+}
+
+.title {
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  color: #f4d03f;
+  border-bottom: 1px solid #c5a059;
+  padding-bottom: 0.5rem;
+}
+
+.content {
+  margin-top: 0.5rem;
+}

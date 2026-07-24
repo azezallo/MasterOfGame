@@ -1,9 +1,11 @@
 import { z } from 'zod';
 
 export const SessionMetadataSchema = z.object({
-  sessionId: z.string().uuid(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  sessionId: z.string().uuid(), // Unique identifier
+  gameName: z.string().min(1),           // Name of the game/world
+  characterName: z.string().min(1),      // Character name in this session
+  createdAt: z.number().int(),    // Unix timestamp of creation
+  lastPlayedAt: z.number().int().default(() => Math.floor(Date.now() / 1000)), // Unix timestamp of last play
   version: z.number().default(1),
 });
 
