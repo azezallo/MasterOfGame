@@ -12,7 +12,7 @@ import { DatabaseRepository } from './database_repository';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../logger';
 import { SessionMetadataService } from '../services/session_metadata.service';
-import { PersistenceError } from '../errors/app_errors';
+import { PersistenceError, ValidationError } from '../errors/app_errors';
 
 export interface CombinedSessionState {
   playerState: PlayerState;

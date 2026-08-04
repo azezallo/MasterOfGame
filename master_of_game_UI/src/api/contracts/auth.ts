@@ -24,12 +24,9 @@ export interface RegisterResponse {
   message: string;
 }
 
-export interface GetMeRequest {
-  body: Record<string, any>;
-}
-
 export interface GetMeResponse {
   success: boolean;
   message: string;
   player: Player;
 }
+

@@ -16,9 +16,10 @@ export const useSessionCreation = () => {
       const result = await createSession(data);
       setState(prev => ({ ...prev, success: true, isLoading: false }));
       return result;
-    } catch (err: any) {
-      setState(prev => ({ ...prev, error: err.message || 'Помилка створення сесії', isLoading: false }));
-      throw err;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Помилка створення сесії';
+      setState(prev => ({ ...prev, error: message, isLoading: false }));
+      throw error;
     }
   };
 

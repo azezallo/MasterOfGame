@@ -5,7 +5,7 @@ import type { ZodSafeParseResult } from 'zod';
  * @param result - Результат виконання safeParse від Zod
  * @returns Об'єкт помилки з повідомленням або null, якщо валідація успішна
  */
-export const handleZodError = (result: ZodSafeParseResult<any>) => {
+export const handleZodError = (result: ZodSafeParseResult<unknown>) => {
   if (result.success) return null;
 
   const firstError = result.error.issues[0];

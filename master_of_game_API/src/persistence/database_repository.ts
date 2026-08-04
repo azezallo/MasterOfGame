@@ -22,9 +22,7 @@ export class DatabaseRepository {
     
     // Ensure the player directory exists
     const dirPath = path.dirname(dbPath);
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
+    await fs.promises.mkdir(dirPath, { recursive: true });
 
     // better-sqlite3 is synchronous in its connection, 
     // but we'll wrap it to maintain a consistent async API if needed.

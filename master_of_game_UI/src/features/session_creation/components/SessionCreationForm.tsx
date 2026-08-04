@@ -1,6 +1,6 @@
 import React from 'react';
-import { Input } from '@/components/ui/Input/Input.tsx';
-import { Button } from '@/components/ui/Button/Button.tsx';
+import { Input } from '@/components/ui/input/Input';
+import { Button } from '@/components/ui/button/Button';
 import styles from '../styles/SessionCreationForm.module.css';
 import type { SessionCreationInput } from '../types';
 
@@ -8,7 +8,7 @@ interface SessionCreationFormProps {
   initialData?: SessionCreationInput;
   onSubmit: (data: SessionCreationInput) => Promise<void>;
   isLoading?: boolean;
-  error?: string;
+  error?: string | null;
 }
 
 export const SessionCreationForm: React.FC<SessionCreationFormProps> = ({
@@ -31,7 +31,7 @@ export const SessionCreationForm: React.FC<SessionCreationFormProps> = ({
     e.preventDefault();
     try {
       await onSubmit(formData);
-    } catch (err) {
+    } catch {
       // Error handling will be managed by the container or hook
     }
   };

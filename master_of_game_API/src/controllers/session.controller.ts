@@ -41,13 +41,14 @@ export const createSession = async (req: AuthenticatedRequest, res: Response) =>
         last_played_at: Math.floor(Date.now() / 1000),
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof ValidationError) {
       return res.status(400).json({ success: false, message: error.message });
     } else if (error instanceof PersistenceError) {
       return res.status(500).json({ success: false, message: error.message });
     } else {
-      return res.status(500).json({ success: false, message: error.message || 'Internal Server Error' });
+      const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';
+      return res.status(500).json({ success: false, message: errorMessage });
     }
   }
 };

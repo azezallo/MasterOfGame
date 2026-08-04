@@ -21,15 +21,7 @@ export const AuthPopup: React.FC = () => {
     clearError,
   } = useAuth();
 
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    if (!user) {
-      setIsVisible(true);
-    } else {
-      setIsVisible(false);
-    }
-  }, [user]);
+  const isVisible = !user;
 
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {

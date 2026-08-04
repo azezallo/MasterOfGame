@@ -1,75 +1,53 @@
-# React + TypeScript + Vite
+# Master of Game UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Це клієнтська частина веб-додатку Master of Game — гри з Narrative-First інтерфейсом, де всі дії відбуваються через діалог з AI Master'ом.
 
-Currently, two official plugins are available:
+## Технологічний стек
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React** + **TypeScript**
+- **Vite** для швидкої збірки
+- **CSS Modules** для стилізації без конфліктів
+- **Zod** для валідації даних
+- Нативний `fetch` для роботи з API
 
-## React Compiler
+## Запуск проєкту
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Перед запуском переконайтесь, що у вас встановлено Node.js.
 
-## Expanding the ESLint configuration
+### Встановлення залежностей
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Запуск у режимі розробки
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+npm run dev
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Додаток буде доступний за адресою `http://localhost:5173`.
 
+### Збірка для production
+
+```bash
+npm run build
+```
+
+Зібраний додаток з'явиться в папці `dist`.
+
+### Запуск лінтера
+
+```bash
+npm run lint
+```
+
+## Змінні середовища
+
+Для роботи з API додаток використовує змінну `VITE_API_BASE_URL`.
+Вона повинна бути вказана у файлі `.env.development` або `.env.production` в корені UI проєкту.
+
+Приклад `.env.development`:
+```
+VITE_API_BASE_URL=http://localhost:3000
 ```

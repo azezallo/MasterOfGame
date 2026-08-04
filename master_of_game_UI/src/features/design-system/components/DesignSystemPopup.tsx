@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styles from './DesignSystemPopup.module.css';
 import type { DesignSystemPopupProps } from '../types';
+import type { Message } from '@/components/ui/dialog/types';
 import { Button } from '@/components/ui/button/Button';
 import { Input } from '@/components/ui/input/Input';
 import { Select } from '@/components/ui/input/Select';
@@ -11,16 +12,16 @@ import { Spinner } from '@/components/ui/spinner/Spinner';
 import { Modal } from '@/components/ui/modal/Modal';
 
 export const DesignSystemPopup: React.FC<DesignSystemPopupProps> = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
-
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const mockMessages = [
+  const mockMessages: Message[] = [
     { id: '1', type: 'system', content: 'Система ініціалізована.' },
     { id: '2', type: 'ai', content: 'Вітаю, мандрівнику. Я твій провідник у цьому світі.' },
     { id: '3', type: 'player', content: 'Хто ти?', sender: 'Гравцеві' },
     { id: '4', type: 'ai', content: 'Я — дух цього лісу, що запампорядів давні шляхи.' },
   ];
+
+  if (!isOpen) return null;
 
   return (
     <div className={styles.designSystemOverlay}>

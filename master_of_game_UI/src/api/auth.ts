@@ -3,7 +3,6 @@ import type {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
-  GetMeRequest,
   GetMeResponse
 } from './contracts/auth';
 import { ApiServiceError } from './errors';
@@ -14,6 +13,22 @@ const headers = {
   'Content-Type': 'application/json',
 };
 
+/**
+ * Safely parses error body from a failed response.
+ * Falls back to HTTP status text if body is not JSON.
+ */
+async function parseErrorBody(response: Response, fallbackMessage: string): Promise<string> {
+  try {
+    const data: unknown = await response.json();
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      return String((data as { message: unknown }).message);
+    }
+  } catch {
+    // Response body is not JSON — use fallback
+  }
+  return `${fallbackMessage} (${response.status} ${response.statusText})`;
+}
+
 export const register = async (data: RegisterRequest): Promise<RegisterResponse> => {
   const response = await fetch(`${BASE_URL}/auth/register`, {
     method: 'POST',
@@ -23,8 +38,8 @@ export const register = async (data: RegisterRequest): Promise<RegisterResponse>
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new ApiServiceError(errorData.message || 'Register failed', response.status);
+    const message = await parseErrorBody(response, 'Register failed');
+    throw new ApiServiceError(message, response.status);
   }
 
   return response.json();
@@ -39,27 +54,25 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new ApiServiceError(errorData.message || 'Login failed', response.status);
+    const message = await parseErrorBody(response, 'Login failed');
+    throw new ApiServiceError(message, response.status);
   }
 
   return response.json();
 };
 
-export const getMe = async (data: GetMeRequest, customHeaders?: Record<string, string>): Promise<GetMeResponse> => {
+export const getMe = async (): Promise<GetMeResponse> => {
   const response = await fetch(`${BASE_URL}/auth/me`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      ...customHeaders,
     },
-    body: data.body ? JSON.stringify(data.body) : undefined,
     credentials: 'include',
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new ApiServiceError(errorData.message || 'Get me failed', response.status);
+    const message = await parseErrorBody(response, 'Get me failed');
+    throw new ApiServiceError(message, response.status);
   }
 
   return response.json();

@@ -34,7 +34,8 @@ export class SessionMetadataService {
   public async createMetadata(playerId: string, sessionId: string, gameName: string, characterName: string): Promise<SessionMetadata> {
     const dbPath = path.resolve(CONFIG.SAVES_DIR, playerId, `${sessionId}.db`);
     
-    if (fs.existsSync(dbPath)) {
+    const dbExists = await fs.promises.access(dbPath).then(() => true).catch(() => false);
+    if (dbExists) {
       let repo = PersistenceService.repos.get(sessionId);
       
       if (!repo) {
@@ -67,14 +68,16 @@ export class SessionMetadataService {
    */
   public async getAvailableSessions(playerId: string): Promise<SessionMetadata[]> {
     const playerDir = path.resolve(CONFIG.SAVES_DIR, playerId);
-    if (!fs.existsSync(playerDir)) {
+    const dirExists = await fs.promises.access(playerDir).then(() => true).catch(() => false);
+    if (!dirExists) {
       return [];
     }
 
-    const files = fs.readdirSync(playerDir).filter(file => file.endsWith('.db'));
+    const files = await fs.promises.readdir(playerDir);
+    const dbFiles = files.filter(file => file.endsWith('.db'));
     const sessions: SessionMetadata[] = [];
 
-    for (const file of files) {
+    for (const file of dbFiles) {
       const sessionId = path.basename(file, '.db');
       const metadata = await this.getMetadata(playerId, sessionId);
       if (metadata) {

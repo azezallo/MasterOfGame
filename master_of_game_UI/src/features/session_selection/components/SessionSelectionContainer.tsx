@@ -13,16 +13,10 @@ interface SessionSelectionContainerProps {
 
 export const SessionSelectionContainer: React.FC<SessionSelectionContainerProps> = ({ onSessionSelect }) => {
   const { sessions, isLoading, error } = useSessions();
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
-
-  // Sync with URL on mount
-  useEffect(() => {
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get('session_id');
-    if (id) {
-      setSelectedSessionId(id);
-    }
-  }, []);
+    return params.get('session_id');
+  });
 
   // Effect to update URL when selectedSessionId changes
   useEffect(() => {

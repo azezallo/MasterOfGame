@@ -14,7 +14,7 @@ export const useSessions = () => {
         setError(null);
         const data = await fetchSessions();
         setSessions(data);
-      } catch (err) {
+      } catch {
         setError('Помилка при завантаженні даних');
       } finally {
         setIsLoading(false);

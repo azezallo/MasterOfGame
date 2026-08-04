@@ -2,12 +2,12 @@ import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { RegisterSchema, LoginSchema } from '../schemas/auth.schema';
 import { ValidationError, AuthError } from '../errors/app.errors';
+import { logger } from '../logger';
 
 const authService = new AuthService();
 
 export const register = async (req: Request, res: Response) => {
   try {
-    console.log(req.body);
     const validatedData = RegisterSchema.parse(req.body);
     await authService.register(validatedData.login, validatedData.password);
     return res.status(201).json({
@@ -18,7 +18,7 @@ export const register = async (req: Request, res: Response) => {
     if (error instanceof ValidationError) {
       return res.status(400).json({ success: false, message: error.message });
     }
-    console.error(error);
+    logger.error(`Register controller error: ${error instanceof Error ? error.message : String(error)}`);
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };

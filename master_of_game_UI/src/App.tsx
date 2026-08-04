@@ -1,4 +1,3 @@
-import React from 'react'
 import './App.css'
 import { useDesignSystem } from './features/design-system/hooks/useDesignSystem'
 import { DesignSystemPopup } from './features/design-system/components/DesignSystemPopup'
@@ -11,7 +10,7 @@ function App() {
   return (
     <>
       <SessionSelectionContainer onSessionSelect={(id) => console.log(`Selected: ${id}`)} />
-      
+
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <button
           type="button"

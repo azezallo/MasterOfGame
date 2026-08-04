@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { RegisterSchema, LoginSchema } from '../types';
 import type { RegisterData, LoginData, AuthError, AuthMode } from '../types';
+import type { GetMeResponse } from '@/api/contracts/auth';
 import { authService } from '../services/auth.service';
 import { handleZodError } from '@/utils/zod';
 
@@ -8,7 +9,7 @@ export const useAuth = () => {
   const [mode, setMode] = useState<AuthMode>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<GetMeResponse | null>(null);
 
   const [registerData, setRegisterData] = useState<RegisterData>({
     login: '',
@@ -49,7 +50,7 @@ export const useAuth = () => {
       setIsLoading(false);
       setError(null);
       setMode('login');
-    } catch (err) {
+    } catch {
       setIsLoading(false);
       setError({ message: 'Помилка реєстрації' });
     }
@@ -72,7 +73,7 @@ export const useAuth = () => {
       setUser(userData);
       setIsLoading(false);
       setError(null);
-    } catch (err) {
+    } catch {
       setIsLoading(false);
       setError({ message: 'Помилка входу' });
     }
@@ -83,7 +84,7 @@ export const useAuth = () => {
       try {
         const userData = await authService.getMe();
         setUser(userData);
-      } catch (err) {
+      } catch {
         setUser(null);
       }
     };

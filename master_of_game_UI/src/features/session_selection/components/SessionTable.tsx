@@ -25,11 +25,12 @@ export const SessionTable: React.FC<SessionTableProps> = ({ sessions, onSelect }
             <th className={styles.tableHeader}>Створено</th>
             <th className={styles.tableHeader}>Остання гра</th>
             <th className={styles.tableHeader}>Ім'я героя</th>
+            <th className={styles.tableHeader}><span className="sr-only">Дії</span></th>
           </tr>
         </thead>
         <tbody>
           {sessions.map((session) => (
-            <tr key={session.sessionId} className={styles.tableRow} onClick={() => onSelect(session.sessionId)}>
+            <tr key={session.sessionId} className={styles.tableRow}>
               <td className={styles.tableCell}>{session.gameName}</td>
               <td className={styles.tableCell}>{formatDate(session.createdAt)}</td>
               <td className={styles.tableCell}>
@@ -38,6 +39,14 @@ export const SessionTable: React.FC<SessionTableProps> = ({ sessions, onSelect }
                 </span>
               </td>
               <td className={styles.tableCell}>{session.characterName}</td>
+              <td className={styles.tableCell}>
+                <button
+                  className={styles.selectButton}
+                  onClick={() => onSelect(session.sessionId)}
+                >
+                  Обрати
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
