@@ -1,0 +1,78 @@
+{
+  "common": {
+    "errors": {
+      "validation_failed": "Валідація даних не вдалася"
+    },
+    "not_specified": "Не вказано",
+    "not_played": "Не гралося"
+  },
+  "session_selection": {
+    "title": "Вибір сесії",
+    "empty_message": "Не має активних ігор",
+    "table": {
+      "name": "Назва",
+      "created": "Створено",
+      "last_played": "Остання гра",
+      "hero_name": "Ім'я героя",
+      "actions": "Дії"
+    },
+    "actions": {
+      "select": "Обрати"
+    },
+    "card": {
+      "created": "Створено: ",
+      "hero": "Герой: ",
+      "last_update": "Останнє оновлення: "
+    },
+    "game_view_placeholder": {
+      "in_progress": "В процесі"
+    },
+    "errors": {
+      "fetch_failed": "Помилка при завантаженні даних"
+    }
+  },
+  "session_creation": {
+    "title": "Створити нову гру",
+    "button": "Створити нову гру",
+    "button_title": "Створення нової сесії",
+    "form": {
+      "game_name": "Назва гри",
+      "game_name_placeholder": "Введіть назву гри",
+      "hero_name": "Ім'я героя",
+      "hero_name_placeholder": "Введіть ім'я героя"
+    },
+    "submit": "Створити",
+    "errors": {
+      "creation_failed": "Помилка створення сесії"
+    }
+  },
+  "chat": {
+    "placeholder": "Напишіть вашу дію...",
+    "right_sidebar": "Тут буде енциклопедія та деталі NPC",
+    "left_sidebar": "Тут буде стан персонажа та інвентар",
+    "master_status": {
+      "gathering_memory": "Майстер збирає спогади...",
+      "reading_map": "Майстер перевіряє місцевість...",
+      "generating_narrative": "Майстер обмірковує наслідки..."
+    }
+  },
+  "auth": {
+    "title_login": "Вхід у гру",
+    "title_register": "Реєстрація",
+    "fields": {
+      "username": "Ім'я користувача",
+      "username_placeholder": "Введіть ім'я",
+      "password": "Пароль",
+      "password_placeholder": "********",
+      "confirm_password": "Підтвердження пароля"
+    },
+    "buttons": {
+      "login": "Увійти",
+      "register": "Реєстрація"
+    },
+    "switch_mode": {
+      "no_account": "Немаєте акаунту?",
+      "has_account": "Вже маєте акаунт?"
+    }
+  }
+}

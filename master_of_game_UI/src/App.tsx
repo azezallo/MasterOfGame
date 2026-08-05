@@ -11,7 +11,7 @@ function App() {
     <>
       <SessionSelectionContainer onSessionSelect={(id) => console.log(`Selected: ${id}`)} />
 
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
+      {/* <div style={{ padding: '2rem', textAlign: 'center' }}>
         <button
           type="button"
           className="design-system-trigger"
@@ -28,7 +28,7 @@ function App() {
         >
           Open Design System
         </button>
-      </div>
+      </div> */}
 
       <DesignSystemPopup isOpen={isOpen} onClose={closePopup} />
       <AuthPopup />

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input/Input';
 import { Button } from '@/components/ui/button/Button';
 import styles from '../styles/SessionCreationForm.module.css';
@@ -17,6 +18,7 @@ export const SessionCreationForm: React.FC<SessionCreationFormProps> = ({
   isLoading,
   error,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = React.useState<SessionCreationInput>(initialData);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,28 +40,28 @@ export const SessionCreationForm: React.FC<SessionCreationFormProps> = ({
 
   return (
     <form className={styles.formContainer} onSubmit={handleSubmit}>
-      <h2 className={styles.formTitle}>Створити нову гру</h2>
+      <h2 className={styles.formTitle}>{t('session_creation.title')}</h2>
       
       <div className={styles.inputGroup}>
-        <label htmlFor="gameName">Назва гри</label>
+        <label htmlFor="gameName">{t('session_creation.form.game_name')}</label>
         <Input
           id="gameName"
           name="gameName"
           value={formData.gameName}
           onChange={handleChange}
-          placeholder="Введіть назву гри"
+          placeholder={t('session_creation.form.game_name_placeholder')}
           required
         />
       </div>
 
       <div className={styles.inputGroup}>
-        <label htmlFor="characterName">Ім'я героя</label>
+        <label htmlFor="characterName">{t('session_creation.form.hero_name')}</label>
         <Input
           id="characterName"
           name="characterName"
           value={formData.characterName}
           onChange={handleChange}
-          placeholder="Введіть ім'я героя"
+          placeholder={t('session_creation.form.hero_name_placeholder')}
           required
         />
       </div>
@@ -71,7 +73,7 @@ export const SessionCreationForm: React.FC<SessionCreationFormProps> = ({
         className={styles.submitButton} 
         isLoading={isLoading}
       >
-        Створити
+        {t('session_creation.submit')}
       </Button>
     </form>
   );

@@ -1,5 +1,7 @@
 import type { ZodSafeParseResult } from 'zod';
 
+import i18n from '@/i18n/config';
+
 /**
  * Обробляє результати валідації Zod та повертає структуру помилки для UI.
  * @param result - Результат виконання safeParse від Zod
@@ -11,7 +13,7 @@ export const handleZodError = (result: ZodSafeParseResult<unknown>) => {
   const firstError = result.error.issues[0];
   
   // Якщо повідомлення від Zod відсутнє, використовуємо загальне повідомлення
-  const message = firstError.message || 'Валідація даних не вдалася';
+  const message = firstError.message || i18n.t('common.errors.validation_failed');
   
   return {
     message,

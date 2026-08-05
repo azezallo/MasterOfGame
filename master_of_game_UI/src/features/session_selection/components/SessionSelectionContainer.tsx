@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSessions } from '../hooks/useSessions';
 import { SessionTable } from '../components/SessionTable';
 import { SessionCard } from '../components/SessionCard';
-import { GameViewPlaceholder } from '../components/GameViewPlaceholder';
+import { ChatLayout } from '@/features/chat';
 import { Spinner } from '@/components/ui/spinner/Spinner.tsx';
 import { CreateSessionButton } from '@/features/session_creation';
 import styles from '../styles/SessionSelectionContainer.module.css';
@@ -12,6 +13,7 @@ interface SessionSelectionContainerProps {
 }
 
 export const SessionSelectionContainer: React.FC<SessionSelectionContainerProps> = ({ onSessionSelect }) => {
+  const { t } = useTranslation();
   const { sessions, isLoading, error } = useSessions();
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -45,40 +47,38 @@ export const SessionSelectionContainer: React.FC<SessionSelectionContainerProps>
     );
   }
 
+  if (selectedSessionId) {
+    return <ChatLayout sessionId={selectedSessionId} />;
+  }
+
   return (
     <div className={styles.container}>
-      {selectedSessionId ? (
-        <GameViewPlaceholder />
-      ) : (
-        <>
-          <div className={styles.header}>
-            <h2 className={styles.title}>Вибір сесії</h2>
-            <CreateSessionButton onSessionSelected={(id) => setSelectedSessionId(id)} />
+      <div className={styles.header}>
+        <h2 className={styles.title}>{t('session_selection.title')}</h2>
+        <CreateSessionButton onSessionSelected={(id) => setSelectedSessionId(id)} />
+      </div>
+      <div className={styles.content}>
+        {sessions.length === 0 ? (
+          <p className={styles.emptyMessage}>{t('session_selection.empty_message')}</p>
+        ) : (
+          <div className={styles.responsiveWrapper}>
+            <div className={styles.tableContainer}>
+              <SessionTable sessions={sessions} onSelect={(id) => {
+                setSelectedSessionId(id);
+                onSessionSelect(id);
+              }} />
+            </div>
+            <div className={styles.cardContainer}>
+              {sessions.map((session) => (
+                <SessionCard key={session.sessionId} session={session} onSelect={(id) => {
+                  setSelectedSessionId(id);
+                  onSessionSelect(id);
+                }} />
+              ))}
+            </div>
           </div>
-          <div className={styles.content}>
-            {sessions.length === 0 ? (
-              <p className={styles.emptyMessage}>Не має активних ігор</p>
-            ) : (
-              <div className={styles.responsiveWrapper}>
-                <div className={styles.tableContainer}>
-                  <SessionTable sessions={sessions} onSelect={(id) => {
-                    setSelectedSessionId(id);
-                    onSessionSelect(id);
-                  }} />
-                </div>
-                <div className={styles.cardContainer}>
-                  {sessions.map((session) => (
-                    <SessionCard key={session.sessionId} session={session} onSelect={(id) => {
-                      setSelectedSessionId(id);
-                      onSessionSelect(id);
-                    }} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 };

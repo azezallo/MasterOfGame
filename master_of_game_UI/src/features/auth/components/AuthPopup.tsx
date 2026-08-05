@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './AuthPopup.module.css';
 import { Button } from '@/components/ui/button/Button';
 import { Input } from '@/components/ui/input/Input';
@@ -6,6 +7,7 @@ import { Modal } from '@/components/ui/modal/Modal';
 import { useAuth } from '../hooks/useAuth';
 
 export const AuthPopup: React.FC = () => {
+  const { t } = useTranslation();
   const {
     mode,
     setMode,
@@ -32,7 +34,7 @@ export const AuthPopup: React.FC = () => {
   if (!isVisible || !isReady) return null;
 
   return (
-    <Modal isOpen={isVisible} title={mode === 'login' ? 'Вхід у гру' : 'Реєстрація'}>
+    <Modal isOpen={isVisible} title={mode === 'login' ? t('auth.title_login') : t('auth.title_register')}>
       <div className={styles.formWrapper}>
         {error && <div className={styles.errorMessage}>{error.message}</div>}
         
@@ -40,24 +42,24 @@ export const AuthPopup: React.FC = () => {
           <div className={styles.formFields}>
             <Input
               name="login"
-              label="Ім'я користувача"
-              placeholder="Введіть ім'я"
+              label={t('auth.fields.username')}
+              placeholder={t('auth.fields.username_placeholder')}
               value={registerData.login}
               onChange={handleRegisterChange}
             />
             <Input
               name="password"
               type="password"
-              label="Пароль"
-              placeholder="********"
+              label={t('auth.fields.password')}
+              placeholder={t('auth.fields.password_placeholder')}
               value={registerData.password}
               onChange={handleRegisterChange}
             />
             <Input
               name="confirmPassword"
               type="password"
-              label="Підтвердження пароля"
-              placeholder="********"
+              label={t('auth.fields.confirm_password')}
+              placeholder={t('auth.fields.password_placeholder')}
               value={registerData.confirmPassword}
               onChange={handleRegisterChange}
             />
@@ -66,23 +68,23 @@ export const AuthPopup: React.FC = () => {
               onClick={handleRegister} 
               isLoading={isLoading}
             >
-              Реєстрація
+              {t('auth.buttons.register')}
             </Button>
           </div>
         ) : (
           <div className={styles.formFields}>
             <Input
               name="login"
-              label="Ім'я користувача"
-              placeholder="Введіть ім'я"
+              label={t('auth.fields.username')}
+              placeholder={t('auth.fields.username_placeholder')}
               value={loginData.login}
               onChange={handleLoginChange}
             />
             <Input
               name="password"
               type="password"
-              label="Пароль"
-              placeholder="********"
+              label={t('auth.fields.password')}
+              placeholder={t('auth.fields.password_placeholder')}
               value={loginData.password}
               onChange={handleLoginChange}
             />
@@ -91,7 +93,7 @@ export const AuthPopup: React.FC = () => {
               onClick={handleLogin} 
               isLoading={isLoading}
             >
-              Увійти
+              {t('auth.buttons.login')}
             </Button>
           </div>
         )}
@@ -99,7 +101,7 @@ export const AuthPopup: React.FC = () => {
         <div className={styles.switchMode}>
           {mode === 'login' ? (
             <>
-              <p>Немаєте акаунту? </p>
+              <p>{t('auth.switch_mode.no_account')} </p>
               <button 
                 className={styles.switchButton} 
                 onClick={() => {
@@ -107,12 +109,12 @@ export const AuthPopup: React.FC = () => {
                   clearError();
                 }}
               >
-                Реєстрація
+                {t('auth.buttons.register')}
               </button>
             </>
           ) : (
             <>
-              <p>Вже маєте акаунт? </p>
+              <p>{t('auth.switch_mode.has_account')} </p>
               <button 
                 className={styles.switchButton} 
                 onClick={() => {
@@ -120,7 +122,7 @@ export const AuthPopup: React.FC = () => {
                   clearError();
                 }}
               >
-                Увійти
+                {t('auth.buttons.login')}
               </button>
             </>
           )}
