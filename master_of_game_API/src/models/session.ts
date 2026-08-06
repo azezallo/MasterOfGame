@@ -27,7 +27,7 @@ export const PlayerStateSchema = z.object({
   inventory: z.array(z.object({
     itemId: z.string(),
     quantity: z.number().min(0),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
   })).default([]),
 });
 
@@ -44,7 +44,7 @@ export const WorldStateSchema = z.object({
       y: z.number(),
       z: z.number(),
     }),
-    data: z.record(z.any()).optional(),
+    data: z.record(z.string(), z.any()).optional(),
   })).default([]),
   weather: z.object({
     type: z.string(),

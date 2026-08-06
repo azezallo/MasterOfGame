@@ -1,4 +1,4 @@
-import type { LogLevel } from './types'; // I'll skip types for now and just use a string or number
+// I'll skip types for now and just use a string or number
 
 /**
  * Simple structured logger that outputs JSON.

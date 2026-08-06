@@ -1,4 +1,4 @@
-import { Database } from 'better-sqlite3';
+
 import { CONFIG } from '../config';
 import {
   SessionMetadata,

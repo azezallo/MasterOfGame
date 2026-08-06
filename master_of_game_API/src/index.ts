@@ -39,7 +39,7 @@ app.use((err: any, req: any, res: any, next: any) => {
   });
 });
 
-app.export = app; // Export for testing purposes
+export default app; // Export for testing purposes
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
