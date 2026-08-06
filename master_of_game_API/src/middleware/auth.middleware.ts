@@ -4,7 +4,7 @@ import { AuthError } from '../errors/app.errors';
 
 const authService = new AuthService();
 
-interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest extends Request {
   user?: {
     id: number;
     login: string;

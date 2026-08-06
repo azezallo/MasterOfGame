@@ -1,6 +1,6 @@
-import { PersistenceService } from './src/persistence/persistence_service';
-import { SessionMetadataService } from './src/services/session_metadata.service';
-import { CONFIG } from './src/config';
+import { PersistenceService } from '../persistence/persistence_service';
+import { SessionMetadataService } from '../services/session_metadata.service';
+import { CONFIG } from '../config';
 import fs from 'fs';
 import path from 'path';
 
