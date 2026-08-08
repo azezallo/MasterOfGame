@@ -29,7 +29,7 @@ export const createSession = async (req: AuthenticatedRequest, res: Response) =>
     }
 
     const validatedData = CreateSessionSchema.parse(req.body);
-    const sessionId = await persistenceService.createSession(user.id.toString(), validatedData.gameName, validatedData.characterName);
+    const sessionId = await persistenceService.createSession(user.id.toString(), validatedData.gameName, validatedData.characterName, validatedData.mapSize);
     
     return res.status(200).json({
       success: true,
@@ -37,6 +37,7 @@ export const createSession = async (req: AuthenticatedRequest, res: Response) =>
         session_id: sessionId,
         game_name: validatedData.gameName,
         character_name: validatedData.characterName,
+        map_size: validatedData.mapSize,
         created_at: Math.floor(Date.now() / 1000),
         last_played_at: Math.floor(Date.now() / 1000),
       }

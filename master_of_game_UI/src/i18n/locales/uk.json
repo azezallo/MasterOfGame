@@ -39,7 +39,13 @@
       "game_name": "Назва гри",
       "game_name_placeholder": "Введіть назву гри",
       "hero_name": "Ім'я героя",
-      "hero_name_placeholder": "Введіть ім'я героя"
+      "hero_name_placeholder": "Введіть ім'я героя",
+      "map_size": "Розмір карти",
+      "sizes": {
+        "small": "Малий ({{x}}x{{y}})",
+        "medium": "Середній ({{x}}x{{y}})",
+        "large": "Великий ({{x}}x{{y}})"
+      }
     },
     "submit": "Створити",
     "errors": {
@@ -74,5 +80,11 @@
       "no_account": "Немаєте акаунту?",
       "has_account": "Вже маєте акаунт?"
     }
+  },
+  "map": {
+    "loading_environment": "Завантаження оточення...",
+    "location_data_missing": "Дані про локацію відсутні",
+    "open_map": "Відкрити мапу",
+    "title": "Інтерактивна Мапа"
   }
 }

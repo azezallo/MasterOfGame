@@ -9,11 +9,17 @@ interface SessionCreationFormProps {
   initialData?: SessionCreationInput;
   onSubmit: (data: SessionCreationInput) => Promise<void>;
   isLoading?: boolean;
-  error?: string | null;
+  error: string | null;
 }
 
+const MAP_SIZES = [
+  { id: 'small', dimensions: { x: 3, y: 3 } },
+  { id: 'medium', dimensions: { x: 5, y: 5 } },
+  { id: 'large', dimensions: { x: 7, y: 7 } },
+];
+
 export const SessionCreationForm: React.FC<SessionCreationFormProps> = ({
-  initialData = { gameName: '', characterName: '' },
+  initialData = { gameName: '', characterName: '', mapSize: { x: 5, y: 5 } },
   onSubmit,
   isLoading,
   error,
@@ -21,12 +27,14 @@ export const SessionCreationForm: React.FC<SessionCreationFormProps> = ({
   const { t } = useTranslation();
   const [formData, setFormData] = React.useState<SessionCreationInput>(initialData);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+    
+    if (name === 'mapSize') {
+      setFormData(prev => ({ ...prev, [name]: JSON.parse(value) }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,6 +72,32 @@ export const SessionCreationForm: React.FC<SessionCreationFormProps> = ({
           placeholder={t('session_creation.form.hero_name_placeholder')}
           required
         />
+      </div>
+
+      <div className={styles.inputGroup}>
+        <label htmlFor="mapSize">{t('session_creation.form.map_size')}</label>
+        <select
+          id="mapSize"
+          name="mapSize"
+          value={JSON.stringify(formData.mapSize)}
+          onChange={handleChange}
+          className={styles.selectInput}
+          required
+          style={{
+            padding: '8px 12px',
+            borderRadius: '4px',
+            border: '1px solid var(--color-border)',
+            background: 'var(--color-bg-secondary)',
+            color: 'var(--color-text)',
+            fontSize: '1rem'
+          }}
+        >
+          {MAP_SIZES.map(size => (
+            <option key={size.id} value={JSON.stringify(size.dimensions)}>
+              {t(`session_creation.form.sizes.${size.id}`, size.dimensions)}
+            </option>
+          ))}
+        </select>
       </div>
 
       {error && <p style={{ color: 'var(--fire-red)' }}>{error}</p>}

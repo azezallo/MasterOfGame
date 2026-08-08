@@ -106,9 +106,27 @@ export class DatabaseRepository {
         position_z REAL NOT NULL,
         data TEXT
       );
+
+      CREATE TABLE IF NOT EXISTS locations (
+        id TEXT PRIMARY KEY,
+        parent_location_id TEXT,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        x INTEGER,
+        y INTEGER,
+        z INTEGER,
+        data TEXT NOT NULL,
+        created_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
+        updated_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
+        FOREIGN KEY (parent_location_id) REFERENCES locations(id)
+      );
     `;
 
     this.db.exec(schema);
+  }
+
+  public getDb(): Database.Database | null {
+    return this.db;
   }
 
   public close(): void {

@@ -24,7 +24,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ sessionId }) => {
   return (
     <div className={styles.layoutContainer}>
       <aside className={`${styles.sidebar} ${styles.leftSidebar}`}>
-        <LeftSidebar />
+        <LeftSidebar sessionId={sessionId} />
       </aside>
 
       <main className={styles.mainContent}>
@@ -37,7 +37,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ sessionId }) => {
       </main>
 
       <aside className={`${styles.sidebar} ${styles.rightSidebar}`}>
-        <RightSidebar />
+        <RightSidebar sessionId={sessionId} />
       </aside>
     </div>
   );

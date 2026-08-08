@@ -9,6 +9,7 @@ const INITIAL_MESSAGES: ChatMessage[] = [
 export const mockChatApi = {
   fetchHistory: async (sessionId: string): Promise<{ messages: ChatMessage[], status: GameStatus }> => {
     // Simulate network delay
+    console.log("Session ID", sessionId);
     await new Promise(resolve => setTimeout(resolve, 500));
     return {
       messages: [...INITIAL_MESSAGES],
@@ -17,6 +18,7 @@ export const mockChatApi = {
   },
 
   sendMessage: async (content: string): Promise<{ success: boolean }> => {
+    console.log("Message", content);
     await new Promise(resolve => setTimeout(resolve, 200));
     return { success: true };
   },

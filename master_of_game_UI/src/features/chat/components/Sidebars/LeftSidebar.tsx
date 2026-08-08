@@ -1,7 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const LeftSidebar: React.FC = () => {
+interface LeftSidebarProps {
+  sessionId: string;
+}
+
+export const LeftSidebar: React.FC<LeftSidebarProps> = ({ sessionId }) => {
   const { t } = useTranslation();
   return (
     <div style={{ padding: '15px', color: 'var(--color-text-dim)', textAlign: 'center' }}>
