@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MainChat } from '../MainChat/MainChat';
 import { LeftSidebar } from '../Sidebars/LeftSidebar';
 import { RightSidebar } from '../Sidebars/RightSidebar';
@@ -11,6 +11,9 @@ interface ChatLayoutProps {
 
 export const ChatLayout: React.FC<ChatLayoutProps> = ({ sessionId }) => {
   const { messages, status, isProcessing, isLoadingHistory, sendMessage } = useChat(sessionId);
+  
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
 
   if (isLoadingHistory) {
     return (
@@ -23,9 +26,30 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ sessionId }) => {
 
   return (
     <div className={styles.layoutContainer}>
-      <aside className={`${styles.sidebar} ${styles.leftSidebar}`}>
+      <header className={styles.mobileHeader}>
+        <button onClick={() => setIsLeftSidebarOpen(true)} className={styles.hamburgerBtn}>
+          ☰ Герой
+        </button>
+        <span className={styles.mobileTitle}>Master of Game</span>
+        <button onClick={() => setIsRightSidebarOpen(true)} className={styles.hamburgerBtn}>
+          Світ ☰
+        </button>
+      </header>
+
+      <aside className={`${styles.sidebar} ${styles.leftSidebar} ${isLeftSidebarOpen ? styles.sidebarOpen : ''}`}>
+        <div className={styles.closeMobileSidebar} onClick={() => setIsLeftSidebarOpen(false)}>✕ Закрити</div>
         <LeftSidebar sessionId={sessionId} />
       </aside>
+
+      {(isLeftSidebarOpen || isRightSidebarOpen) && (
+        <div 
+          className={styles.mobileOverlay} 
+          onClick={() => {
+            setIsLeftSidebarOpen(false);
+            setIsRightSidebarOpen(false);
+          }}
+        />
+      )}
 
       <main className={styles.mainContent}>
         <MainChat
@@ -36,7 +60,8 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ sessionId }) => {
         />
       </main>
 
-      <aside className={`${styles.sidebar} ${styles.rightSidebar}`}>
+      <aside className={`${styles.sidebar} ${styles.rightSidebar} ${isRightSidebarOpen ? styles.sidebarOpen : ''}`}>
+        <div className={styles.closeMobileSidebar} onClick={() => setIsRightSidebarOpen(false)}>✕ Закрити</div>
         <RightSidebar sessionId={sessionId} />
       </aside>
     </div>

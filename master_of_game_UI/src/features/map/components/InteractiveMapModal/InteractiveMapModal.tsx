@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { LocationData } from '../../../../types/location';
 import styles from './InteractiveMapModal.module.css';
@@ -54,8 +55,8 @@ export const InteractiveMapModal: React.FC<InteractiveMapModalProps> = ({
 
   const gridStyle = {
     display: 'grid',
-    gridTemplateColumns: `repeat(${maxX - minX + 1}, 100px)`,
-    gridTemplateRows: `repeat(${maxY - minY + 1}, 100px)`,
+    gridTemplateColumns: `repeat(${maxX - minX + 1}, var(--map-cell-size, 100px))`,
+    gridTemplateRows: `repeat(${maxY - minY + 1}, var(--map-cell-size, 100px))`,
     gap: '4px',
     width: 'fit-content',
     margin: '0 auto',
@@ -63,7 +64,7 @@ export const InteractiveMapModal: React.FC<InteractiveMapModalProps> = ({
 
   const fullPath = [...(mapHistory || []), currentMapContext];
 
-  return (
+  return ReactDOM.createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <header className={styles.header}>
@@ -144,6 +145,7 @@ export const InteractiveMapModal: React.FC<InteractiveMapModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
