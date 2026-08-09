@@ -1,11 +1,24 @@
 .layoutContainer {
   display: flex;
+  flex-direction: row;
   height: 100vh;
   width: 100%;
   background-color: var(--color-bg);
   gap: 10px;
   padding: 10px;
   box-sizing: border-box;
+}
+
+.mobileHeader {
+  display: none;
+}
+
+.closeMobileSidebar {
+  display: none;
+}
+
+.mobileOverlay {
+  display: none;
 }
 
 .sidebar {
@@ -46,13 +59,8 @@
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @media (max-width: 1500px) {
@@ -62,7 +70,93 @@
 }
 
 @media (max-width: 1200px) {
+  .layoutContainer {
+    flex-direction: column;
+    padding: 0;
+    gap: 0;
+  }
+  
+  .mobileHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: var(--color-bg-chat);
+    border-bottom: 1px solid var(--color-border-secondary);
+    flex-shrink: 0;
+  }
+  
+  .hamburgerBtn {
+    background: none;
+    border: 1px solid var(--color-border-secondary);
+    border-radius: 4px;
+    color: var(--color-text);
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+  }
+  
+  .hamburgerBtn:hover {
+    background: var(--color-surface);
+  }
+  
+  .mobileTitle {
+    font-weight: bold;
+    color: var(--color-gold-dim);
+  }
+  
   .sidebar {
-    display: none;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 80%;
+    max-width: 320px;
+    z-index: 100;
+    background: var(--color-bg-chat);
+    transition: transform 0.3s ease;
+    border: none;
+    border-radius: 0;
+  }
+  
+  .leftSidebar {
+    left: 0;
+    transform: translateX(-100%);
+    border-right: 1px solid var(--color-border-secondary);
+  }
+  .leftSidebar.sidebarOpen {
+    transform: translateX(0);
+  }
+  
+  .rightSidebar {
+    right: 0;
+    left: auto;
+    transform: translateX(100%);
+    border-left: 1px solid var(--color-border-secondary);
+  }
+  .rightSidebar.sidebarOpen {
+    transform: translateX(0);
+  }
+  
+  .closeMobileSidebar {
+    display: block;
+    text-align: right;
+    padding: 15px;
+    cursor: pointer;
+    color: var(--color-text-dim);
+    border-bottom: 1px solid var(--color-border-secondary);
+    background: rgba(0,0,0,0.2);
+  }
+  
+  .mobileOverlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 90;
   }
 }

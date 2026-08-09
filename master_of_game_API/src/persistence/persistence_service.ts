@@ -1,4 +1,5 @@
-
+import fs from 'fs';
+import path from 'path';
 import { CONFIG } from '../config';
 import {
   SessionMetadata,
@@ -12,6 +13,7 @@ import { DatabaseRepository } from './database_repository';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../logger';
 import { SessionMetadataService } from '../services/session_metadata.service';
+import { MapGeneratorService } from '../services/map_generator.service';
 import { PersistenceError, ValidationError } from '../errors/app_errors';
 
 export interface CombinedSessionState {
@@ -29,9 +31,10 @@ export class PersistenceService {
    * @param playerId The unique identifier for the player.
    * @param gameName The name of the game.
    * @param characterName The name of the character.
+   * @param mapSize The size of the map to generate.
    * @returns The unique identifier for the new session.
    */
-  public async createSession(playerId: string, gameName: string, characterName: string): Promise<string> {
+  public async createSession(playerId: string, gameName: string, characterName: string, mapSize: { x: number, y: number } = { x: 5, y: 5 }): Promise<string> {
     const sessionId = uuidv4();
 
     try {
@@ -44,6 +47,10 @@ export class PersistenceService {
       
       repo.saveMetadata(metadata);
       
+      // Generate the initial world map
+      const mapGenerator = new MapGeneratorService(repo);
+      await mapGenerator.generateWorld(mapSize);
+      
       PersistenceService.repos.set(sessionId, repo);
       
       logger.info(`Session ${sessionId} created for player ${playerId}`);
@@ -52,6 +59,36 @@ export class PersistenceService {
       logger.error(`Failed to create session for player ${playerId}: ${error}`);
       throw new PersistenceError(`Failed to create session: ${error instanceof Error ? error.message : String(error)}`);
     }
+  }
+
+  /**
+   * Loads the session repository into memory if it exists on disk.
+   * @param playerId The unique identifier for the player.
+   * @param sessionId The unique identifier for the session.
+   * @returns The DatabaseRepository instance or null if it doesn't exist.
+   */
+  public async loadSessionRepo(playerId: string, sessionId: string): Promise<DatabaseRepository | null> {
+    let repo = PersistenceService.repos.get(sessionId);
+    if (repo) return repo;
+
+    const dbPath = path.resolve(CONFIG.SAVES_DIR, playerId, `${sessionId}.db`);
+    
+    let dbExists = false;
+    try {
+      await fs.promises.access(dbPath);
+      dbExists = true;
+    } catch {
+      console.log(`[PersistenceService] Session DB not found at ${dbPath}`);
+    }
+    
+    if (dbExists) {
+      repo = new DatabaseRepository();
+      await repo.initializeDB(playerId, sessionId);
+      PersistenceService.repos.set(sessionId, repo);
+      return repo;
+    }
+
+    return null;
   }
 
   /**
