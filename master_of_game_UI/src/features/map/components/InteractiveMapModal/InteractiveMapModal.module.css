@@ -52,10 +52,72 @@
   color: #fff;
 }
 
+.breadcrumbContainer {
+  padding: 12px 24px;
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.backButton {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.backButton:hover {
+  background: var(--color-surface);
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.breadcrumbActive {
+  color: #fff;
+  font-weight: bold;
+  cursor: default;
+}
+
+.breadcrumbLink {
+  color: var(--color-text-dim);
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.breadcrumbLink:hover {
+  color: #fff;
+}
+
+.breadcrumbSeparator {
+  color: var(--color-border);
+}
+
+.emptyState {
+  padding: 20px;
+  color: #888;
+  grid-column: 1 / -1;
+  text-align: center;
+}
+
 .mapContainer {
   overflow: auto;
   background: #0a0a0c;
   padding: 24px;
+  flex: 1;
 }
 
 .cell {

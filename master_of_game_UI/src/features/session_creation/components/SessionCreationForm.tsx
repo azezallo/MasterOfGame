@@ -9,7 +9,7 @@ interface SessionCreationFormProps {
   initialData?: SessionCreationInput;
   onSubmit: (data: SessionCreationInput) => Promise<void>;
   isLoading?: boolean;
-  error: string | null;
+  error?: string | null;
 }
 
 const MAP_SIZES = [

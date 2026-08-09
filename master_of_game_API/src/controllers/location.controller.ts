@@ -3,11 +3,30 @@ import { PersistenceService } from '../persistence/persistence_service';
 import { LocationRepository } from '../repositories/location.repository';
 import { LocationService } from '../services/location.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { z } from 'zod';
+
+const getMapLocationsSchema = z.object({
+  params: z.object({
+    sessionId: z.string().uuid('Invalid session ID format')
+  }),
+  query: z.object({
+    parent_location_id: z.string().optional()
+  })
+});
 
 export const getMapLocations = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const sessionId = req.params.sessionId as string;
-    const parentLocationId = req.query.parent_location_id as string | undefined;
+    const validation = getMapLocationsSchema.safeParse({
+      params: req.params,
+      query: req.query
+    });
+
+    if (!validation.success) {
+      return res.status(400).json({ success: false, message: 'Validation error', errors: validation.error.issues });
+    }
+
+    const { sessionId } = validation.data.params;
+    const { parent_location_id } = validation.data.query;
     
     const playerId = req.user?.id?.toString();
     if (!playerId) {
@@ -20,31 +39,10 @@ export const getMapLocations = async (req: AuthenticatedRequest, res: Response, 
       return res.status(404).json({ success: false, message: 'Session not found or not loaded' });
     }
 
-    const db = repo.getDb();
-    if (!db) {
-      return res.status(500).json({ success: false, message: 'Database not initialized' });
-    }
-
-    const locationRepo = new LocationRepository(db);
-    // Return all locations for the given parent, or root locations if parent is not specified
-    const locations = locationRepo.findByParentId(parentLocationId || null);
-    
-    // For the UI map, we might want to filter out hidden secrets using the service if we returned specific contexts,
-    // but here we are just returning map tiles. We should strip hidden transitions manually or just send it and let frontend handle it.
-    // However, the spec says "Бекенд повиннен автоматично відфільтровувати всі hidden переходи... перед відправкою даних на клієнт".
-    
+    const locationRepo = repo.getLocationRepository();
     const locationService = new LocationService(locationRepo);
     
-    const safeLocations = locations.map(loc => {
-       const safeLoc = locationService.getLocationContext(loc.location_id, 'NAVIGATION_MODE');
-       // getLocationContext strips hidden transitions/secrets but removes coordinates. We need coordinates for the map!
-       return {
-         ...safeLoc,
-         matrix_coordinates: loc.matrix_coordinates,
-         parent_location_id: loc.parent_location_id,
-         location_type: loc.location_type
-       };
-    });
+    const safeLocations = locationService.getMapTiles(parent_location_id || null);
 
     return res.status(200).json({ success: true, data: safeLocations });
   } catch (error) {

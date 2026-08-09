@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { LocationData } from '../../../../types/location';
 import styles from './EnvironmentSidebar.module.css';
 
@@ -7,6 +8,8 @@ interface EnvironmentSidebarProps {
 }
 
 export const EnvironmentSidebar: React.FC<EnvironmentSidebarProps> = ({ location }) => {
+  const { t } = useTranslation();
+
   const [openSections, setOpenSections] = useState({
     transitions: true,
     entities: true,
@@ -24,12 +27,12 @@ export const EnvironmentSidebar: React.FC<EnvironmentSidebarProps> = ({ location
 
   return (
     <div className={styles.sidebar}>
-      <h2 className={styles.title}>Оточення</h2>
+      <h2 className={styles.title}>{t('map.sidebar.title')}</h2>
 
       <section className={styles.section}>
         <h3 className={styles.sectionTitle} onClick={() => toggleSection('transitions')}>
           <span className={`${styles.chevron} ${openSections.transitions ? styles.open : ''}`}>▼</span>
-          🗺️ Виходи
+          {t('map.sidebar.exits')}
         </h3>
         {openSections.transitions && (
           transitions && transitions.length > 0 ? (
@@ -38,17 +41,17 @@ export const EnvironmentSidebar: React.FC<EnvironmentSidebarProps> = ({ location
                 <li key={transition.transition_id} className={styles.listItem}>
                   <span className={styles.direction}>{transition.direction_label}</span>
                   <span className={`${styles.status} ${styles[transition.access_status as keyof typeof styles]}`}>
-                    {transition.access_status === 'open' && 'Відкрито'}
-                    {transition.access_status === 'locked' && 'Замкнено'}
-                    {transition.access_status === 'blocked' && 'Заблоковано'}
-                    {transition.access_status === 'conditional' && 'Умовно'}
-                    {transition.discovery_status === 'discovered' && ' ⚡ [Секрет]'}
+                    {transition.access_status === 'open' && t('map.status.open')}
+                    {transition.access_status === 'locked' && t('map.status.locked')}
+                    {transition.access_status === 'blocked' && t('map.status.blocked')}
+                    {transition.access_status === 'conditional' && t('map.status.conditional')}
+                    {transition.discovery_status === 'discovered' && t('map.status.secret')}
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className={styles.emptyText}>Немає видимих виходів.</p>
+            <p className={styles.emptyText}>{t('map.sidebar.no_exits')}</p>
           )
         )}
       </section>
@@ -56,7 +59,7 @@ export const EnvironmentSidebar: React.FC<EnvironmentSidebarProps> = ({ location
       <section className={styles.section}>
         <h3 className={styles.sectionTitle} onClick={() => toggleSection('entities')}>
           <span className={`${styles.chevron} ${openSections.entities ? styles.open : ''}`}>▼</span>
-          👥 Присутні
+          {t('map.sidebar.entities')}
         </h3>
         {openSections.entities && (
           connected_entities?.associated_npc_ids?.length > 0 ? (
@@ -69,7 +72,7 @@ export const EnvironmentSidebar: React.FC<EnvironmentSidebarProps> = ({ location
               ))}
             </ul>
           ) : (
-            <p className={styles.emptyText}>Нікого немає.</p>
+            <p className={styles.emptyText}>{t('map.sidebar.no_entities')}</p>
           )
         )}
       </section>
@@ -77,7 +80,7 @@ export const EnvironmentSidebar: React.FC<EnvironmentSidebarProps> = ({ location
       <section className={styles.section}>
         <h3 className={styles.sectionTitle} onClick={() => toggleSection('items')}>
           <span className={`${styles.chevron} ${openSections.items ? styles.open : ''}`}>▼</span>
-          📦 Предмети поруч
+          {t('map.sidebar.items')}
         </h3>
         {openSections.items && (
           connected_entities?.present_item_ids?.length > 0 ? (
@@ -90,7 +93,7 @@ export const EnvironmentSidebar: React.FC<EnvironmentSidebarProps> = ({ location
               ))}
             </ul>
           ) : (
-            <p className={styles.emptyText}>Нічого цікавого.</p>
+            <p className={styles.emptyText}>{t('map.sidebar.no_items')}</p>
           )
         )}
       </section>
@@ -99,7 +102,7 @@ export const EnvironmentSidebar: React.FC<EnvironmentSidebarProps> = ({ location
         <section className={`${styles.section} ${styles.hazardSection}`}>
           <h3 className={styles.sectionTitle} onClick={() => toggleSection('hazards')}>
             <span className={`${styles.chevron} ${openSections.hazards ? styles.open : ''}`}>▼</span>
-            ⚠️ Небезпеки
+            {t('map.sidebar.hazards')}
           </h3>
           {openSections.hazards && (
             <ul className={styles.list}>

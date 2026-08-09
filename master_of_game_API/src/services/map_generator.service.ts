@@ -1,23 +1,24 @@
 import { v4 as uuidv4 } from 'uuid';
 import { DatabaseRepository } from '../persistence/database_repository';
-import { LocationRepository } from '../repositories/location.repository';
 import { LocationData, Transition } from '../types/location.types';
 
 export class MapGeneratorService {
   constructor(private dbRepo: DatabaseRepository) {}
 
-  public async generateWorld(size: { x: number, y: number }, seed?: string): Promise<void> {
-    const gridDimension = size.x; // using x as the dimension for the square grid
+  public async generateWorld(size: { x: number, y: number }): Promise<void> {
+    // TODO [F019]: Implement seed-based PRNG for generation
+    const gridDimensionX = size.x;
+    const gridDimensionY = size.y;
     
     // Create a 2D array to hold location IDs for adjacency calculations
-    const grid: string[][] = Array(gridDimension).fill(null).map(() => Array(gridDimension).fill(''));
-    const locations: LocationData[] = [];
+    const grid: string[][] = Array(gridDimensionY).fill(null).map(() => Array(gridDimensionX).fill(''));
+    const locations = new Map<string, LocationData>();
     
     const biomes = ['Ліс', 'Поля', 'Гори', 'Рівнина'];
 
     // 1. Generate regions
-    for (let y = 1; y <= gridDimension; y++) {
-      for (let x = 1; x <= gridDimension; x++) {
+    for (let y = 1; y <= gridDimensionY; y++) {
+      for (let x = 1; x <= gridDimensionX; x++) {
         const locId = uuidv4();
         grid[y - 1]![x - 1] = locId;
         
@@ -26,7 +27,7 @@ export class MapGeneratorService {
         let type: 'wilderness' | 'waterway' | 'region' = 'region';
         let name = `Дикі Землі (${biome})`;
 
-        locations.push({
+        locations.set(locId, {
           location_id: locId,
           parent_location_id: null,
           name: name,
@@ -53,10 +54,10 @@ export class MapGeneratorService {
     }
 
     // 2. Build transitions (grid neighbors)
-    for (let y = 0; y < gridDimension; y++) {
-      for (let x = 0; x < gridDimension; x++) {
+    for (let y = 0; y < gridDimensionY; y++) {
+      for (let x = 0; x < gridDimensionX; x++) {
         const currentLocId = grid[y]![x]!;
-        const currentLoc = locations.find(l => l.location_id === currentLocId);
+        const currentLoc = locations.get(currentLocId);
         if (!currentLoc) continue;
 
         // North
@@ -64,7 +65,7 @@ export class MapGeneratorService {
           currentLoc.transitions.push(this.createGridTransition('Північ', grid[y - 1]![x]!));
         }
         // South
-        if (y < gridDimension - 1) {
+        if (y < gridDimensionY - 1) {
           currentLoc.transitions.push(this.createGridTransition('Південь', grid[y + 1]![x]!));
         }
         // West
@@ -72,18 +73,19 @@ export class MapGeneratorService {
           currentLoc.transitions.push(this.createGridTransition('Захід', grid[y]![x - 1]!));
         }
         // East
-        if (x < gridDimension - 1) {
+        if (x < gridDimensionX - 1) {
           currentLoc.transitions.push(this.createGridTransition('Схід', grid[y]![x + 1]!));
         }
       }
     }
 
     // 3. Create a starter settlement in the center
-    const center = Math.floor(gridDimension / 2);
-    const centerRegionId = grid[center]![center]!;
+    const centerY = Math.floor(gridDimensionY / 2);
+    const centerX = Math.floor(gridDimensionX / 2);
+    const centerRegionId = grid[centerY]![centerX]!;
     const settlementId = uuidv4();
     
-    locations.push({
+    locations.set(settlementId, {
       location_id: settlementId,
       parent_location_id: centerRegionId,
       name: 'Стартове Місто',
@@ -110,7 +112,7 @@ export class MapGeneratorService {
     });
 
     // Add transition from the center region back to the settlement
-    const centerRegion = locations.find(l => l.location_id === centerRegionId);
+    const centerRegion = locations.get(centerRegionId);
     if (centerRegion) {
       centerRegion.transitions.push(this.createGridTransition('Увійти в Стартове Місто', settlementId));
       centerRegion.name = `Околиці Стартового Міста`;
@@ -118,15 +120,8 @@ export class MapGeneratorService {
     }
 
     // 4. Save everything
-    // LocationRepository expects a better-sqlite3 database instance
-    // Let's get it from the dbRepo and save each location
-    const db = this.dbRepo.getDb();
-    if (!db) {
-       throw new Error('Database is not initialized');
-    }
-    
-    const locationRepo = new LocationRepository(db);
-    for (const loc of locations) {
+    const locationRepo = this.dbRepo.getLocationRepository();
+    for (const loc of locations.values()) {
        locationRepo.save(loc);
     }
   }

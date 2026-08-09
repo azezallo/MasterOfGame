@@ -1,0 +1,46 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 10px;
+}
+
+.mapButtonContainer {
+  padding: 10px 15px;
+}
+
+.mapButton {
+  width: 100%;
+  padding: 8px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mapButton:hover {
+  background: var(--color-surface);
+}
+
+.environmentContainer {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.emptyState {
+  padding: 15px;
+  color: var(--color-text-dim);
+  text-align: center;
+}
+
+.emptyStateTitle {
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+}
+
+.emptyStateSubtitle {
+  font-size: 0.8rem;
+}

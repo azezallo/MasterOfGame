@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { CONFIG } from '../config';
 import { SessionMetadata } from '../models/session';
+import { LocationRepository } from '../repositories/location.repository';
 
 interface DBInventoryRow {
   id: number;
@@ -125,8 +126,9 @@ export class DatabaseRepository {
     this.db.exec(schema);
   }
 
-  public getDb(): Database.Database | null {
-    return this.db;
+  public getLocationRepository(): LocationRepository {
+    if (!this.db) throw new Error('Database not initialized');
+    return new LocationRepository(this.db);
   }
 
   public close(): void {

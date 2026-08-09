@@ -1,5 +1,5 @@
-import { ApiServiceError } from './errors';
-import type { LocationData } from '../types/location';
+import { ApiServiceError } from '@/api/errors';
+import type { LocationData } from '@/types/location';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 

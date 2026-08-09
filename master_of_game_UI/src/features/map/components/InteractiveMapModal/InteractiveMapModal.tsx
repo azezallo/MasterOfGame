@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { LocationData } from '../../../../types/location';
 import styles from './InteractiveMapModal.module.css';
 
@@ -13,8 +14,6 @@ interface InteractiveMapModalProps {
   onBack?: () => void;
   onBreadcrumbClick?: (index: number) => void;
 }
-
-import { useTranslation } from 'react-i18next';
 
 export const InteractiveMapModal: React.FC<InteractiveMapModalProps> = ({
   isOpen,
@@ -72,51 +71,30 @@ export const InteractiveMapModal: React.FC<InteractiveMapModalProps> = ({
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </header>
 
-        <div style={{ 
-          padding: '12px 24px', 
-          background: 'var(--color-bg-primary)', 
-          borderBottom: '1px solid var(--color-border)', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '16px' 
-        }}>
+        <div className={styles.breadcrumbContainer}>
           {onBack && (
             <button 
               onClick={onBack}
-              style={{
-                background: 'none', border: '1px solid var(--color-border)', borderRadius: '4px',
-                color: 'var(--color-text)', cursor: 'pointer', fontSize: '0.9rem', padding: '4px 12px',
-                display: 'flex', alignItems: 'center', gap: '6px'
-              }}
-              title="Повернутися на рівень вище"
+              className={styles.backButton}
+              title={t('map.back_tooltip')}
             >
-              ⬅️ Назад
+              {t('map.back')}
             </button>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', flexWrap: 'wrap' }}>
+          <div className={styles.breadcrumbs}>
             {fullPath.map((loc, index) => {
               const isLast = index === fullPath.length - 1;
-              const name = loc ? `${loc.name} ${loc.matrix_coordinates ? `(${loc.matrix_coordinates.x}, ${loc.matrix_coordinates.y})` : ''}` : 'Світ';
+              const name = loc ? `${loc.name} ${loc.matrix_coordinates ? `(${loc.matrix_coordinates.x}, ${loc.matrix_coordinates.y})` : ''}` : t('map.world');
               
               return (
                 <React.Fragment key={index}>
                   <span 
                     onClick={() => !isLast && onBreadcrumbClick?.(index)}
-                    style={{ 
-                      color: isLast ? '#fff' : 'var(--color-text-dim)', 
-                      fontWeight: isLast ? 'bold' : 'normal',
-                      cursor: isLast ? 'default' : 'pointer',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isLast) e.currentTarget.style.color = '#fff';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isLast) e.currentTarget.style.color = 'var(--color-text-dim)';
-                    }}
+                    className={isLast ? styles.breadcrumbActive : styles.breadcrumbLink}
                   >
                     {name}
                   </span>
-                  {!isLast && <span style={{ color: 'var(--color-border)' }}>/</span>}
+                  {!isLast && <span className={styles.breadcrumbSeparator}>/</span>}
                 </React.Fragment>
               );
             })}
@@ -126,42 +104,42 @@ export const InteractiveMapModal: React.FC<InteractiveMapModalProps> = ({
         <div className={styles.mapContainer}>
           <div style={gridStyle}>
             {locations.length === 0 ? (
-              <div style={{ padding: '20px', color: '#888', gridColumn: '1 / -1', textAlign: 'center' }}>
-                Тут нічого немає.
+              <div className={styles.emptyState}>
+                {t('map.empty_state')}
               </div>
             ) : (
               locations.map(loc => {
                 if (!loc.matrix_coordinates) return null;
 
-              const isCurrent = loc.location_id === currentLocationId;
-              const isHidden = loc.discovery_status === 'undiscovered';
+                const isCurrent = loc.location_id === currentLocationId;
+                const isHidden = loc.discovery_status === 'undiscovered';
 
-              const col = loc.matrix_coordinates.x - minX + 1;
-              const row = loc.matrix_coordinates.y - minY + 1;
+                const col = loc.matrix_coordinates.x - minX + 1;
+                const row = loc.matrix_coordinates.y - minY + 1;
 
-              return (
-                <div
-                  key={loc.location_id}
-                  className={`${styles.cell} ${isCurrent ? styles.current : ''} ${isHidden ? styles.hidden : ''}`}
-                  style={{ gridColumn: col, gridRow: row }}
-                  onClick={() => !isHidden && onLocationSelect?.(loc)}
-                >
-                  {isHidden ? (
-                    <span className={styles.unknownText}>?</span>
-                  ) : (
-                    <>
-                      <div className={styles.cellIcon}>
-                        {loc.location_type === 'region' ? '🌍' :
-                          loc.location_type === 'settlement' ? '🏰' :
-                            loc.location_type === 'waterway' ? '🌊' :
-                              loc.location_type === 'wilderness' ? '🌲' : '🏠'}
-                      </div>
-                      <div className={styles.cellName}>{loc.name}</div>
-                    </>
-                  )}
-                </div>
-              );
-            })
+                return (
+                  <div
+                    key={loc.location_id}
+                    className={`${styles.cell} ${isCurrent ? styles.current : ''} ${isHidden ? styles.hidden : ''}`}
+                    style={{ gridColumn: col, gridRow: row }}
+                    onClick={() => !isHidden && onLocationSelect?.(loc)}
+                  >
+                    {isHidden ? (
+                      <span className={styles.unknownText}>?</span>
+                    ) : (
+                      <>
+                        <div className={styles.cellIcon}>
+                          {loc.location_type === 'region' ? '🌍' :
+                            loc.location_type === 'settlement' ? '🏰' :
+                              loc.location_type === 'waterway' ? '🌊' :
+                                loc.location_type === 'wilderness' ? '🌲' : '🏠'}
+                        </div>
+                        <div className={styles.cellName}>{loc.name}</div>
+                      </>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

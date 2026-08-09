@@ -5,6 +5,7 @@ import { AuthPopup } from './features/auth/components/AuthPopup'
 import { SessionSelectionContainer } from './features/session_selection/components/SessionSelectionContainer'
 
 function App() {
+  // TEMPORARY: Design system preview — remove with the preview button
   // @ts-ignore: 'openPopup' is declared but its value is never read.
   const { isOpen, openPopup, closePopup } = useDesignSystem();
 

@@ -59,6 +59,7 @@ export interface ConnectedEntities {
   present_item_ids: string[];
 }
 
+// TODO: Auto-generate from backend Zod schema
 export interface LocationData {
   location_id: string;
   parent_location_id: string | null;

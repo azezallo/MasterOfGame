@@ -5,7 +5,6 @@ import { getMapLocations } from '../controllers/location.controller';
 const router = Router({ mergeParams: true });
 
 // GET /sessions/:sessionId/locations
-router.get('', getMapLocations);
 router.get('/', getMapLocations);
 
 export default router;

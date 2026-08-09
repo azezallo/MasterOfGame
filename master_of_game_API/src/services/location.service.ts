@@ -44,6 +44,19 @@ export class LocationService {
     return location;
   }
 
+  public getMapTiles(parentId: string | null): LocationData[] {
+    const locations = this.repo.findByParentId(parentId);
+    return locations.map(loc => {
+       const safeLoc = this.getLocationContext(loc.location_id, 'NAVIGATION_MODE');
+       return {
+         ...safeLoc,
+         matrix_coordinates: loc.matrix_coordinates,
+         parent_location_id: loc.parent_location_id,
+         location_type: loc.location_type
+       } as LocationData;
+    });
+  }
+
   public searchLocations(query: string, filters?: { type?: string, parent_location_id?: string, discovery_status?: string }): LocationData[] {
     let results = this.repo.search(query);
     
@@ -62,7 +75,7 @@ export class LocationService {
     return results;
   }
 
-  public calculateDistance(sourceLocationId: string, targetLocationId: string): number {
+  public calculateDistance(sourceLocationId: string, targetLocationId: string): number | null {
     const source = this.repo.findById(sourceLocationId);
     const target = this.repo.findById(targetLocationId);
     
@@ -76,15 +89,16 @@ export class LocationService {
     }
     
     // For topological graph distance, we'd need pathfinding (A*)
-    // Returning dummy value for now
-    return 10;
+    // Returning null for now instead of magic number
+    return null;
   }
 
   public movePlayer(sessionId: string, destinationLocationId: string, travelTimeMinutes: number, travelSummary?: string): void {
     const destination = this.repo.findById(destinationLocationId);
     if (!destination) throw new Error('Destination not found');
     
-    // TODO: Integrate with PersistenceService to update playerState.current_location
+    // TODO [F006]: Implement player movement with time progression
+    // integrate with PersistenceService to update playerState.current_location
     // TODO: Advance game time by travelTimeMinutes in session metadata
     console.log(`Player moved to ${destinationLocationId}. Time passed: ${travelTimeMinutes} minutes. ${travelSummary || ''}`);
   }

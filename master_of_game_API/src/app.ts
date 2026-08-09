@@ -4,7 +4,6 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import authRoutes from './routes/auth.routes';
 import sessionRoutes from './routes/session.routes';
-import locationRoutes from './routes/location.routes';
 import { AppError } from './errors/app.errors';
 
 dotenv.config();
