@@ -97,6 +97,51 @@
           "last_played_at": "number"
         }
       }
+    },
+    "player_state": {
+      "endpoints": [
+        {
+          "path": "/sessions/:sessionId/player-state",
+          "method": "GET",
+          "description": "Get current player state (attributes, magic, qualitative states, skills)",
+          "request": {},
+          "response": {
+            "success": "boolean",
+            "data": "PlayerStateProfile"
+          }
+        }
+      ],
+      "types": {
+        "StateItem": {
+          "name": "string",
+          "timestamp": "string"
+        },
+        "PlayerAttributes": {
+          "strength": "number",
+          "agility": "number",
+          "endurance": "number",
+          "perception": "number",
+          "willpower": "number"
+        },
+        "DerivedStats": {
+          "max_carry_weight_kg": "number"
+        },
+        "MagicStats": {
+          "mana_pool": "number",
+          "current_mana": "number",
+          "mana_flow": "number"
+        },
+        "PlayerSkills": "Record<string, number>",
+        "PlayerStateProfile": {
+          "physical_states": "Array<StateItem>",
+          "body_states": "Array<StateItem>",
+          "psychological_states": "Array<StateItem>",
+          "attributes": "PlayerAttributes",
+          "derived_stats": "DerivedStats",
+          "magic_stats": "MagicStats",
+          "skills": "PlayerSkills"
+        }
+      }
     }
   }
 }

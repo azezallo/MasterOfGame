@@ -1,0 +1,49 @@
+.inlineHeaderLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-main, 'Georgia', serif);
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #c4b49e);
+  padding: 6px 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid var(--color-border-secondary, #333);
+  justify-content: flex-end;
+  user-select: none;
+}
+
+.timeIcon {
+  font-size: 0.95rem;
+}
+
+.narrativeDate {
+  font-weight: 600;
+  color: var(--color-text-main, #e3d5c1);
+}
+
+.separator {
+  color: var(--color-border-secondary, #555);
+  font-size: 0.8rem;
+  margin: 0 2px;
+}
+
+.weatherCondition {
+  font-style: italic;
+  color: var(--color-gold-dim, #d1a153);
+}
+
+.pulseText {
+  font-size: 0.8rem;
+  color: var(--color-text-dim, #888);
+  font-style: italic;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}

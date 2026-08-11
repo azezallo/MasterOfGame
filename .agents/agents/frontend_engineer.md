@@ -2,6 +2,7 @@
 name: frontend_engineer
 description: Specialized subagent for UI development. Uses React, Vite, TypeScript, and CSS Modules.
 subagent: true
+enable_write_tools: true
 ---
 
 # Frontend Engineer

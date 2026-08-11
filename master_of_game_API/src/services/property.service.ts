@@ -1,5 +1,6 @@
 import { PropertyRepository } from '../repositories/property.repository';
 import { ItemRepository } from '../repositories/item.repository';
+import { PlayerStateRepository } from '../repositories/player_state.repository';
 import { ValidationError } from '../errors/app.errors';
 import {
   PropertyProfile,
@@ -27,11 +28,13 @@ import {
 
 export class PropertyService {
   private propertyRepo: PropertyRepository;
-  private itemRepo?: ItemRepository;
+  private itemRepo?: ItemRepository | undefined;
+  private playerStateRepo?: PlayerStateRepository | undefined;
 
-  constructor(propertyRepo: PropertyRepository, itemRepo?: ItemRepository) {
+  constructor(propertyRepo: PropertyRepository, itemRepo?: ItemRepository, playerStateRepo?: PlayerStateRepository) {
     this.propertyRepo = propertyRepo;
     this.itemRepo = itemRepo;
+    this.playerStateRepo = playerStateRepo;
   }
 
   private getItemWeight(itemId: string): number {
@@ -50,9 +53,21 @@ export class PropertyService {
   public recalculateWeightStats(profile: PropertyProfile, maxCarryWeightKg?: number): PropertyProfile {
     if (maxCarryWeightKg !== undefined) {
       profile.pocket_inventory.weight_stats.max_carry_weight_kg = maxCarryWeightKg;
+    } else if (this.playerStateRepo && profile.owner_context.owner_type === 'player') {
+      const existingWeight = profile.pocket_inventory.weight_stats.max_carry_weight_kg;
+      if (!existingWeight || existingWeight === 30.0) {
+        try {
+          const playerState = this.playerStateRepo.getPlayerState(profile.owner_context.owner_id);
+          if (playerState?.derived_stats?.max_carry_weight_kg) {
+            profile.pocket_inventory.weight_stats.max_carry_weight_kg = playerState.derived_stats.max_carry_weight_kg;
+          }
+        } catch {
+          // Keep existing
+        }
+      }
     }
 
-    const maxWeight = profile.pocket_inventory.weight_stats.max_carry_weight_kg;
+    const maxWeight = profile.pocket_inventory.weight_stats.max_carry_weight_kg || 55.0;
 
     // 1. Equipped items weight
     const equippedWeight = profile.equipped.reduce((sum, eq) => sum + this.getItemWeight(eq.item_id), 0);
@@ -87,6 +102,12 @@ export class PropertyService {
     profile.pocket_inventory.weight_stats.encumbrance_status = this.calculateEncumbranceStatus(currentCarriedWeight, maxWeight);
     profile.pocket_inventory.weight_stats.combat_encumbrance_status = this.calculateEncumbranceStatus(equippedAndPocketsWeight, maxWeight);
 
+    try {
+      this.propertyRepo.savePropertyProfile(profile);
+    } catch {
+      // Ignore if called during initialization
+    }
+
     return profile;
   }
 
@@ -102,7 +123,7 @@ export class PropertyService {
           equipped_and_pockets_weight_kg: 0,
           backpack_weight_kg: 0,
           total_weight_kg: 0,
-          max_carry_weight_kg: 30.0,
+          max_carry_weight_kg: 55.0,
           encumbrance_status: 'normal',
           combat_encumbrance_status: 'normal',
         },
@@ -268,15 +289,17 @@ export class PropertyService {
     }
 
     const [removed] = profile.equipped.splice(eqIndex, 1);
-    const existingPocketItem = profile.pocket_inventory.pockets_and_belt.items.find(i => i.item_id === removed.item_id);
-    if (existingPocketItem) {
-      existingPocketItem.quantity += 1;
-    } else {
-      profile.pocket_inventory.pockets_and_belt.items.push({
-        item_id: removed.item_id,
-        quantity: 1,
-        custom_label: null,
-      });
+    if (removed) {
+      const existingPocketItem = profile.pocket_inventory.pockets_and_belt.items.find(i => i.item_id === removed.item_id);
+      if (existingPocketItem) {
+        existingPocketItem.quantity += 1;
+      } else {
+        profile.pocket_inventory.pockets_and_belt.items.push({
+          item_id: removed.item_id,
+          quantity: 1,
+          custom_label: null,
+        });
+      }
     }
 
     this.recalculateWeightStats(profile);
@@ -337,6 +360,7 @@ export class PropertyService {
         container_item_id: null,
         access_type: 'private',
         allowed_user_ids: [params.owner_id],
+        items: [],
       });
     }
 

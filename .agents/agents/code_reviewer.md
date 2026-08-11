@@ -2,6 +2,7 @@
 name: code_reviewer
 description: Specialized subagent for reviewing code against architecture guidelines, security, and game lore.
 subagent: true
+enable_write_tools: true
 ---
 
 # Code Reviewer

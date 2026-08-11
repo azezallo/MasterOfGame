@@ -53,6 +53,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ sessionId }) => {
 
       <main className={styles.mainContent}>
         <MainChat
+          sessionId={sessionId}
           messages={messages}
           status={status}
           isProcessing={isProcessing}

@@ -6,6 +6,9 @@ import { SessionMetadata } from '../models/session';
 import { LocationRepository } from '../repositories/location.repository';
 import { ItemRepository } from '../repositories/item.repository';
 import { PropertyRepository } from '../repositories/property.repository';
+import { NpcRepository } from '../repositories/npc.repository';
+import { WorldStateRepository } from '../repositories/world_state.repository';
+import { PlayerStateRepository } from '../repositories/player_state.repository';
 
 interface DBInventoryRow {
   id: number;
@@ -87,12 +90,8 @@ export class DatabaseRepository {
 
       CREATE TABLE IF NOT EXISTS player_state (
         session_id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        level INTEGER NOT NULL,
-        experience REAL NOT NULL,
-        health REAL NOT NULL,
-        mana REAL NOT NULL,
-        attributes TEXT
+        data TEXT NOT NULL,
+        updated_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int))
       );
 
       CREATE TABLE IF NOT EXISTS inventory (
@@ -103,13 +102,24 @@ export class DatabaseRepository {
       );
 
       CREATE TABLE IF NOT EXISTS npcs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        entity_id TEXT NOT NULL,
-        type TEXT NOT NULL,
-        position_x REAL NOT NULL,
-        position_y REAL NOT NULL,
-        position_z REAL NOT NULL,
-        data TEXT
+        npc_id TEXT PRIMARY KEY,
+        status TEXT NOT NULL DEFAULT 'alive',
+        name TEXT NOT NULL,
+        role TEXT,
+        current_location_id TEXT,
+        data TEXT NOT NULL,
+        created_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
+        updated_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int))
+      );
+
+      CREATE TABLE IF NOT EXISTS npc_relationships (
+        source_npc_id TEXT NOT NULL,
+        target_npc_id TEXT NOT NULL,
+        relationship_type TEXT NOT NULL,
+        strength REAL DEFAULT 0,
+        summary TEXT,
+        last_updated INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
+        PRIMARY KEY (source_npc_id, target_npc_id)
       );
 
       CREATE TABLE IF NOT EXISTS locations (
@@ -162,6 +172,37 @@ export class DatabaseRepository {
         created_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
         updated_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
         UNIQUE(owner_type, owner_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS world_time_weather (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        current_date TEXT NOT NULL,
+        weather_timeline TEXT NOT NULL,
+        updated_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int))
+      );
+
+      CREATE TABLE IF NOT EXISTS world_events (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        tier TEXT NOT NULL,
+        location_id TEXT,
+        start_date TEXT NOT NULL,
+        status TEXT NOT NULL,
+        resolution_summary TEXT,
+        created_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
+        updated_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int))
+      );
+
+      CREATE TABLE IF NOT EXISTS calendar_events (
+        id TEXT PRIMARY KEY,
+        month INTEGER NOT NULL,
+        day INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        tier TEXT DEFAULT 'GLOBAL',
+        location_id TEXT,
+        created_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int))
       );
     `;
 
@@ -244,6 +285,21 @@ export class DatabaseRepository {
     return new PropertyRepository(this.db);
   }
 
+  public getNpcRepository(): NpcRepository {
+    if (!this.db) throw new Error('Database not initialized');
+    return new NpcRepository(this.db);
+  }
+
+  public getWorldStateRepository(): WorldStateRepository {
+    if (!this.db) throw new Error('Database not initialized');
+    return new WorldStateRepository(this.db);
+  }
+
+  public getPlayerStateRepository(): PlayerStateRepository {
+    if (!this.db) throw new Error('Database not initialized');
+    return new PlayerStateRepository(this.db);
+  }
+
   public close(): void {
     if (this.db) {
       this.db.close();
@@ -310,66 +366,62 @@ export class DatabaseRepository {
     stmt.run(quantity, metadataStr, itemId);
   }
 
-  // NPC Methods
-  public saveNPC(npc: { entityId: string; type: string; position: { x: number; y: number; z: number }; data?: Record<string, any> | undefined }, db?: Database.Database): number | bigint {
-    const targetDb = db || this.db;
-    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
-
-    const stmt = targetDb.prepare(`
-      INSERT INTO npcs (entity_id, type, position_x, position_y, position_z, data)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `);
-
-    const dataStr = npc.data ? JSON.stringify(npc.data) : null;
-    return stmt.run(
-      npc.entityId,
-      npc.type,
-      npc.position.x,
-      npc.position.y,
-      npc.position.z,
-      dataStr
-    ).lastInsertRowid;
+  // Legacy NPC Methods (Compatibility wrapper for NpcRepository)
+  public saveNPC(npc: { entityId: string; type: string; position: { x: number; y: number; z: number }; data?: Record<string, any> | undefined }, _db?: Database.Database): number | bigint {
+    const npcRepo = this.getNpcRepository();
+    npcRepo.save({
+      npc_id: npc.entityId,
+      status: 'alive',
+      public_profile: {
+        name: npc.data?.name || npc.entityId,
+        role: npc.type || '',
+        appearance: '',
+        public_description: '',
+      },
+      private_profile: {
+        traits: { moral_alignment: '', resilience: '', social_style: '' },
+        drivers: { primary_goals: [], critical_fears: [] },
+        attachments: { family_loyalty: '', organization_loyalty: '', core_values: '' },
+        current_status: { mood: 'calm', relationship_to_player: 'neutral', current_goal: '' },
+      },
+      knowledge: {
+        world_perception: { description: '', dynamic_updates: [] },
+        hidden_memory: { events: [], memory_summary: '', secrets: [] },
+        subjective_thoughts: { player_evaluation: '', topics_discussed: [], mood_impact: '' },
+        player_notes: { content: '', last_updated: 0 },
+      },
+      relationships: [],
+      organizations: [],
+      spatial_presence: {
+        current_location_id: '',
+        default_routine: [],
+        override_event: null,
+      },
+    });
+    return 1;
   }
 
-  public loadNPCs(db?: Database.Database): any[] {
-    const targetDb = db || this.db;
-    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
-
-    const stmt = targetDb.prepare(`SELECT * FROM npcs`);
-    const rows = stmt.all() as DBNPCRow[];
-
-    return rows.map(row => ({
-      id: row.id,
-      entityId: row.entity_id,
-      type: row.type,
-      position: {
-        x: row.position_x,
-        y: row.position_y,
-        z: row.position_z
-      },
-      data: row.data ? JSON.parse(row.data) : null
+  public loadNPCs(_db?: Database.Database): any[] {
+    const npcRepo = this.getNpcRepository();
+    return npcRepo.findAll().map(n => ({
+      id: n.npc_id,
+      entityId: n.npc_id,
+      type: n.public_profile.role,
+      position: { x: 0, y: 0, z: 0 },
+      data: n,
     }));
   }
 
-  public loadNPC(entityId: string, db?: Database.Database): any | null {
-    const targetDb = db || this.db;
-    if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
-
-    const stmt = targetDb.prepare(`SELECT * FROM npcs WHERE entity_id = ?`);
-    const row = stmt.get(entityId) as DBNPCRow | undefined;
-
-    if (!row) return null;
-
+  public loadNPC(entityId: string, _db?: Database.Database): any | null {
+    const npcRepo = this.getNpcRepository();
+    const n = npcRepo.findById(entityId);
+    if (!n) return null;
     return {
-      id: row.id,
-      entityId: row.entity_id,
-      type: row.type,
-      position: {
-        x: row.position_x,
-        y: row.position_y,
-        z: row.position_z
-      },
-      data: row.data ? JSON.parse(row.data) : null
+      id: n.npc_id,
+      entityId: n.npc_id,
+      type: n.public_profile.role,
+      position: { x: 0, y: 0, z: 0 },
+      data: n,
     };
   }
 
@@ -430,51 +482,44 @@ export class DatabaseRepository {
     }
   }
 
-  public savePlayerState(state: { name: string; level: number; experience: number; health: number; mana: number; attributes: Record<string, number> }, db?: Database.Database): void {
+  public savePlayerState(state: any, db?: Database.Database): void {
     const targetDb = db || this.db;
     if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
+    const repo = new PlayerStateRepository(targetDb);
 
-    const stmt = targetDb.prepare(`
-      INSERT INTO player_state (session_id, name, level, experience, health, mana, attributes)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(session_id) DO UPDATE SET
-        name = excluded.name,
-        level = excluded.level,
-        experience = excluded.experience,
-        health = excluded.health,
-        mana = excluded.mana,
-        attributes = excluded.attributes
-    `);
-
-    const attributesStr = state.attributes ? JSON.stringify(state.attributes) : null;
-    stmt.run(
-      this.sessionId,
-      state.name,
-      state.level,
-      state.experience,
-      state.health,
-      state.mana,
-      attributesStr
-    );
+    if (state.physical_states && state.attributes) {
+      repo.savePlayerState(this.sessionId, state);
+    } else {
+      const existing = repo.getPlayerState(this.sessionId);
+      const merged = {
+        ...existing,
+        name: state.name || (existing as any).name || 'Hero',
+        attributes: state.attributes ? { ...existing.attributes, ...state.attributes } : existing.attributes,
+      };
+      repo.savePlayerState(this.sessionId, merged as any);
+    }
   }
 
   public loadPlayerState(db?: Database.Database): any | null {
     const targetDb = db || this.db;
     if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
-
-    const stmt = targetDb.prepare(`SELECT * FROM player_state WHERE session_id = ?`);
-    const row = stmt.get(this.sessionId) as DBPlayerStateRow | undefined;
-
-    if (!row) return null;
+    const repo = new PlayerStateRepository(targetDb);
+    const profile = repo.getPlayerState(this.sessionId);
 
     return {
       playerId: this.playerId,
-      name: row.name,
-      level: row.level,
-      experience: row.experience,
-      health: row.health,
-      mana: row.mana,
-      attributes: row.attributes ? JSON.parse(row.attributes) : {},
+      name: (profile as any).name || 'Hero',
+      level: (profile as any).level || 1,
+      experience: (profile as any).experience || 0,
+      health: (profile as any).health || 100,
+      mana: profile.magic_stats?.current_mana ?? 25,
+      attributes: profile.attributes,
+      physical_states: profile.physical_states,
+      body_states: profile.body_states,
+      psychological_states: profile.psychological_states,
+      derived_stats: profile.derived_stats,
+      magic_stats: profile.magic_stats,
+      skills: profile.skills,
       inventory: [],
     };
   }

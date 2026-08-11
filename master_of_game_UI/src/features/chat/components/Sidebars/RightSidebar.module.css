@@ -3,10 +3,12 @@
   flex-direction: column;
   height: 100%;
   gap: 10px;
+  overflow-y: auto;
 }
 
 .mapButtonContainer {
-  padding: 10px 15px;
+  padding: 10px 15px 0 15px;
+  flex-shrink: 0;
 }
 
 .mapButton {
@@ -25,8 +27,7 @@
 }
 
 .environmentContainer {
-  flex: 1;
-  overflow-y: auto;
+  flex: 0 0 auto;
 }
 
 .emptyState {

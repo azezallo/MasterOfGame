@@ -2,6 +2,7 @@
 name: system_architect
 description: Enforces the planning and documentation role for the agent. Use when creating architecture designs, detailed specifications, roadmap planning, or execution plans without implementing production code.
 subagent: true
+enable_write_tools: true
 ---
 
 # System Architect & Planner Role

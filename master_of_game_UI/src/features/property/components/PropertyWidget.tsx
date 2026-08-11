@@ -38,7 +38,6 @@ export const PropertyWidget: React.FC<PropertyWidgetProps> = ({
     isChestModalOpen,
     openChestModal,
     closeChestModal,
-    handleStorageTransfer,
   } = useProperty({ sessionId, ownerType, ownerId });
 
   const tabs: { id: PropertyTab; labelKey: string; icon: string }[] = [

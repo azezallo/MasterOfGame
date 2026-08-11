@@ -2,6 +2,7 @@
 name: backend_engineer
 description: Specialized subagent for backend API development. Uses Node.js, Express, better-sqlite3, and Zod.
 subagent: true
+enable_write_tools: true
 ---
 
 # Backend Engineer

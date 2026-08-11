@@ -228,5 +228,144 @@
     },
     "loading": "Завантаження майна...",
     "empty": "Профіль майна відсутній"
+  },
+  "npc": {
+    "widget_title": "Активне оточення",
+    "directory_button": "📖 Довідник",
+    "directory_modal_title": "Довідник усіх NPC",
+    "search_placeholder": "Пошук за ім'ям або роллю...",
+    "status_label": "Статус:",
+    "all_statuses": "Усі статуси",
+    "empty_scene": "У цій сцені немає активних NPC.",
+    "loading": "Завантаження NPC...",
+    "loading_directory": "Завантаження довідника...",
+    "empty_directory": "Персонажів не знайдено за вашим запитом.",
+    "total_count": "Всього в списку: {{count}}",
+    "close": "Закрити",
+    "dossier": {
+      "appearance": "👁️ Зовнішність",
+      "public_description": "📜 Публічний опис",
+      "revealed_secrets": "🕵️ Розкриті таємниці",
+      "no_secrets": "Немає розкритих таємниць про цього персонажа.",
+      "public_secret_tag": "Загальновідомо",
+      "relationships": "🔗 Соціальні зв'язки",
+      "no_relationships": "Відомостей про соціальні зв'язки немає.",
+      "player_notes": "✏️ Особисті нотатки гравця",
+      "notes_placeholder": "Записуйте ваші спостереження, здогадки та плани щодо цього NPC...",
+      "saved": "✓ Збережено!",
+      "saving": "Збереження...",
+      "save_notes": "Зберегти нотатки",
+      "save_error": "Не вдалося зберегти нотатки."
+    },
+    "statuses": {
+      "alive": "Живий",
+      "dead": "Мертвий",
+      "coma": "У комі",
+      "missing": "Зниклий",
+      "captured": "Ув'язнений",
+      "archived": "В архіві"
+    },
+    "status_plural": {
+      "alive": "Живі",
+      "dead": "Мертві",
+      "coma": "У комі",
+      "missing": "Зниклі",
+      "captured": "Ув'язнені",
+      "archived": "Архівовані"
+    }
+  },
+  "world_state": {
+    "title": "Стан Світу",
+    "time_and_weather": "Час та Погода",
+    "day": "День",
+    "night": "Ніч",
+    "seasons": {
+      "spring": "Весна",
+      "summer": "Літо",
+      "autumn": "Осінь",
+      "winter": "Зима"
+    },
+    "loading": "Завантаження стану світу...",
+    "weather_label": "Погода",
+    "date_label": "Дата"
+  },
+  "player_state": {
+    "title": "Стан Персонажа",
+    "sidebar_tab_state": "👤 Стан",
+    "sidebar_tab_property": "🎒 Майно",
+    "mana": {
+      "title": "Запас Мани",
+      "flow": "Відновлення (Flow): +{{flow}} / хв",
+      "tiers": {
+        "full_title": "Повний резерв",
+        "full_desc": "Енергія б’є через край",
+        "normal_title": "Часткова витрата",
+        "normal_desc": "Нормальний робочий стан",
+        "fatigued_title": "Виснаження",
+        "fatigued_desc": "Відчутна втома від магії, важко концентруватися",
+        "critical_title": "Критичне виснаження",
+        "critical_desc": "Магічний резерв порожній, спроби касту небезпечні"
+      }
+    },
+    "sections": {
+      "physical": "Фізичний стан",
+      "body": "Тілесні стани",
+      "psychological": "Психологічний стан",
+      "attributes": "Атрибути",
+      "skills": "Навички"
+    },
+    "states": {
+      "light_wound": "Легке поранення",
+      "heavy_wound": "Важке поранення",
+      "bleeding": "Крововтрата",
+      "fracture": "Перелом",
+      "fatigue": "Втома",
+      "exhaustion": "Виснаження",
+      "hunger": "Голод",
+      "thirst": "Спрага",
+      "stress": "Стрес",
+      "shock": "Шок",
+      "panic": "Паніка",
+      "fear": "Страх",
+      "no_effects": "Норма (немає ефектів)"
+    },
+    "attributes": {
+      "strength": "Сила",
+      "agility": "Спритність",
+      "endurance": "Витривалість",
+      "perception": "Сприйняття",
+      "willpower": "Сила волі",
+      "max_carry_weight": "Гранична вага",
+      "weight_unit": "{{weight}} кг"
+    },
+    "skill_tiers": {
+      "grandmaster": "Грандмайстер",
+      "master": "Майстер",
+      "practiced": "Практик",
+      "apprentice": "Учень",
+      "novice": "Початківець"
+    },
+    "skills": {
+      "fire_magic": "Магія вогню",
+      "water_magic": "Магія води",
+      "earth_magic": "Магія землі",
+      "air_magic": "Магія повітря",
+      "sword_fighting": "Володіння мечем",
+      "archery": "Стрільба з лука",
+      "stealth": "Скритність",
+      "alchemy": "Алхімія",
+      "lockpicking": "Злом замків"
+    },
+    "buttons": {
+      "refresh": "Оновити"
+    },
+    "time": {
+      "just_now": "щойно",
+      "minutes_ago": "{{count}} хв тому",
+      "hours_ago": "{{count}} год тому",
+      "days_ago": "{{count}} дн тому"
+    },
+    "loading": "Завантаження стану...",
+    "error_fallback": "Не вдалося завантажити стан гравця"
   }
 }

@@ -1,19 +1,29 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ChatMessage, GameStatus } from '../../types';
+import { useWorldState, WorldStateWidget } from '@/features/worldState';
 import styles from './MainChat.module.css';
 
 interface MainChatProps {
+  sessionId?: string;
   messages: ChatMessage[];
   status: GameStatus;
   isProcessing: boolean;
   onSendMessage: (content: string) => void;
 }
 
-export const MainChat: React.FC<MainChatProps> = ({ messages, status, isProcessing, onSendMessage }) => {
+export const MainChat: React.FC<MainChatProps> = ({
+  sessionId = '',
+  messages,
+  status,
+  isProcessing,
+  onSendMessage,
+}) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const { worldState, isLoading: isLoadingWorldState } = useWorldState({ sessionId });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -45,6 +55,7 @@ export const MainChat: React.FC<MainChatProps> = ({ messages, status, isProcessi
 
   return (
     <div className={styles.dialogContainer}>
+      <WorldStateWidget worldState={worldState} isLoading={isLoadingWorldState} />
       <div className={styles.messagesArea}>
         {messages.map((msg) => {
           const typeSuffix = msg.type.charAt(0).toUpperCase() + msg.type.slice(1);

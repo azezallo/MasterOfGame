@@ -3,6 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { EnvironmentSidebar } from '@/features/map/components/EnvironmentSidebar/EnvironmentSidebar';
 import { InteractiveMapModal } from '@/features/map/components/InteractiveMapModal/InteractiveMapModal';
 import { useMapNavigation } from '@/features/map/hooks/useMapNavigation';
+import {
+  useNpc,
+  ActiveNpcWidget,
+  GlobalNpcDirectoryModal,
+  NpcDossierModal,
+} from '@/features/npc';
 import styles from './RightSidebar.module.css';
 
 interface RightSidebarProps {
@@ -11,7 +17,7 @@ interface RightSidebarProps {
 
 export const RightSidebar: React.FC<RightSidebarProps> = ({ sessionId }) => {
   const { t } = useTranslation();
-  
+
   const {
     currentLocation,
     locations,
@@ -25,6 +31,28 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ sessionId }) => {
     toggleMap,
     closeMap
   } = useMapNavigation(sessionId);
+
+  const {
+    activeNpcs,
+    allNpcs,
+    selectedNpc,
+    isDirectoryOpen,
+    isDossierOpen,
+    searchQuery,
+    statusFilter,
+    isLoadingActive,
+    isLoadingDirectory,
+    isSavingNotes,
+    saveError,
+    saveSuccess,
+    setSearchQuery,
+    setStatusFilter,
+    openDirectory,
+    closeDirectory,
+    openDossier,
+    closeDossier,
+    savePlayerNotes,
+  } = useNpc({ sessionId });
 
   return (
     <div className={styles.container}>
@@ -52,6 +80,13 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ sessionId }) => {
         )}
       </div>
 
+      <ActiveNpcWidget
+        activeNpcs={activeNpcs}
+        isLoading={isLoadingActive}
+        onOpenDirectory={openDirectory}
+        onSelectNpc={openDossier}
+      />
+
       <InteractiveMapModal 
         isOpen={isMapOpen} 
         onClose={closeMap} 
@@ -62,6 +97,30 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ sessionId }) => {
         onLocationSelect={handleLocationSelect}
         onBack={mapHistory.length > 0 || currentMapContext ? handleMapBack : undefined}
         onBreadcrumbClick={handleBreadcrumbClick}
+      />
+
+      <GlobalNpcDirectoryModal
+        isOpen={isDirectoryOpen}
+        onClose={closeDirectory}
+        npcs={allNpcs}
+        isLoading={isLoadingDirectory}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        onSelectNpc={(id) => {
+          openDossier(id);
+        }}
+      />
+
+      <NpcDossierModal
+        npc={selectedNpc}
+        isOpen={isDossierOpen}
+        onClose={closeDossier}
+        onSaveNotes={savePlayerNotes}
+        isSavingNotes={isSavingNotes}
+        saveSuccess={saveSuccess}
+        saveError={saveError}
       />
     </div>
   );
