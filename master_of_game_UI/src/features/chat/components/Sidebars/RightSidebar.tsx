@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EnvironmentSidebar } from '@/features/map/components/EnvironmentSidebar/EnvironmentSidebar';
 import { InteractiveMapModal } from '@/features/map/components/InteractiveMapModal/InteractiveMapModal';
@@ -9,6 +9,12 @@ import {
   GlobalNpcDirectoryModal,
   NpcDossierModal,
 } from '@/features/npc';
+import {
+  useOrganizations,
+  OrganizationsWidget,
+  GlobalOrganizationDirectoryModal,
+  OrganizationDossierModal,
+} from '@/features/organizations';
 import styles from './RightSidebar.module.css';
 
 interface RightSidebarProps {
@@ -17,6 +23,7 @@ interface RightSidebarProps {
 
 export const RightSidebar: React.FC<RightSidebarProps> = ({ sessionId }) => {
   const { t } = useTranslation();
+  const [socialTab, setSocialTab] = useState<'npc' | 'organizations'>('npc');
 
   const {
     currentLocation,
@@ -36,23 +43,45 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ sessionId }) => {
     activeNpcs,
     allNpcs,
     selectedNpc,
-    isDirectoryOpen,
-    isDossierOpen,
-    searchQuery,
-    statusFilter,
-    isLoadingActive,
-    isLoadingDirectory,
-    isSavingNotes,
-    saveError,
-    saveSuccess,
-    setSearchQuery,
-    setStatusFilter,
-    openDirectory,
-    closeDirectory,
-    openDossier,
-    closeDossier,
-    savePlayerNotes,
+    isDirectoryOpen: isNpcDirOpen,
+    isDossierOpen: isNpcDossierOpen,
+    searchQuery: npcSearchQuery,
+    statusFilter: npcStatusFilter,
+    isLoadingActive: isNpcActiveLoading,
+    isLoadingDirectory: isNpcDirLoading,
+    isSavingNotes: isNpcSavingNotes,
+    saveError: npcSaveError,
+    saveSuccess: npcSaveSuccess,
+    setSearchQuery: setNpcSearchQuery,
+    setStatusFilter: setNpcStatusFilter,
+    openDirectory: openNpcDirectory,
+    closeDirectory: closeNpcDirectory,
+    openDossier: openNpcDossier,
+    closeDossier: closeNpcDossier,
+    savePlayerNotes: saveNpcNotes,
   } = useNpc({ sessionId });
+
+  const {
+    organizations,
+    filteredOrganizations,
+    selectedOrgDossier,
+    isDirectoryOpen: isOrgDirOpen,
+    isDossierOpen: isOrgDossierOpen,
+    searchQuery: orgSearchQuery,
+    tabFilter: orgTabFilter,
+    isLoading: isOrgLoading,
+    isLoadingDossier: isOrgDossierLoading,
+    isSavingNotes: isOrgSavingNotes,
+    saveError: orgSaveError,
+    saveSuccess: orgSaveSuccess,
+    setSearchQuery: setOrgSearchQuery,
+    setTabFilter: setOrgTabFilter,
+    openDirectory: openOrgDirectory,
+    closeDirectory: closeOrgDirectory,
+    openDossier: openOrgDossier,
+    closeDossier: closeOrgDossier,
+    savePlayerNotes: saveOrgNotes,
+  } = useOrganizations({ sessionId });
 
   return (
     <div className={styles.container}>
@@ -80,12 +109,66 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ sessionId }) => {
         )}
       </div>
 
-      <ActiveNpcWidget
-        activeNpcs={activeNpcs}
-        isLoading={isLoadingActive}
-        onOpenDirectory={openDirectory}
-        onSelectNpc={openDossier}
-      />
+      <div style={{
+        display: 'flex',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        background: 'rgba(15, 23, 42, 0.8)',
+        padding: '0.4rem 0.5rem',
+        margin: '0 10px 8px 10px',
+        gap: '0.5rem',
+        borderRadius: '8px'
+      }}>
+        <button
+          onClick={() => setSocialTab('npc')}
+          style={{
+            flex: 1,
+            padding: '0.4rem 0.6rem',
+            borderRadius: '6px',
+            border: 'none',
+            background: socialTab === 'npc' ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
+            color: socialTab === 'npc' ? '#38bdf8' : '#94a3b8',
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          {t('organizations.sidebar_tab_npc', '👥 NPC')}
+        </button>
+        <button
+          onClick={() => setSocialTab('organizations')}
+          style={{
+            flex: 1,
+            padding: '0.4rem 0.6rem',
+            borderRadius: '6px',
+            border: 'none',
+            background: socialTab === 'organizations' ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
+            color: socialTab === 'organizations' ? '#38bdf8' : '#94a3b8',
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          {t('organizations.sidebar_tab_organizations', '🏛️ Фракції')}
+        </button>
+      </div>
+
+      {socialTab === 'npc' ? (
+        <ActiveNpcWidget
+          activeNpcs={activeNpcs}
+          isLoading={isNpcActiveLoading}
+          onOpenDirectory={openNpcDirectory}
+          onSelectNpc={openNpcDossier}
+        />
+      ) : (
+        <OrganizationsWidget
+          organizations={organizations}
+          isLoading={isOrgLoading}
+          onOpenDirectory={openOrgDirectory}
+          onSelectOrganization={openOrgDossier}
+        />
+      )}
 
       <InteractiveMapModal 
         isOpen={isMapOpen} 
@@ -100,27 +183,52 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ sessionId }) => {
       />
 
       <GlobalNpcDirectoryModal
-        isOpen={isDirectoryOpen}
-        onClose={closeDirectory}
+        isOpen={isNpcDirOpen}
+        onClose={closeNpcDirectory}
         npcs={allNpcs}
-        isLoading={isLoadingDirectory}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
+        isLoading={isNpcDirLoading}
+        searchQuery={npcSearchQuery}
+        onSearchChange={setNpcSearchQuery}
+        statusFilter={npcStatusFilter}
+        onStatusFilterChange={setNpcStatusFilter}
         onSelectNpc={(id) => {
-          openDossier(id);
+          openNpcDossier(id);
         }}
       />
 
       <NpcDossierModal
         npc={selectedNpc}
-        isOpen={isDossierOpen}
-        onClose={closeDossier}
-        onSaveNotes={savePlayerNotes}
-        isSavingNotes={isSavingNotes}
-        saveSuccess={saveSuccess}
-        saveError={saveError}
+        isOpen={isNpcDossierOpen}
+        onClose={closeNpcDossier}
+        onSaveNotes={saveNpcNotes}
+        isSavingNotes={isNpcSavingNotes}
+        saveSuccess={npcSaveSuccess}
+        saveError={npcSaveError}
+      />
+
+      <GlobalOrganizationDirectoryModal
+        isOpen={isOrgDirOpen}
+        onClose={closeOrgDirectory}
+        organizations={filteredOrganizations}
+        isLoading={isOrgLoading}
+        searchQuery={orgSearchQuery}
+        onSearchChange={setOrgSearchQuery}
+        tabFilter={orgTabFilter}
+        onTabFilterChange={setOrgTabFilter}
+        onSelectOrganization={(id) => {
+          openOrgDossier(id);
+        }}
+      />
+
+      <OrganizationDossierModal
+        organization={selectedOrgDossier}
+        isOpen={isOrgDossierOpen}
+        isLoading={isOrgDossierLoading}
+        onClose={closeOrgDossier}
+        onSaveNotes={saveOrgNotes}
+        isSavingNotes={isOrgSavingNotes}
+        saveSuccess={orgSaveSuccess}
+        saveError={orgSaveError}
       />
     </div>
   );

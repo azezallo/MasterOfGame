@@ -26,6 +26,7 @@ export const DEFAULT_PLAYER_STATE: PlayerStateProfile = {
     mana_pool: 100,
     current_mana: 25,
     mana_flow: 5,
+    base_regen: 10.0,
   },
   skills: {
     fire_magic: 50,

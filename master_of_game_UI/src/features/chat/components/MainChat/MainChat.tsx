@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ChatMessage, GameStatus } from '../../types';
 import { useWorldState, WorldStateWidget } from '@/features/worldState';
+import { useMapNavigation } from '@/features/map/hooks/useMapNavigation';
 import styles from './MainChat.module.css';
 
 interface MainChatProps {
@@ -24,6 +25,7 @@ export const MainChat: React.FC<MainChatProps> = ({
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const { worldState, isLoading: isLoadingWorldState } = useWorldState({ sessionId });
+  const { currentLocation } = useMapNavigation(sessionId);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -55,7 +57,11 @@ export const MainChat: React.FC<MainChatProps> = ({
 
   return (
     <div className={styles.dialogContainer}>
-      <WorldStateWidget worldState={worldState} isLoading={isLoadingWorldState} />
+      <WorldStateWidget
+        worldState={worldState}
+        isLoading={isLoadingWorldState}
+        manaDensity={currentLocation?.environmental_state?.mana_density ?? 50}
+      />
       <div className={styles.messagesArea}>
         {messages.map((msg) => {
           const typeSuffix = msg.type.charAt(0).toUpperCase() + msg.type.slice(1);

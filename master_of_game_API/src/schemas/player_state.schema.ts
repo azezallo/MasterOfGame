@@ -18,9 +18,10 @@ export const DerivedStatsSchema = z.object({
 });
 
 export const MagicStatsSchema = z.object({
-  mana_pool: z.number().int().nonnegative(),
-  current_mana: z.number().int().nonnegative(),
-  mana_flow: z.number().int().nonnegative(),
+  mana_pool: z.number().nonnegative(),
+  current_mana: z.number().nonnegative(),
+  mana_flow: z.number().nonnegative(),
+  base_regen: z.number().nonnegative().optional().default(10.0),
 });
 
 export const PlayerSkillsSchema = z.record(z.string(), z.number().int().min(0).max(100));

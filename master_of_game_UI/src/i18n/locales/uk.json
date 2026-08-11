@@ -367,5 +367,114 @@
     },
     "loading": "Завантаження стану...",
     "error_fallback": "Не вдалося завантажити стан гравця"
+  },
+  "organizations": {
+    "widget_title": "Фракції та Зв'язки",
+    "directory_button": "📖 Довідник",
+    "directory_modal_title": "Довідник відомих фракцій",
+    "dossier_modal_title": "Досьє фракції",
+    "sidebar_tab_npc": "👥 NPC",
+    "sidebar_tab_organizations": "🏛️ Фракції",
+    "search_placeholder": "Пошук фракції...",
+    "empty_widget": "Немає відомих фракцій.",
+    "empty_directory": "Фракцій не знайдено за вашим запитом.",
+    "loading": "Завантаження фракцій...",
+    "loading_directory": "Завантаження довідника фракцій...",
+    "total_count": "Всього в списку: {{count}}",
+    "close": "Закрити",
+    "tabs": {
+      "all": "Усі фракції",
+      "joined": "Мої гільдії",
+      "friendly": "Дружні",
+      "hostile": "Ворожі"
+    },
+    "reputation": {
+      "hostile": "Ворожість",
+      "unfriendly": "Неприязнь",
+      "neutral": "Нейтралітет",
+      "friendly": "Приязнь",
+      "honored": "Пошана"
+    },
+    "types": {
+      "syndicate": "Синдикат",
+      "military": "Варта / Військо",
+      "guild": "Гільдія",
+      "order": "Орден",
+      "cult": "Культ",
+      "scholarly": "Вчена рада",
+      "academic": "Вчена рада",
+      "unknown": "Фракція"
+    },
+    "dossier": {
+      "tabs": {
+        "overview": "🎯 Огляд та Цілі",
+        "hierarchy": "🏛️ Ієрархія",
+        "history": "📜 Журнал подій",
+        "notes": "✏️ Нотатки"
+      },
+      "type_label": "Тип:",
+      "player_rank": "Ваш ранг:",
+      "no_rank": "Не член організації",
+      "reputation_label": "Репутація:",
+      "status_known": "Публічна",
+      "status_secret": "Таємна організація",
+      "description": "📜 Опис",
+      "public_objectives": "🎯 Відкриті цілі",
+      "no_objectives": "Відомі цілі відсутні.",
+      "hierarchy_title": "🏛️ Дерево ієрархії",
+      "privileges": "Привілеї:",
+      "duties": "Обов'язки:",
+      "no_hierarchy": "Дані про ієрархію відсутні.",
+      "interactions_title": "📜 Журнал впливу та подій",
+      "no_interactions": "Немає зафіксованих подій взаємодії з цією фракцією.",
+      "player_notes": "✏️ Особисті нотатки",
+      "notes_placeholder": "Записуйте ваші спостереження, таємні відомості та плани...",
+      "save_notes": "Зберегти нотатки",
+      "saving": "Збереження...",
+      "saved": "✓ Збережено!",
+      "save_error": "Не вдалося зберегти нотатки."
+    }
+  },
+  "magic": {
+    "title": "Магічна система",
+    "density": "Магічний фон",
+    "density_value": "{{density}} / 100",
+    "density_levels": {
+      "zero_zone": "Нульова зона",
+      "low": "Низький фон",
+      "normal": "Нормальний фон",
+      "high": "Високий фон",
+      "anomaly": "Епіцентр аномалії",
+      "instant": "Абсолютний надлишок"
+    },
+    "domains": {
+      "energy": "Енергія (Вогонь, Світло, Блискавка)",
+      "matter": "Матерія (Вода, Земля, Повітря)",
+      "bio": "Біомагія (Життя, Тіло, Лікування)",
+      "mind": "Розум (Ілюзії, Телепатія)",
+      "space": "Простір (Гравітація, Телепортація)",
+      "time": "Час (Хрономагія)"
+    },
+    "regen": {
+      "tooltip_title": "Магічний фон локації",
+      "tooltip_multiplier": "Множник відновлення: x{{multiplier}}",
+      "tooltip_zero_zone": "Пасивна регенерація повністю відсутня (0x)",
+      "tooltip_instant": "Миттєве відновлення мани (∞)",
+      "base_regen": "Базова регенерація",
+      "base_regen_val": "{{amount}} / год",
+      "effective_regen": "Ефективна регенерація",
+      "effective_regen_val": "{{amount}} / год",
+      "flow": "Потік (Flow)",
+      "flow_val": "+{{amount}} / хв"
+    },
+    "spell_cost": {
+      "title": "Розрахунок вартості заклинання",
+      "base_cost": "Базова вартість: {{cost}}",
+      "distance_multiplier": "Множник відстані: x{{multiplier}}",
+      "aura_resistance": "Опір Аури Життя: +{{cost}}",
+      "total_cost": "Підсумкова вартість: {{cost}} мани",
+      "cast_time": "Час касту: {{minutes}} хв",
+      "instant_cast": "Миттєвий каст"
+    }
   }
 }

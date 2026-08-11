@@ -7,6 +7,8 @@ import propertyRoutes from './property.routes';
 import npcRoutes from './npc.routes';
 import worldStateRoutes from './world_state.routes';
 import playerStateRoutes from './player_state.routes';
+import organizationRoutes from './organization.routes';
+import magicRoutes from './magic.routes';
 
 const router = Router();
 
@@ -17,6 +19,8 @@ router.use('/:sessionId/property', propertyRoutes);
 router.use('/:sessionId/npcs', npcRoutes);
 router.use('/:sessionId/world-state', worldStateRoutes);
 router.use('/:sessionId/player-state', playerStateRoutes);
+router.use('/:sessionId/organizations', organizationRoutes);
+router.use('/:sessionId/magic', magicRoutes);
 
 router.get('/', getSessions);
 router.post('/', createSession);

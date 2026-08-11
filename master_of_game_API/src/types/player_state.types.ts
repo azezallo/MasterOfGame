@@ -19,6 +19,7 @@ export interface MagicStats {
   mana_pool: number;
   current_mana: number;
   mana_flow: number;
+  base_regen: number;
 }
 
 export type PlayerSkills = Record<string, number>;

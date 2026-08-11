@@ -129,7 +129,8 @@
         "MagicStats": {
           "mana_pool": "number",
           "current_mana": "number",
-          "mana_flow": "number"
+          "mana_flow": "number",
+          "base_regen": "number"
         },
         "PlayerSkills": "Record<string, number>",
         "PlayerStateProfile": {
@@ -140,6 +141,164 @@
           "derived_stats": "DerivedStats",
           "magic_stats": "MagicStats",
           "skills": "PlayerSkills"
+        }
+      }
+    },
+    "organizations": {
+      "endpoints": [
+        {
+          "path": "/sessions/:sessionId/organizations",
+          "method": "GET",
+          "description": "Get known organizations for the session",
+          "request": {},
+          "response": {
+            "success": "boolean",
+            "data": "Array<OrganizationSummary>"
+          }
+        },
+        {
+          "path": "/sessions/:sessionId/organizations/:id",
+          "method": "GET",
+          "description": "Get organization dossier details",
+          "request": {},
+          "response": {
+            "success": "boolean",
+            "data": "OrganizationDossier"
+          }
+        },
+        {
+          "path": "/sessions/:sessionId/organizations/:id/notes",
+          "method": "PATCH",
+          "description": "Update player notes for an organization",
+          "request": {
+            "body": {
+              "content": "string"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "data": {
+              "content": "string",
+              "last_updated": "number"
+            }
+          }
+        }
+      ],
+      "types": {
+        "RankDefinition": {
+          "rank_id": "string",
+          "rank_name": "string",
+          "superior_id": "string | null",
+          "privileges": "Array<string>",
+          "duties": "Array<string>"
+        },
+        "AffiliationInteraction": {
+          "timestamp": "string",
+          "description": "string",
+          "reputation_change": "number"
+        },
+        "OrganizationSummary": {
+          "id": "string",
+          "name": "string",
+          "type": "string",
+          "is_secret": "boolean",
+          "description": "string",
+          "player_rank": "string | null",
+          "player_reputation": "number"
+        },
+        "OrganizationDossier": {
+          "id": "string",
+          "name": "string",
+          "type": "string",
+          "is_secret": "boolean",
+          "description": "string",
+          "player_rank": "string | null",
+          "player_reputation": "number",
+          "public_objectives": "Array<string>",
+          "hierarchy": "Array<RankDefinition>",
+          "mermaid_graph": "string",
+          "interactions": "Array<AffiliationInteraction>",
+          "player_notes": "string"
+        }
+      }
+    },
+    "magic": {
+      "endpoints": [
+        {
+          "path": "/sessions/:sessionId/magic/spell-cost",
+          "method": "POST",
+          "description": "Calculate spell cost and instability risk",
+          "request": {
+            "body": {
+              "domain": "string",
+              "base_cost": "number",
+              "manifestation_range_m": "number",
+              "targets_life_aura": "boolean",
+              "caster_skill_level": "number",
+              "caster_mana_flow": "number"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "data": "SpellCostResult"
+          }
+        },
+        {
+          "path": "/sessions/:sessionId/magic/regen",
+          "method": "POST",
+          "description": "Recalculate passive mana regeneration",
+          "request": {
+            "body": {
+              "hours": "number",
+              "location_density": "number"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "data": "ManaRegenCalcResult"
+          }
+        },
+        {
+          "path": "/sessions/:sessionId/magic/evaluate-item",
+          "method": "POST",
+          "description": "Evaluate magic item properties",
+          "request": {
+            "body": {
+              "properties": "MagicItemProperties"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "data": "MagicItemEvaluationResult"
+          }
+        }
+      ],
+      "types": {
+        "SpellCostResult": {
+          "domain": "string",
+          "base_cost": "number",
+          "domain_multiplier": "number",
+          "range_multiplier": "number",
+          "manifestation_range_m": "number",
+          "life_aura_cost": "number",
+          "life_aura_penetrated": "boolean",
+          "total_mana_cost": "number",
+          "cast_time_minutes": "number",
+          "can_cast_instantly": "boolean",
+          "instability_risk": "number"
+        },
+        "ManaRegenCalcResult": {
+          "multiplier": "number",
+          "restored_mana": "number",
+          "new_mana": "number",
+          "max_mana": "number",
+          "is_instant": "boolean"
+        },
+        "MagicItemEvaluationResult": {
+          "is_valid": "boolean",
+          "item_type": "string",
+          "summary": "string",
+          "details": "object"
         }
       }
     }

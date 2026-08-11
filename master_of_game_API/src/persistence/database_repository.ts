@@ -9,6 +9,7 @@ import { PropertyRepository } from '../repositories/property.repository';
 import { NpcRepository } from '../repositories/npc.repository';
 import { WorldStateRepository } from '../repositories/world_state.repository';
 import { PlayerStateRepository } from '../repositories/player_state.repository';
+import { OrganizationRepository } from '../repositories/organization.repository';
 
 interface DBInventoryRow {
   id: number;
@@ -203,6 +204,31 @@ export class DatabaseRepository {
         tier TEXT DEFAULT 'GLOBAL',
         location_id TEXT,
         created_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int))
+      );
+
+      CREATE TABLE IF NOT EXISTS organizations (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        is_secret INTEGER NOT NULL DEFAULT 0,
+        is_known_to_player INTEGER NOT NULL DEFAULT 0,
+        description TEXT NOT NULL,
+        hierarchy TEXT NOT NULL,
+        objectives TEXT NOT NULL,
+        resources TEXT NOT NULL,
+        created_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
+        updated_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int))
+      );
+
+      CREATE TABLE IF NOT EXISTS player_organization_affiliations (
+        organization_id TEXT PRIMARY KEY,
+        rank_id TEXT,
+        reputation INTEGER NOT NULL DEFAULT 0,
+        interactions TEXT NOT NULL DEFAULT '[]',
+        player_notes TEXT DEFAULT '',
+        created_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
+        updated_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
+        FOREIGN KEY (organization_id) REFERENCES organizations(id)
       );
     `;
 
@@ -522,5 +548,12 @@ export class DatabaseRepository {
       skills: profile.skills,
       inventory: [],
     };
+  }
+
+  public getOrganizationRepository(): OrganizationRepository {
+    if (!this.db) throw new Error('Database not initialized');
+    const orgRepo = new OrganizationRepository(this.db);
+    orgRepo.seedDefaultOrganizations();
+    return orgRepo;
   }
 }

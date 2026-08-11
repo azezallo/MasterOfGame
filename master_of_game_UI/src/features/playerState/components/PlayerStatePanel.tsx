@@ -112,6 +112,8 @@ export const PlayerStatePanel: React.FC<PlayerStatePanelProps> = ({ sessionId })
     }
   };
 
+  const baseRegen = playerState.magic_stats.base_regen ?? 10.0;
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -140,8 +142,9 @@ export const PlayerStatePanel: React.FC<PlayerStatePanelProps> = ({ sessionId })
         <div className={`${styles.manaDesc} ${getManaDescClass(manaNarrative.tier)}`}>
           <strong>{manaNarrative.title}:</strong> {manaNarrative.description}
         </div>
-        <div className={styles.manaFlow}>
-          {t('player_state.mana.flow', { flow: playerState.magic_stats.mana_flow, defaultValue: `Відновлення (Flow): +${playerState.magic_stats.mana_flow} / хв` })}
+        <div className={styles.manaFlow} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+          <span>{t('magic.regen.flow_val', { amount: playerState.magic_stats.mana_flow, defaultValue: `Потік: +${playerState.magic_stats.mana_flow} / хв` })}</span>
+          <span>{t('magic.regen.base_regen_val', { amount: baseRegen, defaultValue: `Баз. регенерація: +${baseRegen} / год` })}</span>
         </div>
       </div>
 
