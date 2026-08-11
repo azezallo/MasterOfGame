@@ -1,0 +1,242 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: 'Inter', sans-serif;
+}
+
+.weightCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.weightHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.weightLabel {
+  color: #e0e0e0;
+}
+
+.statusBadge {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.statusBadge.normal {
+  background: rgba(76, 175, 80, 0.15);
+  color: #4caf50;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.statusBadge.heavy {
+  background: rgba(255, 152, 0, 0.15);
+  color: #ff9800;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.statusBadge.overloaded {
+  background: rgba(244, 67, 54, 0.15);
+  color: #f44336;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.progressTrack {
+  height: 5px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progressBar.normal {
+  background: linear-gradient(90deg, #388e3c, #4caf50);
+}
+
+.progressBar.heavy {
+  background: linear-gradient(90deg, #f57c00, #ff9800);
+}
+
+.progressBar.overloaded {
+  background: linear-gradient(90deg, #d32f2f, #f44336);
+}
+
+.weightSubText {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.accordionHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-accent, #4a90e2);
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #333;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.2s ease;
+}
+
+.accordionHeader:hover {
+  opacity: 0.8;
+}
+
+.chevron {
+  font-size: 0.7rem;
+  color: var(--color-text-dim, #888);
+  transition: transform 0.2s ease;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px;
+}
+
+.layerGroup {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.layerHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ccc;
+  margin-bottom: 4px;
+}
+
+.equippedList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.equippedCard {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.equippedCard:hover {
+  border-color: var(--color-accent, #4a90e2);
+}
+
+.blockedCard {
+  opacity: 0.65;
+  border-color: rgba(244, 67, 54, 0.4);
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.zoneBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-accent, #4a90e2);
+}
+
+.durBadge {
+  font-size: 0.7rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.durBadge.intact {
+  color: #4caf50;
+}
+
+.durBadge.worn {
+  color: #ffc107;
+}
+
+.durBadge.damaged {
+  color: #ff9800;
+}
+
+.durBadge.broken {
+  color: #f44336;
+}
+
+.cardName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.noteText {
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: #ffc107;
+  font-style: italic;
+}
+
+.itemsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.itemWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.customLabel {
+  font-size: 0.75rem;
+  color: #888;
+  margin-left: 6px;
+}
+
+.droppedGrid {
+  opacity: 0.6;
+}
+
+.emptyCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed #333;
+  border-radius: 4px;
+  padding: 8px 10px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: #777;
+}

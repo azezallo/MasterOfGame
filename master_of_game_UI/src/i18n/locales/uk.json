@@ -107,5 +107,126 @@
       "conditional": "Умовно",
       "secret": " ⚡ [Секрет]"
     }
+  },
+  "items": {
+    "title": "Інвентар",
+    "total_count": "{{count}} предметів",
+    "search_placeholder": "Пошук предметів...",
+    "loading": "Завантаження предметів...",
+    "empty": "Предметів не знайдено",
+    "categories": {
+      "all": "Усі",
+      "weapon": "Зброя",
+      "armor": "Обладунки",
+      "jewelry": "Коштовиці",
+      "consumable": "Витратні",
+      "key": "Ключі",
+      "container": "Контейнери",
+      "document": "Документи",
+      "artifact": "Артефакти",
+      "misc": "Інше"
+    },
+    "durability": {
+      "intact": "Цілий",
+      "worn": "Зношений",
+      "damaged": "Пошкоджений",
+      "broken": "Зламаний"
+    },
+    "dossier": {
+      "appearance": "Зовнішній вигляд",
+      "description": "Опис",
+      "weight": "Вага",
+      "weight_unit": "{{weight}} кг",
+      "durability": "Міцність",
+      "value": "Цінність",
+      "value_unit": "{{value}} зл.",
+      "discovered_secrets": "Розкриті таємниці",
+      "magical_effects": "Магічні чари",
+      "charges": "Заряди: {{current}}/{{max}}",
+      "document_content": "Зміст документа ({{language}})",
+      "close": "Закрити досьє"
+    }
+  },
+  "property": {
+    "title": "Інструменти Агента: Майно",
+    "tabs": {
+      "equipment": "Спорядження",
+      "finances": "Фінанси",
+      "real_estate": "Нерухомість"
+    },
+    "weight": {
+      "label": "Навантаження: {{current}} / {{max}} кг",
+      "body_pockets": "Тіло + кишені: {{weight}} кг",
+      "backpack": "Рюкзак: {{weight}} кг",
+      "status": {
+        "normal": "Норма",
+        "heavy": "Важко",
+        "overloaded": "Перевантаж."
+      }
+    },
+    "equipment": {
+      "layered_title": "Задіяне спорядження по шарах",
+      "pockets_title": "Кишені та Пояс",
+      "backpack_title": "Рюкзак",
+      "backpack_equipped": "(За спиною)",
+      "backpack_dropped": "(Скинуто на землю)",
+      "empty_layered": "Нічого не одягнуто",
+      "empty_pockets": "Нічого немає у кишенях",
+      "empty_backpack": "Рюкзак порожній",
+      "layers": {
+        "inner": "Внутрішній шар",
+        "middle": "Основний шар",
+        "outer": "Зовнішній шар",
+        "accessory": "Прикраси & Амулети"
+      },
+      "zones": {
+        "head": "Голова",
+        "torso": "Торс",
+        "left_hand": "Ліва рука",
+        "right_hand": "Права рука",
+        "neck": "Шия",
+        "legs": "Ноги",
+        "feet": "Ступні"
+      }
+    },
+    "finances": {
+      "cash_title": "Універсальна готівка",
+      "cash_subtitle": "Карбовані соверейни у гаманці",
+      "coins_unit": "{{amount}} монет",
+      "bank_title": "Банківські рахунки в гільдіях",
+      "no_bank_accounts": "Немає відкритих рахунків у банках",
+      "account_number": "Рахунок #{{number}}",
+      "location": "Локація: {{location}}",
+      "guild": "Гільдія: {{guild}}",
+      "notes_title": "Боргові розписки та векселі",
+      "no_notes": "Немає активних боргових зобов’язань",
+      "due_date": "Термін погашення: {{date}}"
+    },
+    "real_estate": {
+      "title": "Володіння & Оренда Нерухомості",
+      "no_properties": "Немає зареєстрованої нерухомості",
+      "rented": "Оренда",
+      "owned": "Власність",
+      "rent_paid_until": "Оплачено до {{day}}-го дня ({{cost}} монет/день)",
+      "business_profit": "Пасивний прибуток у касі:",
+      "caches_title": "Сховища & Особисті скрині",
+      "no_caches": "Немає збережених сховищ",
+      "open_chest": "Відкрити ({{count}})",
+      "vehicles_title": "Транспорт & Їздові тварини",
+      "no_vehicles": "Немає коней чи транспортних засобів",
+      "status": {
+        "traveling": "У дорозі",
+        "stabled": "У стайні",
+        "abandoned": "Покинуто"
+      }
+    },
+    "chest": {
+      "title": "Сховище: {{name}}",
+      "chest_title": "Вміст сховища",
+      "empty_chest": "Сховище порожнє",
+      "inspect_hint": "💡 Для взяття або поповнення речей напишіть вашу дію у чаті"
+    },
+    "loading": "Завантаження майна...",
+    "empty": "Профіль майна відсутній"
   }
 }

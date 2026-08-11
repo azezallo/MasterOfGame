@@ -1,15 +1,17 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { PropertyWidget } from '../../../property';
 
 interface LeftSidebarProps {
   sessionId: string;
+  playerId?: string;
 }
 
-export const LeftSidebar: React.FC<LeftSidebarProps> = ({ sessionId }) => {
-  const { t } = useTranslation();
+export const LeftSidebar: React.FC<LeftSidebarProps> = ({ sessionId, playerId }) => {
+  const activePlayerId = playerId || 'player_1';
+
   return (
-    <div style={{ padding: '15px', color: 'var(--color-text-dim)', textAlign: 'center' }}>
-      <p style={{ fontStyle: 'italic', fontSize: '0.9rem' }}>{t('chat.left_sidebar')}</p>
+    <div style={{ height: '100%', width: '100%', overflow: 'hidden' }}>
+      <PropertyWidget sessionId={sessionId} ownerType="player" ownerId={activePlayerId} />
     </div>
   );
 };

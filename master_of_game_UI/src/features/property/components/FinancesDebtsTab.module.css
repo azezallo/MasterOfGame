@@ -1,0 +1,142 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coinsCard {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(30, 41, 59, 0.8) 100%);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.coinsHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coinsIcon {
+  font-size: 20px;
+}
+
+.coinsTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fef08a;
+}
+
+.coinsSubtitle {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.coinsAmount {
+  font-size: 15px;
+  font-weight: 800;
+  color: #facc15;
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
+}
+
+.accordionHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #38bdf8;
+  padding: 6px 8px;
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+.accordionHeader:hover {
+  background: rgba(30, 41, 59, 0.7);
+}
+
+.chevron {
+  font-size: 9px;
+  color: #94a3b8;
+  transition: transform 0.2s ease;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.emptyCard {
+  background: rgba(30, 41, 59, 0.3);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 10px;
+  text-align: center;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.listGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bankCard,
+.noteCard {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.bankHeader,
+.noteHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.bankName,
+.debtorName {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.bankBalance,
+.noteAmount {
+  font-size: 12px;
+  font-weight: 700;
+  color: #facc15;
+}
+
+.bankSubText {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.noteDesc {
+  font-size: 11px;
+  color: #cbd5e1;
+  margin-bottom: 4px;
+}
+
+.noteDueDate {
+  font-size: 10px;
+  color: #94a3b8;
+}

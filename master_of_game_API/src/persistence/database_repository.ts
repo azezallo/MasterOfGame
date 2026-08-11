@@ -4,6 +4,8 @@ import fs from 'fs';
 import { CONFIG } from '../config';
 import { SessionMetadata } from '../models/session';
 import { LocationRepository } from '../repositories/location.repository';
+import { ItemRepository } from '../repositories/item.repository';
+import { PropertyRepository } from '../repositories/property.repository';
 
 interface DBInventoryRow {
   id: number;
@@ -59,7 +61,9 @@ export class DatabaseRepository {
     
     // Ensure the player directory exists
     const dirPath = path.dirname(dbPath);
-    await fs.promises.mkdir(dirPath, { recursive: true });
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
 
     // better-sqlite3 is synchronous in its connection, 
     // but we'll wrap it to maintain a consistent async API if needed.
@@ -121,14 +125,123 @@ export class DatabaseRepository {
         updated_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
         FOREIGN KEY (parent_location_id) REFERENCES locations(id)
       );
+
+      CREATE TABLE IF NOT EXISTS item_templates (
+        template_id TEXT PRIMARY KEY,
+        category TEXT NOT NULL,
+        public_profile TEXT NOT NULL,
+        physical_properties TEXT NOT NULL,
+        special_mechanics TEXT,
+        created_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int))
+      );
+
+      CREATE TABLE IF NOT EXISTS items (
+        item_id TEXT PRIMARY KEY,
+        template_id TEXT,
+        category TEXT NOT NULL,
+        public_profile TEXT NOT NULL,
+        private_profile TEXT,
+        physical_properties TEXT NOT NULL,
+        special_mechanics TEXT,
+        location_context TEXT NOT NULL,
+        created_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
+        updated_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
+        FOREIGN KEY (template_id) REFERENCES item_templates(template_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS properties (
+        property_profile_id TEXT PRIMARY KEY,
+        owner_type TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        equipped TEXT NOT NULL,
+        pocket_inventory TEXT NOT NULL,
+        finances TEXT NOT NULL,
+        real_estate TEXT NOT NULL,
+        storage_caches TEXT NOT NULL,
+        vehicles_and_mounts TEXT NOT NULL,
+        created_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
+        updated_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int)),
+        UNIQUE(owner_type, owner_id)
+      );
     `;
 
     this.db.exec(schema);
+    this.seedDefaultTemplates();
+  }
+
+  private seedDefaultTemplates(): void {
+    if (!this.db) return;
+    const count = (this.db.prepare(`SELECT count(*) as cnt FROM item_templates`).get() as any)?.cnt;
+    if (count > 0) return;
+
+    const templates = [
+      {
+        template_id: 'tpl_iron_sword',
+        category: 'weapon',
+        public_profile: JSON.stringify({ name: 'Залізний меч', appearance: 'Класичний меч з прямим сталевим лезом.', public_description: 'Надійне військове лезо з простим ефесом.' }),
+        physical_properties: JSON.stringify({ weight_kg: 2.5, durability: { current: 100, max: 100, state: 'intact' }, base_value_gold: 25 }),
+        special_mechanics: null
+      },
+      {
+        template_id: 'tpl_leather_boots',
+        category: 'armor',
+        public_profile: JSON.stringify({ name: 'Шкіряні чоботи', appearance: 'Міцні чоботи з темної дубленої шкіри.', public_description: 'Зручне взуття для довгих переходів.' }),
+        physical_properties: JSON.stringify({ weight_kg: 1.2, durability: { current: 100, max: 100, state: 'intact' }, base_value_gold: 10 }),
+        special_mechanics: null
+      },
+      {
+        template_id: 'tpl_healing_potion',
+        category: 'consumable',
+        public_profile: JSON.stringify({ name: 'Зілля зцілення', appearance: 'Невелика скляна флаконка з мерехтливою червоною рідиною.', public_description: 'Солодкувате зілля, що прискорює регенерацію тканин.' }),
+        physical_properties: JSON.stringify({ weight_kg: 0.3, durability: { current: 1, max: 1, state: 'intact' }, base_value_gold: 15 }),
+        special_mechanics: null
+      },
+      {
+        template_id: 'tpl_signet_ring',
+        category: 'key',
+        public_profile: JSON.stringify({ name: 'Перстень з печаткою', appearance: 'Срібний перстень із зображенням вовчої голови.', public_description: 'Старий масивний перстень.' }),
+        physical_properties: JSON.stringify({ weight_kg: 0.05, durability: { current: 100, max: 100, state: 'intact' }, base_value_gold: 15 }),
+        special_mechanics: JSON.stringify({ key_properties: { unlocks_key_id: 'item_thief_signet' } })
+      },
+      {
+        template_id: 'tpl_wooden_chest',
+        category: 'container',
+        public_profile: JSON.stringify({ name: 'Дерев’яна скриня', appearance: 'Окована залізом дубова скриня з масивним замком.', public_description: 'Надійний контейнер для зберігання цінностей.' }),
+        physical_properties: JSON.stringify({ weight_kg: 15.0, durability: { current: 100, max: 100, state: 'intact' }, base_value_gold: 50 }),
+        special_mechanics: JSON.stringify({ container_properties: { contained_item_ids: [], capacity_weight_kg: 50.0, lock_details: { is_locked: true, key_id: 'item_thief_signet', lockpick_dc: 15 }, trap_details: { has_trap: true, is_disarmed: false, trap_description: 'Отруєна голка', trap_dc: 15, discovery_status: 'hidden' } } })
+      },
+      {
+        template_id: 'tpl_old_letter',
+        category: 'document',
+        public_profile: JSON.stringify({ name: 'Старий лист', appearance: 'Пожовклий пергамент з печаткою.', public_description: 'Лист з важливим посланням.' }),
+        physical_properties: JSON.stringify({ weight_kg: 0.01, durability: { current: 10, max: 10, state: 'intact' }, base_value_gold: 2 }),
+        special_mechanics: JSON.stringify({ document_properties: { text_content: 'Зустрінемось опівночі біля старих доків. Принесіть перстень.', language: 'Загальна мова', is_encrypted: false, decryption_dc: 0 } })
+      }
+    ];
+
+    const stmt = this.db.prepare(`
+      INSERT INTO item_templates (template_id, category, public_profile, physical_properties, special_mechanics)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    for (const t of templates) {
+      stmt.run(t.template_id, t.category, t.public_profile, t.physical_properties, t.special_mechanics);
+    }
   }
 
   public getLocationRepository(): LocationRepository {
     if (!this.db) throw new Error('Database not initialized');
     return new LocationRepository(this.db);
+  }
+
+  public getItemRepository(): ItemRepository {
+    if (!this.db) throw new Error('Database not initialized');
+    return new ItemRepository(this.db);
+  }
+
+  public getPropertyRepository(): PropertyRepository {
+    if (!this.db) throw new Error('Database not initialized');
+    return new PropertyRepository(this.db);
   }
 
   public close(): void {

@@ -1,0 +1,166 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.accordionHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #38bdf8;
+  padding: 6px 8px;
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+.accordionHeader:hover {
+  background: rgba(30, 41, 59, 0.7);
+}
+
+.chevron {
+  font-size: 9px;
+  color: #94a3b8;
+  transition: transform 0.2s ease;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.emptyCard {
+  background: rgba(30, 41, 59, 0.3);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 10px;
+  text-align: center;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.listGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.propertyCard,
+.cacheCard,
+.vehicleCard {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.propHeader,
+.cacheHeader,
+.vehHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.propName,
+.cacheName,
+.vehName {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.typeBadge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.ownedBadge {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+}
+
+.rentedBadge {
+  background: rgba(250, 204, 21, 0.15);
+  color: #facc15;
+}
+
+.rentInfoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  font-size: 10px;
+  color: #cbd5e1;
+}
+
+.openChestBtn {
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.openChestBtn:hover {
+  background: rgba(56, 189, 248, 0.25);
+}
+
+.businessRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.profitVal {
+  font-weight: 700;
+  color: #4ade80;
+}
+
+.cacheLocation,
+.vehSub {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.statusBadge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.statusBadge.traveling {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+}
+
+.statusBadge.stabled {
+  background: rgba(250, 204, 21, 0.15);
+  color: #facc15;
+}
+
+.statusBadge.abandoned {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+}

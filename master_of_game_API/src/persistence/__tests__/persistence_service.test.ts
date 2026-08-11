@@ -99,7 +99,7 @@ describe('PersistenceService Integration Tests', () => {
       metadata: {}
     };
 
-    await expect(service.saveSessionState(sessionId, invalidState)).rejects.toThrow(/ValidationError is not defined/);
+    await expect(service.saveSessionState(sessionId, invalidState)).rejects.toThrow(/Error saving session state/);
   });
 
   it('should remove a session from memory', async () => {
