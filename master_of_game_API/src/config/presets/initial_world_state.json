@@ -1,0 +1,21 @@
+{
+  "current_date": "1015-05-12 08:00:00",
+  "time_of_day": "morning",
+  "hour": 8,
+  "weather": {
+    "type": "clear",
+    "intensity": 20,
+    "description": "Сонячний свіжий ранок, легкий прохолодний вітерець"
+  },
+  "mana_density": {
+    "level": "normal",
+    "value": 50
+  },
+  "weather_timeline": [
+    {
+      "weather_type": "clear",
+      "intensity": 20,
+      "timestamp": "1015-05-12T08:00:00.000Z"
+    }
+  ]
+}

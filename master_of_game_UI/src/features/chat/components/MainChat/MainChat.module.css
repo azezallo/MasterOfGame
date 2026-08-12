@@ -2,10 +2,10 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: var(--color-bg-chat);
-  border: 2px solid var(--color-border-secondary);
-  border-radius: 4px;
-  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9);
+  background-color: var(--color-bg-chat, #0e1117);
+  border: 1px solid var(--color-border-secondary, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
   overflow: hidden;
 }
 
@@ -15,82 +15,22 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
-}
-
-.message {
-  padding: 12px;
-  border-radius: 4px;
-  max-width: 85%;
-  word-wrap: break-word;
-}
-
-.messageMaster {
-  align-self: flex-start;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-left: 3px solid var(--color-gold-dim);
-}
-
-.messagePlayer {
-  align-self: flex-end;
-  background-color: var(--color-iron-primary);
-  border-right: 3px solid var(--color-gold-dim);
-  text-align: right;
-}
-
-.messageSystem {
-  align-self: center;
-  color: var(--color-text-dim);
-  font-style: italic;
-  border: 1px dashed var(--color-border-secondary);
-  padding: 8px;
-  max-width: 90%;
-}
-
-.speaker {
-  font-weight: bold;
-  margin-bottom: 4px;
-  color: var(--color-gold-dim);
-}
-
-.content {
-  font-family: var(--font-main);
-  line-height: 1.5;
-  white-space: pre-wrap;
+  gap: 16px;
+  scroll-behavior: smooth;
 }
 
 .inputArea {
-  padding: 20px;
-  border-top: 1px solid var(--color-border-secondary);
-  background-color: var(--color-bg);
-}
-
-.input {
-  width: 100%;
-  padding: 12px;
-  background-color: var(--color-bg-chat);
-  color: var(--color-text-main);
-  border: 1px solid var(--color-border-secondary);
-  border-radius: 4px;
-  outline: none;
-  font-family: var(--font-main);
-  resize: none;
-}
-
-.input:focus {
-  border-color: var(--color-gold-dim);
-}
-
-.input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-border-secondary, rgba(255, 255, 255, 0.08));
+  background-color: var(--color-bg, #161b22);
 }
 
 @media (max-width: 768px) {
   .messagesArea {
-    padding: 10px;
+    padding: 12px;
+    gap: 12px;
   }
-  
+
   .inputArea {
     padding: 12px;
   }

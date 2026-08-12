@@ -1,0 +1,26 @@
+{
+  "physical_states": [],
+  "body_states": [],
+  "psychological_states": [],
+  "attributes": {
+    "strength": 25,
+    "agility": 30,
+    "endurance": 28,
+    "perception": 22,
+    "willpower": 20
+  },
+  "derived_stats": {
+    "max_carry_weight_kg": 55.0
+  },
+  "magic_stats": {
+    "mana_pool": 100,
+    "current_mana": 100,
+    "mana_flow": 5,
+    "base_regen": 10.0
+  },
+  "skills": {
+    "fire_magic": 50,
+    "sword_fighting": 30,
+    "stealth": 15
+  }
+}

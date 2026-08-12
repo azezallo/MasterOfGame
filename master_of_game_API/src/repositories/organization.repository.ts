@@ -7,6 +7,7 @@ import {
   GetOrganizationsListFilter,
   AffiliationInteraction,
 } from '../types/organization.types';
+import { getInitialOrganizationsPreset } from '../config';
 
 interface DBOrganizationRow {
   id: string;
@@ -31,150 +32,6 @@ interface DBPlayerAffiliationRow {
   created_at: number;
   updated_at: number;
 }
-
-export const DEFAULT_ORGANIZATIONS: Organization[] = [
-  {
-    id: 'org_city_guard',
-    name: 'Міська Варта',
-    type: 'military',
-    is_secret: false,
-    is_known_to_player: true,
-    description: 'Офіційні правоохоронці міста, відповідальні за порядок, патрулювання вулиць та захист громадян.',
-    hierarchy: [
-      {
-        rank_id: 'CAPTAIN',
-        rank_name: 'Капітан Варти',
-        superior_id: null,
-        privileges: ['Командування гарнізоном', 'Доступ до archives'],
-        duties: ['Забезпечення порядку в місті', 'Звіт перед намісником'],
-      },
-      {
-        rank_id: 'SERGEANT',
-        rank_name: 'Сержант',
-        superior_id: 'CAPTAIN',
-        privileges: ['Керування патрулем', 'Право арешту'],
-        duties: ['Патрулювання кварталів', 'Допит підозрюваних'],
-      },
-      {
-        rank_id: 'GUARD',
-        rank_name: 'Вартовий',
-        superior_id: 'SERGEANT',
-        privileges: ['Носіння зброї', 'Доступ до казарми'],
-        duties: ['Чергування на брамі', 'Виконання наказів'],
-      },
-      {
-        rank_id: 'RECRUIT',
-        rank_name: 'Рекрут',
-        superior_id: 'GUARD',
-        privileges: ['Базове спорядження'],
-        duties: ['Навчання', 'Варта на складах'],
-      },
-    ],
-    objectives: {
-      public: ['Захист жителів міста від злочинності', 'Підтримання порядку на вулицях'],
-      secret: ['Викриття контрабандних мереж Гільдії Тіней', 'Захист секретного арсеналу від шпигунів'],
-    },
-    resources: {
-      wealth_level: 'medium',
-      manpower_level: 'high',
-      influence: 'high',
-    },
-  },
-  {
-    id: 'org_thieves_guild',
-    name: 'Гільдія Тіней',
-    type: 'syndicate',
-    is_secret: true,
-    is_known_to_player: false,
-    description: 'Мережа злодіїв та контрабандистів, що контролює тіньовий ринок столиці.',
-    hierarchy: [
-      {
-        rank_id: 'M',
-        rank_name: 'Майстер Тіней',
-        superior_id: null,
-        privileges: ['Керування осередком'],
-        duties: ['Забезпечення безпеки осередку', 'Розподіл фінансів'],
-      },
-      {
-        rank_id: 'S1',
-        rank_name: 'Тінь',
-        superior_id: 'M',
-        privileges: ['Скупка краденого', 'Доступ до замовлень'],
-        duties: ['Виконання мінімум 1 контракту на місяць', 'Навчання Шукачів'],
-      },
-      {
-        rank_id: 'S2',
-        rank_name: 'Шпигун',
-        superior_id: 'M',
-        privileges: ['Збір інформації', 'Недоторканність'],
-        duties: ['Збір інформації про патрулі міської варти'],
-      },
-      {
-        rank_id: 'N',
-        rank_name: 'Шукач',
-        superior_id: 'S1',
-        privileges: ['Доступ до базового притулку'],
-        duties: ['Віддавати 10% здобичі гільдії', 'Виконувати дрібні доручення'],
-      },
-    ],
-    objectives: {
-      public: ['Взаємодопомога', 'Захист бідних районів'],
-      secret: ['Повалення поточного намісника', 'Монополізація ринку забороненої магії'],
-    },
-    resources: {
-      wealth_level: 'high',
-      manpower_level: 'medium',
-      influence: 'high',
-    },
-  },
-  {
-    id: 'org_mages_order',
-    name: 'Орден Аркануму',
-    type: 'academic',
-    is_secret: false,
-    is_known_to_player: true,
-    description: 'Спільнота магів та вчених, що займається дослідженням давнього чаклунства та магічних аномалій.',
-    hierarchy: [
-      {
-        rank_id: 'ARCHMAGE',
-        rank_name: 'Архімаг',
-        superior_id: null,
-        privileges: ['Доступ до Секретної Бібліотеки', 'Право голосу у Раді'],
-        duties: ['Збереження магічної рівноваги', 'Керування Орденом'],
-      },
-      {
-        rank_id: 'MASTER',
-        rank_name: 'Майстер Магії',
-        superior_id: 'ARCHMAGE',
-        privileges: ['Проведення ритуалів', 'Навчання учнів'],
-        duties: ['Дослідження аномалій', 'Захист вежі'],
-      },
-      {
-        rank_id: 'ADEPT',
-        rank_name: 'Адепт',
-        superior_id: 'MASTER',
-        privileges: ['Доступ до лабораторій'],
-        duties: ['Складання зілля', 'Допомога Майстрам'],
-      },
-      {
-        rank_id: 'APPRENTICE',
-        rank_name: 'Учень',
-        superior_id: 'ADEPT',
-        privileges: ['Доступ до базової бібліотеки'],
-        duties: ['Прибирання лабораторій', 'Вивчення заклять'],
-      },
-    ],
-    objectives: {
-      public: ['Дослідження магічних аномалій', 'Навчання обдарованих магів'],
-      secret: ['Пошук втраченого артефакту Першодавніх', 'Контроль за магічними джерелами міста'],
-    },
-    resources: {
-      wealth_level: 'high',
-      manpower_level: 'low',
-      influence: 'high',
-    },
-  },
-];
 
 export class OrganizationRepository {
   constructor(private db: Database.Database) {}
@@ -213,22 +70,23 @@ export class OrganizationRepository {
     const countRow = (this.db.prepare('SELECT count(*) as count FROM organizations').get() as any)?.count;
     if (countRow > 0) return;
 
+    const presetOrganizations = getInitialOrganizationsPreset();
     const stmt = this.db.prepare(`
       INSERT INTO organizations (id, name, type, is_secret, is_known_to_player, description, hierarchy, objectives, resources)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    for (const org of DEFAULT_ORGANIZATIONS) {
+    for (const org of presetOrganizations) {
       stmt.run(
         org.id,
         org.name,
         org.type,
         org.is_secret ? 1 : 0,
         org.is_known_to_player ? 1 : 0,
-        org.description,
-        JSON.stringify(org.hierarchy),
-        JSON.stringify(org.objectives),
-        JSON.stringify(org.resources)
+        org.description || '',
+        typeof org.hierarchy === 'string' ? org.hierarchy : JSON.stringify(org.hierarchy || []),
+        typeof org.objectives === 'string' ? org.objectives : JSON.stringify(org.objectives || { public: [], secret: [] }),
+        typeof org.resources === 'string' ? org.resources : JSON.stringify(org.resources || { wealth_level: 'medium', manpower_level: 'medium', influence: 'medium' })
       );
     }
   }

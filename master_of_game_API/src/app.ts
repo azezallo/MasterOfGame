@@ -5,6 +5,8 @@ import cors from 'cors';
 import authRoutes from './routes/auth.routes';
 import sessionRoutes from './routes/session.routes';
 import aiSettingsRoutes from './routes/ai_settings.routes';
+import semanticMemoryRoutes from './routes/semantic_memory.routes';
+import agenticLoopRoutes from './routes/agentic_loop.routes';
 import { AppError } from './errors/app.errors';
 
 dotenv.config();
@@ -24,6 +26,8 @@ app.use(cookieParser());
 app.use('/auth', authRoutes);
 app.use('/sessions', sessionRoutes);
 app.use('/api/v1/ai', aiSettingsRoutes);
+app.use('/api/v1/memory', semanticMemoryRoutes);
+app.use('/api/v1/chat', agenticLoopRoutes);
 
 // Global Error Handler
 app.use((err: any, req: any, res:any, next: any) => {

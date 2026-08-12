@@ -31,6 +31,7 @@ export class OpenAICompatibleProvider implements ILLMProvider {
   private getHeaders(overrideApiKey?: string): Record<string, string> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      Connection: 'keep-alive',
     };
     const key = overrideApiKey ?? this.apiKey;
     if (key) {
@@ -71,30 +72,73 @@ export class OpenAICompatibleProvider implements ILLMProvider {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
+        const errorText = await response.text().catch(() => '');
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
-      const json: any = await response.json();
-      const choice = json.choices?.[0];
+      const text = await response.text();
+      try {
+        const json: any = JSON.parse(text);
+        const choice = json.choices?.[0];
 
-      return {
-        id: json.id,
-        content: choice?.message?.content ?? null,
-        toolCalls: choice?.message?.tool_calls,
-        usage: json.usage
-          ? {
-              promptTokens: json.usage.prompt_tokens,
-              completionTokens: json.usage.completion_tokens,
-              totalTokens: json.usage.total_tokens,
-            }
-          : undefined,
-        finishReason: choice?.finish_reason,
-      };
+        return {
+          id: json.id,
+          content: choice?.message?.content ?? null,
+          toolCalls: choice?.message?.tool_calls,
+          usage: json.usage
+            ? {
+                promptTokens: json.usage.prompt_tokens,
+                completionTokens: json.usage.completion_tokens,
+                totalTokens: json.usage.total_tokens,
+              }
+            : undefined,
+          finishReason: choice?.finish_reason,
+        };
+      } catch {
+        // Handle case where local server returns SSE formatted stream or plain text
+        const lines = text.split('\n');
+        let accumulated = '';
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('data: ') && trimmed !== 'data: [DONE]') {
+            try {
+              const parsed = JSON.parse(trimmed.slice(6));
+              const delta =
+                parsed.choices?.[0]?.delta?.content || parsed.choices?.[0]?.message?.content || '';
+              accumulated += delta;
+            } catch {}
+          }
+        }
+        if (accumulated) {
+          return { content: accumulated };
+        }
+        return { content: text };
+      }
     } catch (error: any) {
       if (error.name === 'AbortError') {
         throw new Error('Request timed out');
       }
+
+      // Fallback: If non-stream generate failed with socket/stream error, attempt stream() accumulation
+      if (
+        error.message &&
+        (error.message.includes('input stream') ||
+          error.message.includes('fetch failed') ||
+          error.message.includes('terminated'))
+      ) {
+        try {
+          let accumulated = '';
+          for await (const chunk of this.stream(request)) {
+            if (chunk.delta) accumulated += chunk.delta;
+          }
+          if (accumulated) {
+            return { content: accumulated };
+          }
+        } catch (streamErr) {
+          console.error('[OpenAICompatibleProvider] Fallback stream failed:', streamErr);
+        }
+      }
+
       throw error;
     } finally {
       if (timeoutId) clearTimeout(timeoutId);
@@ -124,7 +168,7 @@ export class OpenAICompatibleProvider implements ILLMProvider {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
+        const errorText = await response.text().catch(() => '');
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
@@ -143,7 +187,7 @@ export class OpenAICompatibleProvider implements ILLMProvider {
             const choice = parsed.choices?.[0];
             if (choice) {
               yield {
-                delta: choice.delta?.content || '',
+                delta: choice.delta?.content || choice.message?.content || '',
                 finishReason: choice.finish_reason || null,
                 toolCalls: choice.delta?.tool_calls,
               };

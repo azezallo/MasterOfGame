@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal } from '@/components/ui/modal/Modal.tsx';
+import { Modal } from '@/components/ui/modal/Modal';
 import { SessionCreationForm } from './SessionCreationForm';
 import { useSessionCreation } from '../hooks/useSessionCreation';
 import type { SessionCreationInput } from '../types';

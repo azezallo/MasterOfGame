@@ -1,20 +1,56 @@
-// I'll skip types for now and just use a string or number
+import fs from 'fs';
+import path from 'path';
+
+const LOG_DIR = path.resolve(process.cwd(), 'logs');
+const LOG_FILE = path.resolve(LOG_DIR, 'master_of_game.log');
+
+function ensureLogDir(): void {
+  try {
+    if (!fs.existsSync(LOG_DIR)) {
+      fs.mkdirSync(LOG_DIR, { recursive: true });
+    }
+  } catch {}
+}
+
+function writeToFile(level: string, message: string, meta?: any): void {
+  ensureLogDir();
+  try {
+    const entry = JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level,
+      message,
+      ...(meta || {}),
+    });
+    fs.appendFileSync(LOG_FILE, entry + '\n', 'utf-8');
+  } catch {}
+}
 
 /**
- * Simple structured logger that outputs JSON.
- * In a production environment, this should be replaced with a library like Pino or Winston.
+ * Enhanced structured logger that outputs formatted console messages and writes to logs/master_of_game.log.
  */
 export const logger = {
   info: (message: string, meta?: any) => {
-    console.log(JSON.stringify({ level: 'info', message, ...meta, timestamp: new Date().toISOString() }));
+    console.log(`[INFO] [${new Date().toISOString()}] ${message}`, meta ? JSON.stringify(meta) : '');
+    writeToFile('info', message, meta);
   },
   warn: (message: string, meta?: any) => {
-    console.warn(JSON.stringify({ level: 'warn', message, ...meta, timestamp: new Date().toISOString() }));
+    console.warn(`[WARN] [${new Date().toISOString()}] ${message}`, meta ? JSON.stringify(meta) : '');
+    writeToFile('warn', message, meta);
   },
   error: (message: string, meta?: any) => {
-    console.error(JSON.stringify({ level: 'error', message, ...meta, timestamp: new Date().toISOString() }));
+    console.error(`[ERROR] [${new Date().toISOString()}] ${message}`, meta ? JSON.stringify(meta) : '');
+    writeToFile('error', message, meta);
   },
   debug: (message: string, meta?: any) => {
-    console.debug(JSON.stringify({ level: 'debug', message, ...meta, timestamp: new Date().toISOString() }));
+    console.debug(`[DEBUG] [${new Date().toISOString()}] ${message}`, meta ? JSON.stringify(meta) : '');
+    writeToFile('debug', message, meta);
+  },
+  llm: (message: string, meta?: any) => {
+    console.log(`[LLM] [${new Date().toISOString()}] 🤖 ${message}`, meta ? JSON.stringify(meta) : '');
+    writeToFile('llm', message, meta);
+  },
+  subagent: (message: string, meta?: any) => {
+    console.log(`[SUBAGENT] [${new Date().toISOString()}] ⚙️ ${message}`, meta ? JSON.stringify(meta) : '');
+    writeToFile('subagent', message, meta);
   },
 };

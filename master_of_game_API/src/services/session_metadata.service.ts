@@ -10,11 +10,16 @@ import { PersistenceError } from '../errors/app_errors';
 export class SessionMetadataService {
   /**
    * Gets metadata for a specific session.
-   * Returns null if metadata does not exist in the database.
+   * Loads the session database from disk if it is not already in memory.
    */
   public async getMetadata(playerId: string, sessionId: string): Promise<SessionMetadata | null> {
-    const repo = PersistenceService.repos.get(sessionId);
-    
+    let repo = PersistenceService.repos.get(sessionId);
+
+    if (!repo) {
+      const persistenceService = new PersistenceService();
+      repo = (await persistenceService.loadSessionRepo(playerId, sessionId)) || undefined;
+    }
+
     if (repo) {
       const metadata = repo.loadMetadata();
       if (metadata) return metadata;
@@ -64,7 +69,7 @@ export class SessionMetadataService {
 
   /**
    * Gets all available sessions for a player.
-   * Scans the saves folder and returns only sessions that have valid metadata in the database.
+   * Scans the saves folder and returns all sessions with valid metadata.
    */
   public async getAvailableSessions(playerId: string): Promise<SessionMetadata[]> {
     const playerDir = path.resolve(CONFIG.SAVES_DIR, playerId);

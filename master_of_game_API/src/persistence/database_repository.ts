@@ -10,6 +10,8 @@ import { NpcRepository } from '../repositories/npc.repository';
 import { WorldStateRepository } from '../repositories/world_state.repository';
 import { PlayerStateRepository } from '../repositories/player_state.repository';
 import { OrganizationRepository } from '../repositories/organization.repository';
+import { SemanticMemoryRepository } from '../repositories/semantic_memory.repository';
+import { AgenticLoopRepository } from '../repositories/agentic_loop.repository';
 
 interface DBInventoryRow {
   id: number;
@@ -324,6 +326,16 @@ export class DatabaseRepository {
   public getPlayerStateRepository(): PlayerStateRepository {
     if (!this.db) throw new Error('Database not initialized');
     return new PlayerStateRepository(this.db);
+  }
+
+  public getSemanticMemoryRepository(): SemanticMemoryRepository {
+    if (!this.db) throw new Error('Database not initialized');
+    return new SemanticMemoryRepository(this.db);
+  }
+
+  public getAgenticLoopRepository(): AgenticLoopRepository {
+    if (!this.db) throw new Error('Database not initialized');
+    return new AgenticLoopRepository(this.db);
   }
 
   public close(): void {

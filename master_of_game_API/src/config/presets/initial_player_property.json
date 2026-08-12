@@ -1,0 +1,47 @@
+{
+  "equipped": [
+    {
+      "slot": "outer_layer",
+      "item_name": "Шкіряний плащ мандрівника",
+      "weight_kg": 2.5
+    },
+    {
+      "slot": "belt",
+      "item_name": "Сталевий мисливський ніж",
+      "weight_kg": 0.8
+    }
+  ],
+  "pocket_inventory": {
+    "backpack": {
+      "is_equipped": true,
+      "backpack_item_id": "backpack_default",
+      "items": [
+        "Магічний факел",
+        "Зілля відновлення мани",
+        "Запас солі та сухарів"
+      ]
+    },
+    "pockets_and_belt": {
+      "items": [
+        "Кресало та трут",
+        "Малий мотузок (5м)"
+      ]
+    },
+    "weight_stats": {
+      "equipped_and_pockets_weight_kg": 3.3,
+      "backpack_weight_kg": 4.0,
+      "total_weight_kg": 7.3,
+      "max_carry_weight_kg": 55.0,
+      "encumbrance_status": "normal",
+      "combat_encumbrance_status": "normal"
+    }
+  },
+  "finances": {
+    "coins": 150,
+    "bank_accounts": [],
+    "promissory_notes": []
+  },
+  "real_estate": [],
+  "storage_caches": [],
+  "vehicles_and_mounts": []
+}

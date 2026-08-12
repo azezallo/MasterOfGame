@@ -1,39 +1,13 @@
 import Database from 'better-sqlite3';
 import { PlayerStateProfile } from '../types/player_state.types';
 import { PlayerStateProfileSchema } from '../schemas/player_state.schema';
+import { getInitialPlayerStatePreset } from '../config';
 
 export interface DBPlayerStateRow {
   session_id: string;
   data: string;
   updated_at: number;
 }
-
-export const DEFAULT_PLAYER_STATE: PlayerStateProfile = {
-  physical_states: [],
-  body_states: [],
-  psychological_states: [],
-  attributes: {
-    strength: 25,
-    agility: 30,
-    endurance: 28,
-    perception: 22,
-    willpower: 20,
-  },
-  derived_stats: {
-    max_carry_weight_kg: 55.0, // 5.0 + 25 * 2.0
-  },
-  magic_stats: {
-    mana_pool: 100,
-    current_mana: 25,
-    mana_flow: 5,
-    base_regen: 10.0,
-  },
-  skills: {
-    fire_magic: 50,
-    sword_fighting: 30,
-    stealth: 15,
-  },
-};
 
 export class PlayerStateRepository {
   private db: Database.Database;
@@ -58,19 +32,19 @@ export class PlayerStateRepository {
     const row = stmt.get(sessionId) as DBPlayerStateRow | undefined;
 
     if (!row) {
-      const defaultState = JSON.parse(JSON.stringify(DEFAULT_PLAYER_STATE));
-      this.savePlayerState(sessionId, defaultState);
-      return defaultState;
+      const defaultPreset = getInitialPlayerStatePreset() as PlayerStateProfile;
+      this.savePlayerState(sessionId, defaultPreset);
+      return defaultPreset;
     }
 
     try {
       const parsed = JSON.parse(row.data);
       return PlayerStateProfileSchema.parse(parsed);
     } catch (err) {
-      console.error('[PlayerStateRepository] Failed to parse player state data, returning default:', err);
-      const defaultState = JSON.parse(JSON.stringify(DEFAULT_PLAYER_STATE));
-      this.savePlayerState(sessionId, defaultState);
-      return defaultState;
+      console.error('[PlayerStateRepository] Failed to parse player state data, returning default preset:', err);
+      const defaultPreset = getInitialPlayerStatePreset() as PlayerStateProfile;
+      this.savePlayerState(sessionId, defaultPreset);
+      return defaultPreset;
     }
   }
 

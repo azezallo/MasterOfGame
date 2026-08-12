@@ -1,98 +1,160 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { ChatMessage, GameStatus } from '../types';
-import { mockChatApi } from '../api/mockChatApi';
+import { useTranslation } from 'react-i18next';
+import type { ChatMessage } from '../types';
+import { useAgenticLoop, agenticLoopApi } from '@/features/agentic_loop';
 
-export const useChat = (sessionId: string | null) => {
+export const useChat = (sessionId: string) => {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [status, setStatus] = useState<GameStatus>('IDLE');
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
+  const lastProcessedTurnIdRef = useRef<string | null>(null);
 
-  const pollStepRef = useRef(0);
+  const defaultInitialMessage: ChatMessage = {
+    id: 'welcome_1',
+    type: 'master',
+    text: t('chat.default_initial_message', 'Ви прокидаєтесь у тьмяно освітленій кімнаті. Холодна кам\'яна підлога неприємно холодить спину. Повітря просякнуте запахом вогкості та старої сталі.'),
+  };
+
+  const agenticLoop = useAgenticLoop(sessionId);
+  const {
+    submitTurn,
+    isStreaming,
+    stage,
+    subagent,
+    statusMessage,
+    narrativeText,
+    turnId,
+    error,
+    isCompressing,
+    compressedLogsCount,
+    compressContext: agenticCompressContext,
+    resetTurnState,
+  } = agenticLoop;
 
   useEffect(() => {
     if (!sessionId) return;
 
+    let isMounted = true;
     const loadHistory = async () => {
       setIsLoadingHistory(true);
       try {
-        const data = await mockChatApi.fetchHistory(sessionId);
-        setMessages(data.messages);
-        setStatus(data.status);
-      } catch (error) {
-        console.error('Failed to load chat history', error);
+        const historyMessages = await agenticLoopApi.fetchHistory(sessionId);
+        if (isMounted) {
+          if (historyMessages && historyMessages.length > 0) {
+            setMessages(historyMessages);
+          } else {
+            setMessages([defaultInitialMessage]);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load chat history', err);
+        if (isMounted) {
+          setMessages([defaultInitialMessage]);
+        }
       } finally {
-        setIsLoadingHistory(false);
+        if (isMounted) {
+          setIsLoadingHistory(false);
+        }
       }
     };
 
     loadHistory();
+    return () => {
+      isMounted = false;
+    };
   }, [sessionId]);
 
-  const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || isProcessing) return;
+  useEffect(() => {
+    if (stage === 'completed' && narrativeText) {
+      const currentTurnId = turnId || `turn_${Date.now()}`;
+      if (lastProcessedTurnIdRef.current !== currentTurnId) {
+        lastProcessedTurnIdRef.current = currentTurnId;
 
-    // Add player message optimistically
-    const playerMsg: ChatMessage = {
-      id: Date.now().toString(),
-      type: 'player',
-      text: text
-    };
-    
-    setMessages(prev => [...prev, playerMsg]);
-    setIsProcessing(true);
-    setStatus('GATHERING_MEMORY');
-    pollStepRef.current = 0;
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: currentTurnId,
+            type: 'master',
+            text: narrativeText,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+      }
+    }
+  }, [stage, narrativeText, turnId]);
 
-    try {
-      await mockChatApi.sendMessage(text);
-      
-      // Start polling logic using recursive setTimeout to avoid overlapping calls
-      const poll = async () => {
+  useEffect(() => {
+    if (stage === 'error' && error) {
+      // Auto-recover check: If backend completed turn asynchronously after SSE disconnection, fetch history
+      const timer = setTimeout(async () => {
         try {
-          const result = await mockChatApi.pollGameStatus(pollStepRef.current);
-          setStatus(result.status);
-          
-          if (result.isReady) {
-            setIsProcessing(false);
-            setStatus('IDLE');
-            
-            if (result.message) {
-              const masterMsg: ChatMessage = {
-                id: (Date.now() + 1).toString(),
-                type: 'master',
-                text: result.message
-              };
-              setMessages(prev => [...prev, masterMsg]);
-            }
-          } else {
-            pollStepRef.current += 1;
-            // Schedule next poll only after the current one finishes
-            setTimeout(poll, 1500);
+          const historyMessages = await agenticLoopApi.fetchHistory(sessionId);
+          if (historyMessages && historyMessages.length > 0) {
+            setMessages(historyMessages);
+            return;
           }
-        } catch (error) {
-          console.error('Polling error', error);
-          setIsProcessing(false);
-          setStatus('IDLE');
-        }
+        } catch {}
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `error_${Date.now()}`,
+            type: 'system',
+            text: `Помилка виконання ходу: ${error}`,
+          },
+        ]);
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [stage, error, sessionId]);
+
+  const sendMessage = useCallback(
+    async (text: string) => {
+      if (!text.trim() || isStreaming) return;
+
+      const playerMsg: ChatMessage = {
+        id: `player_${Date.now()}`,
+        type: 'player',
+        text: text.trim(),
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
-      // Start the first poll
-      setTimeout(poll, 1500);
+      setMessages((prev) => [...prev, playerMsg]);
+      await submitTurn(text.trim());
+    },
+    [isStreaming, submitTurn]
+  );
 
-    } catch (error) {
-      console.error('Failed to send message', error);
-      setIsProcessing(false);
-      setStatus('IDLE');
+  const compressContext = useCallback(async () => {
+    const res = await agenticCompressContext();
+    if (res && res.success) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `compress_${Date.now()}`,
+          type: 'system',
+          text: `Главу успішно завершено! Стиснено записів логу: ${res.compressedLogsCount}.`,
+        },
+      ]);
     }
-
-  }, [isProcessing]);
+    return res;
+  }, [agenticCompressContext]);
 
   return {
     messages,
-    status,
-    isProcessing,
     isLoadingHistory,
-    sendMessage
+    isStreaming,
+    stage,
+    subagent,
+    statusMessage,
+    narrativeText,
+    error,
+    isCompressing,
+    compressedLogsCount,
+    sendMessage,
+    compressContext,
+    cancelStream: agenticLoop.cancelStream,
+    resetTurnState,
   };
 };

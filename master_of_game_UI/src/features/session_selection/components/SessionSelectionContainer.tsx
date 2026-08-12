@@ -4,7 +4,7 @@ import { useSessions } from '../hooks/useSessions';
 import { SessionTable } from '../components/SessionTable';
 import { SessionCard } from '../components/SessionCard';
 import { ChatLayout } from '@/features/chat';
-import { Spinner } from '@/components/ui/spinner/Spinner.tsx';
+import { Spinner } from '@/components/ui/spinner/Spinner';
 import { CreateSessionButton } from '@/features/session_creation';
 import { useAISettings, AISettingsModal } from '@/features/ai_settings';
 import type { GetMeResponse } from '@/api/contracts/auth';

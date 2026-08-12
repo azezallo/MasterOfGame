@@ -1,28 +1,37 @@
 import React, { useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { ChatMessage, GameStatus } from '../../types';
+import type { ChatMessage as ChatMessageType } from '../../types';
+import type { TurnStage, SubagentGroup } from '@/features/agentic_loop';
 import { useWorldState, WorldStateWidget } from '@/features/worldState';
 import { useMapNavigation } from '@/features/map/hooks/useMapNavigation';
+import { TurnProgressIndicator } from '@/features/agentic_loop';
+import { ChatMessage } from '../ChatMessage/ChatMessage';
+import { ChatInput } from '../ChatInput/ChatInput';
 import styles from './MainChat.module.css';
 
 interface MainChatProps {
   sessionId?: string;
-  messages: ChatMessage[];
-  status: GameStatus;
-  isProcessing: boolean;
+  messages: ChatMessageType[];
+  isStreaming: boolean;
+  stage: TurnStage;
+  subagent?: SubagentGroup | null;
+  statusMessage?: string | null;
+  narrativeText?: string;
   onSendMessage: (content: string) => void;
+  onCancelStream?: () => void;
 }
 
 export const MainChat: React.FC<MainChatProps> = ({
   sessionId = '',
   messages,
-  status,
-  isProcessing,
+  isStreaming,
+  stage,
+  subagent,
+  statusMessage,
+  narrativeText = '',
   onSendMessage,
+  onCancelStream,
 }) => {
-  const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const { worldState, isLoading: isLoadingWorldState } = useWorldState({ sessionId });
   const { currentLocation } = useMapNavigation(sessionId);
@@ -33,27 +42,7 @@ export const MainChat: React.FC<MainChatProps> = ({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, status]);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      const text = e.currentTarget.value;
-      if (text.trim() && !isProcessing) {
-        onSendMessage(text);
-        e.currentTarget.value = '';
-      }
-    }
-  };
-
-  const getStatusText = (status: GameStatus) => {
-    switch (status) {
-      case 'GATHERING_MEMORY': return t('chat.master_status.gathering_memory');
-      case 'READING_MAP': return t('chat.master_status.reading_map');
-      case 'GENERATING_NARRATIVE': return t('chat.master_status.generating_narrative');
-      default: return '';
-    }
-  };
+  }, [messages, narrativeText, stage]);
 
   return (
     <div className={styles.dialogContainer}>
@@ -62,34 +51,37 @@ export const MainChat: React.FC<MainChatProps> = ({
         isLoading={isLoadingWorldState}
         manaDensity={currentLocation?.environmental_state?.mana_density ?? 50}
       />
-      <div className={styles.messagesArea}>
-        {messages.map((msg) => {
-          const typeSuffix = msg.type.charAt(0).toUpperCase() + msg.type.slice(1);
-          return (
-            <div key={msg.id} className={`${styles.message} ${styles[`message${typeSuffix}`]}`}>
-              <div className={styles.content}>{msg.text}</div>
-            </div>
-          );
-        })}
 
-        {isProcessing && (
-          <div className={`${styles.message} ${styles.messageSystem}`}>
-            <div className={styles.content}>{getStatusText(status)}</div>
-          </div>
+      <div className={styles.messagesArea}>
+        {messages.map((msg) => (
+          <ChatMessage key={msg.id} message={msg} />
+        ))}
+
+        {isStreaming && (
+          <TurnProgressIndicator
+            stage={stage}
+            subagent={subagent}
+            statusMessage={statusMessage}
+            onCancel={onCancelStream}
+          />
+        )}
+
+        {isStreaming && stage === 'narrative' && narrativeText && (
+          <ChatMessage
+            message={{
+              id: 'streaming_narrative',
+              type: 'master',
+              text: narrativeText,
+            }}
+            isStreaming={true}
+          />
         )}
 
         <div ref={messagesEndRef} />
       </div>
 
       <div className={styles.inputArea}>
-        <textarea
-          ref={inputRef}
-          className={styles.input}
-          placeholder={t('chat.placeholder')}
-          disabled={isProcessing}
-          onKeyDown={handleKeyDown}
-          rows={3}
-        />
+        <ChatInput onSendMessage={onSendMessage} disabled={isStreaming} />
       </div>
     </div>
   );
