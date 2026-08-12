@@ -10,9 +10,19 @@ export const register = async (req: Request, res: Response) => {
   try {
     const validatedData = RegisterSchema.parse(req.body);
     await authService.register(validatedData.login, validatedData.password);
+    const loginResult = await authService.login(validatedData.login, validatedData.password);
+
+    res.cookie('session_id', loginResult.session_id, {
+      httpOnly: true,
+      secure: false, // Set to true in production
+      sameSite: 'lax',
+      maxAge: loginResult.expires_at * 1000,
+    });
+
     return res.status(201).json({
       success: true,
       message: 'User registered successfully',
+      player: loginResult.player,
     });
   } catch (error) {
     if (error instanceof ValidationError) {

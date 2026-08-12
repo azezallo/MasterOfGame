@@ -2,38 +2,22 @@ import './App.css'
 import { useDesignSystem } from './features/design-system/hooks/useDesignSystem'
 import { DesignSystemPopup } from './features/design-system/components/DesignSystemPopup'
 import { AuthPopup } from './features/auth/components/AuthPopup'
+import { useAuth } from './features/auth/hooks/useAuth'
 import { SessionSelectionContainer } from './features/session_selection/components/SessionSelectionContainer'
 
 function App() {
-  // TEMPORARY: Design system preview — remove with the preview button
-  // @ts-ignore: 'openPopup' is declared but its value is never read.
-  const { isOpen, openPopup, closePopup } = useDesignSystem();
+  const { isOpen, closePopup } = useDesignSystem();
+  const auth = useAuth();
 
   return (
     <>
-      <SessionSelectionContainer onSessionSelect={(id) => console.log(`Selected: ${id}`)} />
-
-      {/* <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <button
-          type="button"
-          className="design-system-trigger"
-          onClick={openPopup}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#d4af37',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          Open Design System
-        </button>
-      </div> */}
+      <SessionSelectionContainer
+        user={auth.user}
+        onSessionSelect={(id) => console.log(`Selected: ${id}`)}
+      />
 
       <DesignSystemPopup isOpen={isOpen} onClose={closePopup} />
-      <AuthPopup />
+      <AuthPopup auth={auth} />
     </>
   )
 }

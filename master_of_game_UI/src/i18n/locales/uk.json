@@ -6,6 +6,22 @@
     "not_specified": "Не вказано",
     "not_played": "Не гралося"
   },
+  "ai_settings": {
+    "title": "Налаштування ШІ (AI Settings)",
+    "main_llm": "ГОЛОВНА LLM МОДЕЛЬ",
+    "provider": "Провайдер",
+    "base_url": "Base URL сервера",
+    "model_name": "Назва моделі",
+    "fetch_models": "Отримати список моделей",
+    "api_key": "API Key",
+    "temperature": "Температура",
+    "timeout": "Таймаут запиту (секунди)",
+    "no_timeout": "Без таймауту (Чекати скільки завгодно)",
+    "embeddings": "МОДЕЛЬ ВЕКТОРИЗАЦІЇ (EMBEDDINGS - F017)",
+    "embedding_provider": "Тип векторизатора",
+    "test_connection": "Тестувати з'єднання",
+    "save": "Зберегти"
+  },
   "session_selection": {
     "title": "Вибір сесії",
     "empty_message": "Не має активних ігор",

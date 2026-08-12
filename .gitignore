@@ -144,3 +144,5 @@ vite.config.ts.timestamp-*
 /.idea/*
 */.idea/*
 /master_of_game_API/test_saves_integration/**
+
+/master_of_game_API/saves/

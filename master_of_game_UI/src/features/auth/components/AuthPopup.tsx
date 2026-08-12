@@ -6,8 +6,15 @@ import { Input } from '@/components/ui/input/Input';
 import { Modal } from '@/components/ui/modal/Modal';
 import { useAuth } from '../hooks/useAuth';
 
-export const AuthPopup: React.FC = () => {
+interface AuthPopupProps {
+  auth?: ReturnType<typeof useAuth>;
+}
+
+export const AuthPopup: React.FC<AuthPopupProps> = ({ auth: externalAuth }) => {
   const { t } = useTranslation();
+  const fallbackAuth = useAuth();
+  const auth = externalAuth || fallbackAuth;
+
   const {
     mode,
     setMode,
@@ -21,7 +28,7 @@ export const AuthPopup: React.FC = () => {
     handleLogin,
     user,
     clearError,
-  } = useAuth();
+  } = auth;
 
   const isVisible = !user;
 
