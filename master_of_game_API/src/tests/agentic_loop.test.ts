@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 import { DatabaseRepository } from '../persistence/database_repository';
@@ -9,17 +8,55 @@ import { CompressionService } from '../services/agentic_loop/compression.service
 import { SemanticMemoryService } from '../services/semantic_memory.service';
 import { SemanticMemoryRepository } from '../repositories/semantic_memory.repository';
 import { ILLMProvider } from '../providers/llm/llm_provider.interface';
+import { CONFIG } from '../config';
 
 describe('F012 Agentic Loop Services', () => {
-  let db: Database.Database;
   let repo: DatabaseRepository;
   let memoryService: SemanticMemoryService;
-  const testDbPath = path.resolve(__dirname, 'test_agentic_loop.db');
+  const testPlayerId = 'test_player_agentic';
+  const testSessionId = 'sess_test_123';
+  const testDbPath = path.resolve(CONFIG.SAVES_DIR, testPlayerId, `${testSessionId}.db`);
 
   const mockLLMProvider: ILLMProvider = {
     id: 'openai_compatible',
     generate: async (req) => {
       const userMsg = req.messages.find((m) => m.role === 'user')?.content || '';
+      const toolMsg = req.messages.find((m) => m.role === 'tool')?.content || '';
+
+      if (userMsg.includes('половину мани')) {
+        if (!toolMsg) {
+          // Turn 1: Inspect player state
+          return {
+            content: null,
+            toolCalls: [
+              {
+                id: 'call_inspect_mana',
+                type: 'function',
+                function: {
+                  name: 'get_player_state',
+                  arguments: JSON.stringify({}),
+                },
+              },
+            ],
+          };
+        } else {
+          // Turn 2: Apply calculated mana reduction (-50%)
+          return {
+            content: null,
+            toolCalls: [
+              {
+                id: 'call_apply_mana',
+                type: 'function',
+                function: {
+                  name: 'update_player_state',
+                  arguments: JSON.stringify({ mana_percent: -50 }),
+                },
+              },
+            ],
+          };
+        }
+      }
+
       if (userMsg.includes('мани')) {
         return {
           content: null,
@@ -116,116 +153,25 @@ describe('F012 Agentic Loop Services', () => {
   };
 
   beforeEach(async () => {
-    if (fs.existsSync(testDbPath)) {
-      fs.unlinkSync(testDbPath);
-    }
-    db = new Database(testDbPath);
     repo = new DatabaseRepository();
-    (repo as any).db = db;
-    (repo as any).sessionId = 'sess_test_123';
-
+    await repo.initializeDB(testPlayerId, testSessionId);
+    const db = (repo as any).db;
     const memoryRepo = new SemanticMemoryRepository(db);
     memoryService = new SemanticMemoryService(memoryRepo);
-
-    // Initialize tables
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS short_logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id TEXT NOT NULL,
-        turn_number INTEGER NOT NULL,
-        content TEXT NOT NULL,
-        is_compressed INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS long_context (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id TEXT NOT NULL,
-        turn_number INTEGER NOT NULL,
-        role TEXT NOT NULL CHECK(role IN ('player', 'master')),
-        content TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS session_summaries (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id TEXT NOT NULL,
-        summary_text TEXT NOT NULL,
-        compressed_until_turn INTEGER NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS player_state (
-        session_id TEXT PRIMARY KEY,
-        data TEXT NOT NULL,
-        updated_at INTEGER DEFAULT (cast(strftime('%s', 'now') as int))
-      );
-
-      CREATE TABLE IF NOT EXISTS npcs (
-        npc_id TEXT PRIMARY KEY,
-        status TEXT NOT NULL,
-        name TEXT NOT NULL,
-        role TEXT,
-        current_location_id TEXT,
-        data TEXT NOT NULL,
-        created_at INTEGER,
-        updated_at INTEGER
-      );
-
-      CREATE TABLE IF NOT EXISTS npc_relationships (
-        source_npc_id TEXT,
-        target_npc_id TEXT,
-        relationship_type TEXT,
-        strength INTEGER,
-        summary TEXT,
-        last_updated INTEGER,
-        PRIMARY KEY(source_npc_id, target_npc_id)
-      );
-
-      CREATE TABLE IF NOT EXISTS properties (
-        property_profile_id TEXT PRIMARY KEY,
-        owner_type TEXT NOT NULL,
-        owner_id TEXT NOT NULL,
-        equipped TEXT NOT NULL,
-        pocket_inventory TEXT NOT NULL,
-        finances TEXT NOT NULL,
-        real_estate TEXT NOT NULL,
-        storage_caches TEXT NOT NULL,
-        vehicles_and_mounts TEXT NOT NULL,
-        created_at INTEGER,
-        updated_at INTEGER
-      );
-
-      CREATE TABLE IF NOT EXISTS inventory (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        item_id TEXT NOT NULL,
-        quantity INTEGER NOT NULL DEFAULT 1,
-        metadata TEXT
-      );
-
-      CREATE TABLE IF NOT EXISTS world_time_weather (
-        id INTEGER PRIMARY KEY,
-        current_date TEXT NOT NULL,
-        weather_timeline TEXT NOT NULL,
-        updated_at INTEGER NOT NULL
-      );
-    `);
   });
 
   afterEach(() => {
-    db.close();
+    repo.close();
     if (fs.existsSync(testDbPath)) {
-      fs.unlinkSync(testDbPath);
+      try { fs.unlinkSync(testDbPath); } catch {}
     }
   });
 
   it('should assemble system prompt incorporating Summary, RAG, and Short Context', async () => {
-    // Seed summary
-    db.prepare(`INSERT INTO session_summaries (session_id, summary_text, compressed_until_turn) VALUES (?, ?, ?)`).run('sess_test_123', 'Глава 1: Герой увівшов у підземелля.', 5);
+    repo.getAgenticLoopRepository().saveSessionSummary(testSessionId, 'Глава 1: Герой увівшов у підземелля.', 5);
 
-    // Seed F017 Memory
     memoryService.indexRecord({
-      session_id: 'sess_test_123',
+      session_id: testSessionId,
       turn_number: 2,
       role: 'system',
       content: 'Знайдено магічний перстень з печатки.',
@@ -233,23 +179,36 @@ describe('F012 Agentic Loop Services', () => {
     });
 
     const assembly = new ContextAssemblyService(repo, memoryService);
-    const prompt = await assembly.assembleMasterSystemPrompt('sess_test_123', 'Де перстень?');
+    const prompt = await assembly.assembleMasterSystemPrompt(testSessionId, 'Де перстень?');
 
     expect(prompt).toContain('Глава 1: Герой увівшов у підземелля.');
     expect(prompt).toContain('Знайдено магічний перстень з печатки.');
+  });
+
+  it('should execute multi-turn Re-Act subagent loop (inspect state on Turn 1, mutate state on Turn 2)', async () => {
+    const orchestrator = new SubagentOrchestratorService(repo, memoryService, mockLLMProvider, 'test-model');
+
+    const multiTurnRes = await orchestrator.executeSubagentInstruction(testSessionId, 'actor', 'Зніми половину мани у гравця');
+    expect(multiTurnRes.success).toBe(true);
+    expect(multiTurnRes.message).toContain('Стан гравця успішно оновлено');
+
+    const playerRepo = repo.getPlayerStateRepository();
+    const playerState = playerRepo.getPlayerState(testSessionId);
+    // Initial default mana from preset is 100/100, half of 100 is 50
+    expect(playerState.magic_stats.current_mana).toBe(50);
   });
 
   it('should execute pure LLM actor subagent instructions for mana, effects, and NPCs', async () => {
     const orchestrator = new SubagentOrchestratorService(repo, memoryService, mockLLMProvider, 'test-model');
 
     // 1. Mana update
-    const manaRes = await orchestrator.executeSubagentInstruction('sess_test_123', 'actor', 'Зніми 10 мани у гравця');
+    const manaRes = await orchestrator.executeSubagentInstruction(testSessionId, 'actor', 'Зніми 10 мани у гравця');
     expect(manaRes.success).toBe(true);
     expect(manaRes.message).toContain('Стан гравця успішно оновлено');
 
     // 2. Status effect application
     const effectRes = await orchestrator.executeSubagentInstruction(
-      'sess_test_123',
+      testSessionId,
       'actor',
       'Накласти негативний ефект "Тяжке виснаження" на гравця'
     );
@@ -257,11 +216,11 @@ describe('F012 Agentic Loop Services', () => {
     expect(effectRes.message).toContain('Стан гравця успішно оновлено');
 
     const playerRepo = repo.getPlayerStateRepository();
-    const playerState = playerRepo.getPlayerState('sess_test_123');
+    const playerState = playerRepo.getPlayerState(testSessionId);
     expect(playerState.physical_states.some((s) => s.name === 'Тяжке виснаження')).toBe(true);
 
     // 3. NPC Creation
-    const npcRes = await orchestrator.executeSubagentInstruction('sess_test_123', 'actor', 'Створити NPC "Торговець Гриць"');
+    const npcRes = await orchestrator.executeSubagentInstruction(testSessionId, 'actor', 'Створити NPC "Торговець Гриць"');
     expect(npcRes.success).toBe(true);
     expect(npcRes.message).toContain('Торговець Гриць');
   });
@@ -269,11 +228,11 @@ describe('F012 Agentic Loop Services', () => {
   it('should execute pure LLM property subagent instructions for coins and items', async () => {
     const orchestrator = new SubagentOrchestratorService(repo, memoryService, mockLLMProvider, 'test-model');
 
-    const cashRes = await orchestrator.executeSubagentInstruction('sess_test_123', 'property', 'Додай 50 монет');
+    const cashRes = await orchestrator.executeSubagentInstruction(testSessionId, 'property', 'Додай 50 монет');
     expect(cashRes.success).toBe(true);
     expect(cashRes.message).toContain('Майно гравця успішно оновлено');
 
-    const itemRes = await orchestrator.executeSubagentInstruction('sess_test_123', 'property', 'Додай предмет "Магічний факел"');
+    const itemRes = await orchestrator.executeSubagentInstruction(testSessionId, 'property', 'Додай предмет "Магічний факел"');
     expect(itemRes.success).toBe(true);
     expect(itemRes.message).toContain('Майно гравця успішно оновлено');
   });
@@ -281,24 +240,25 @@ describe('F012 Agentic Loop Services', () => {
   it('should execute pure LLM world subagent instructions for weather', async () => {
     const orchestrator = new SubagentOrchestratorService(repo, memoryService, mockLLMProvider, 'test-model');
 
-    const weatherRes = await orchestrator.executeSubagentInstruction('sess_test_123', 'world', 'Зміни погоду на зливу');
+    const weatherRes = await orchestrator.executeSubagentInstruction(testSessionId, 'world', 'Зміни погоду на зливу');
     expect(weatherRes.success).toBe(true);
     expect(weatherRes.message).toContain('downpour');
   });
 
   it('should compress session context according to 80/20 rule', async () => {
+    const loopRepo = repo.getAgenticLoopRepository();
     // Seed 5 short logs
     for (let i = 1; i <= 5; i++) {
-      db.prepare(`INSERT INTO short_logs (session_id, turn_number, content) VALUES (?, ?, ?)`).run('sess_test_123', i, `Подія ходу ${i}`);
+      loopRepo.saveShortLog(testSessionId, i, `Подія ходу ${i}`);
     }
 
     const compression = new CompressionService(repo);
-    const result = await compression.compressSessionContext('sess_test_123', true);
+    const result = await compression.compressSessionContext(testSessionId, true);
 
     expect(result.success).toBe(true);
     expect(result.compressedLogsCount).toBe(5);
 
-    const remainingUncompressed = db.prepare(`SELECT count(*) as cnt FROM short_logs WHERE session_id = ? AND is_compressed = 0`).get('sess_test_123') as any;
-    expect(remainingUncompressed.cnt).toBe(0);
+    const uncompressed = loopRepo.getUncompressedShortLogs(testSessionId);
+    expect(uncompressed.length).toBe(0);
   });
 });

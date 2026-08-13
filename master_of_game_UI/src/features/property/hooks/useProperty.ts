@@ -51,6 +51,20 @@ export function useProperty({
 
   useEffect(() => {
     loadPropertyData();
+
+    const handleTurnCompleted = () => {
+      loadPropertyData();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('game:turn_completed', handleTurnCompleted);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('game:turn_completed', handleTurnCompleted);
+      }
+    };
   }, [loadPropertyData]);
 
   const openDossier = (item: Item) => {

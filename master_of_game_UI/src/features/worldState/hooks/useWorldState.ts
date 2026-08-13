@@ -28,6 +28,20 @@ export function useWorldState({ sessionId }: UseWorldStateParams) {
 
   useEffect(() => {
     loadWorldState();
+
+    const handleTurnCompleted = () => {
+      loadWorldState();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('game:turn_completed', handleTurnCompleted);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('game:turn_completed', handleTurnCompleted);
+      }
+    };
   }, [loadWorldState]);
 
   return {

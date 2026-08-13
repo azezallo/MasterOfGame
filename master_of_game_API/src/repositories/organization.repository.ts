@@ -7,6 +7,7 @@ import {
   GetOrganizationsListFilter,
   AffiliationInteraction,
 } from '../types/organization.types';
+import { OrganizationSchema } from '../schemas/organization.schema';
 import { getInitialOrganizationsPreset } from '../config';
 
 interface DBOrganizationRow {
@@ -33,22 +34,56 @@ interface DBPlayerAffiliationRow {
   updated_at: number;
 }
 
+function safeJsonParse<T>(jsonString: string | null | undefined, fallback: T): T {
+  if (!jsonString) return fallback;
+  try {
+    return JSON.parse(jsonString);
+  } catch (err) {
+    console.error('[OrganizationRepository] JSON parse failure:', err, 'Raw value:', jsonString);
+    return fallback;
+  }
+}
+
 export class OrganizationRepository {
   constructor(private db: Database.Database) {}
 
   private mapOrganizationRow(row: DBOrganizationRow): Organization {
+    const rawHierarchy = safeJsonParse(row.hierarchy, []);
+    const rawObjectives = safeJsonParse(row.objectives, { public: [], secret: [] });
+    const rawResources = safeJsonParse(row.resources, {
+      wealth_level: 'medium',
+      manpower_level: 'medium',
+      influence: 'medium',
+    });
+
+    const parsedOrg = OrganizationSchema.safeParse({
+      id: row.id,
+      name: row.name,
+      type: row.type,
+      is_secret: Boolean(row.is_secret),
+      is_known_to_player: Boolean(row.is_known_to_player),
+      description: row.description || '',
+      hierarchy: Array.isArray(rawHierarchy) ? rawHierarchy : [],
+      objectives: typeof rawObjectives === 'object' && rawObjectives !== null ? rawObjectives : { public: [], secret: [] },
+      resources: typeof rawResources === 'object' && rawResources !== null ? rawResources : { wealth_level: 'medium', manpower_level: 'medium', influence: 'medium' },
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    });
+
+    if (parsedOrg.success) {
+      return parsedOrg.data as Organization;
+    }
+
     return {
       id: row.id,
       name: row.name,
       type: row.type,
       is_secret: Boolean(row.is_secret),
       is_known_to_player: Boolean(row.is_known_to_player),
-      description: row.description,
-      hierarchy: row.hierarchy ? JSON.parse(row.hierarchy) : [],
-      objectives: row.objectives ? JSON.parse(row.objectives) : { public: [], secret: [] },
-      resources: row.resources
-        ? JSON.parse(row.resources)
-        : { wealth_level: 'medium', manpower_level: 'medium', influence: 'medium' },
+      description: row.description || '',
+      hierarchy: Array.isArray(rawHierarchy) ? rawHierarchy : [],
+      objectives: typeof rawObjectives === 'object' && rawObjectives !== null ? rawObjectives : { public: [], secret: [] },
+      resources: typeof rawResources === 'object' && rawResources !== null ? rawResources : { wealth_level: 'medium', manpower_level: 'medium', influence: 'medium' },
       created_at: row.created_at,
       updated_at: row.updated_at,
     };
@@ -59,7 +94,7 @@ export class OrganizationRepository {
       organization_id: row.organization_id,
       rank_id: row.rank_id,
       reputation: row.reputation,
-      interactions: row.interactions ? JSON.parse(row.interactions) : [],
+      interactions: safeJsonParse(row.interactions, []),
       player_notes: row.player_notes || '',
       created_at: row.created_at,
       updated_at: row.updated_at,
@@ -76,17 +111,29 @@ export class OrganizationRepository {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    for (const org of presetOrganizations) {
+    for (const rawOrg of presetOrganizations) {
+      const validatedOrg = OrganizationSchema.parse({
+        id: rawOrg.id || `org_${Date.now()}`,
+        name: rawOrg.name || 'Організація',
+        type: rawOrg.type || 'faction',
+        is_secret: Boolean(rawOrg.is_secret),
+        is_known_to_player: Boolean(rawOrg.is_known_to_player),
+        description: rawOrg.description || '',
+        hierarchy: Array.isArray(rawOrg.hierarchy) ? rawOrg.hierarchy : [],
+        objectives: typeof rawOrg.objectives === 'object' && rawOrg.objectives !== null ? rawOrg.objectives : { public: [], secret: [] },
+        resources: typeof rawOrg.resources === 'object' && rawOrg.resources !== null ? rawOrg.resources : { wealth_level: 'medium', manpower_level: 'medium', influence: 'medium' },
+      });
+
       stmt.run(
-        org.id,
-        org.name,
-        org.type,
-        org.is_secret ? 1 : 0,
-        org.is_known_to_player ? 1 : 0,
-        org.description || '',
-        typeof org.hierarchy === 'string' ? org.hierarchy : JSON.stringify(org.hierarchy || []),
-        typeof org.objectives === 'string' ? org.objectives : JSON.stringify(org.objectives || { public: [], secret: [] }),
-        typeof org.resources === 'string' ? org.resources : JSON.stringify(org.resources || { wealth_level: 'medium', manpower_level: 'medium', influence: 'medium' })
+        validatedOrg.id,
+        validatedOrg.name,
+        validatedOrg.type,
+        validatedOrg.is_secret ? 1 : 0,
+        validatedOrg.is_known_to_player ? 1 : 0,
+        validatedOrg.description,
+        JSON.stringify(validatedOrg.hierarchy),
+        JSON.stringify(validatedOrg.objectives),
+        JSON.stringify(validatedOrg.resources)
       );
     }
   }
@@ -126,24 +173,26 @@ export class OrganizationRepository {
   }
 
   public create(org: Organization): Organization {
+    const validatedOrg = OrganizationSchema.parse(org);
+
     const stmt = this.db.prepare(`
       INSERT INTO organizations (id, name, type, is_secret, is_known_to_player, description, hierarchy, objectives, resources)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
-      org.id,
-      org.name,
-      org.type,
-      org.is_secret ? 1 : 0,
-      org.is_known_to_player ? 1 : 0,
-      org.description,
-      JSON.stringify(org.hierarchy || []),
-      JSON.stringify(org.objectives || { public: [], secret: [] }),
-      JSON.stringify(org.resources || { wealth_level: 'medium', manpower_level: 'medium', influence: 'medium' })
+      validatedOrg.id,
+      validatedOrg.name,
+      validatedOrg.type,
+      validatedOrg.is_secret ? 1 : 0,
+      validatedOrg.is_known_to_player ? 1 : 0,
+      validatedOrg.description,
+      JSON.stringify(validatedOrg.hierarchy),
+      JSON.stringify(validatedOrg.objectives),
+      JSON.stringify(validatedOrg.resources)
     );
 
-    return this.findById(org.id)!;
+    return this.findById(validatedOrg.id)!;
   }
 
   public updateStatus(id: string, updates: UpdateOrganizationStatusInput): Organization | null {

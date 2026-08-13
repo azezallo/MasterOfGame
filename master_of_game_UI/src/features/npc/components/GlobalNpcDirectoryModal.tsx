@@ -18,6 +18,7 @@ interface GlobalNpcDirectoryModalProps {
 
 const STATUS_CLASS_MAP: Record<NpcLifecycleStatus, string> = {
   alive: 'alive',
+  wounded: 'wounded',
   dead: 'dead',
   coma: 'coma',
   missing: 'missing',
@@ -28,6 +29,7 @@ const STATUS_CLASS_MAP: Record<NpcLifecycleStatus, string> = {
 const STATUS_OPTIONS: Array<{ value: NpcLifecycleStatus | 'all' }> = [
   { value: 'all' },
   { value: 'alive' },
+  { value: 'wounded' },
   { value: 'dead' },
   { value: 'coma' },
   { value: 'missing' },

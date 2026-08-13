@@ -33,6 +33,20 @@ export function usePlayerState(sessionId: string): UsePlayerStateResult {
 
   useEffect(() => {
     loadState();
+
+    const handleTurnCompleted = () => {
+      loadState();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('game:turn_completed', handleTurnCompleted);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('game:turn_completed', handleTurnCompleted);
+      }
+    };
   }, [loadState]);
 
   return {

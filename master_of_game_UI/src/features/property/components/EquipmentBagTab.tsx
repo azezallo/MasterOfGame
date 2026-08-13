@@ -35,9 +35,11 @@ export const EquipmentBagTab: React.FC<EquipmentBagTabProps> = ({
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
+  const totalWeight = weight_stats?.total_weight_kg ?? 0;
+  const maxWeight = weight_stats?.max_carry_weight_kg ?? 30.0;
   const weightPercent = Math.min(
     100,
-    (weight_stats.total_weight_kg / weight_stats.max_carry_weight_kg) * 100
+    (totalWeight / (maxWeight || 1)) * 100
   );
 
   const layersOrder: EquipmentLayer[] = ['inner', 'middle', 'outer', 'accessory'];
@@ -50,8 +52,8 @@ export const EquipmentBagTab: React.FC<EquipmentBagTabProps> = ({
           <span className={styles.weightLabel}>
             ⚖️{' '}
             {t('property.weight.label', {
-              current: weight_stats.total_weight_kg.toFixed(1),
-              max: weight_stats.max_carry_weight_kg.toFixed(1),
+              current: totalWeight.toFixed(1),
+              max: maxWeight.toFixed(1),
             })}
           </span>
           <span className={`${styles.statusBadge} ${styles[weight_stats.encumbrance_status]}`}>

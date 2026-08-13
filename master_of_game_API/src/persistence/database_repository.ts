@@ -63,8 +63,16 @@ export class DatabaseRepository {
   public async initializeDB(playerId: string, sessionId: string): Promise<void> {
     this.playerId = playerId;
     this.sessionId = sessionId;
-    const dbPath = path.resolve(CONFIG.SAVES_DIR, playerId, `${sessionId}.db`);
+    let dbPath = path.resolve(CONFIG.SAVES_DIR, playerId, `${sessionId}.db`);
     
+    // If the expected file does not exist, search across all player subdirectories in SAVES_DIR
+    if (!fs.existsSync(dbPath) && fs.existsSync(CONFIG.SAVES_DIR)) {
+      const foundPath = this.findSessionFile(CONFIG.SAVES_DIR, `${sessionId}.db`);
+      if (foundPath) {
+        dbPath = foundPath;
+      }
+    }
+
     // Ensure the player directory exists
     const dirPath = path.dirname(dbPath);
     if (!fs.existsSync(dirPath)) {
@@ -76,6 +84,22 @@ export class DatabaseRepository {
     this.db = new Database(dbPath);
 
     this.createTables();
+  }
+
+  private findSessionFile(dir: string, targetFileName: string): string | null {
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          const found = this.findSessionFile(fullPath, targetFileName);
+          if (found) return found;
+        } else if (entry.isFile() && entry.name === targetFileName) {
+          return fullPath;
+        }
+      }
+    } catch {}
+    return null;
   }
 
   private createTables(): void {

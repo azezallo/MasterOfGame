@@ -16,6 +16,7 @@ interface AISettingsModalProps {
     modelName: string;
     temperature: number;
     timeoutMs: number;
+    maxContextTokens: number;
     embeddingProvider: EmbeddingProviderId;
     apiKey?: string | null;
   };
@@ -148,6 +149,24 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
                 value={formValues.apiKey || ''}
                 onChange={(e) => setFormValues((prev: any) => ({ ...prev, apiKey: e.target.value }))}
                 placeholder={isLocal ? 'Залиште порожнім, якщо не потрібно' : '••••••••••••••••••••'}
+              />
+            </div>
+
+            {/* Max Context Tokens */}
+            <div className={styles.field}>
+              <label>{t('ai_settings.max_context_tokens', 'Максимальний розмір контексту (в токенах)')}:</label>
+              <input
+                type="number"
+                min="1000"
+                max="2000000"
+                step="1000"
+                value={formValues.maxContextTokens}
+                onChange={(e) =>
+                  setFormValues((prev: any) => ({
+                    ...prev,
+                    maxContextTokens: Math.max(1000, parseInt(e.target.value || '32000', 10)),
+                  }))
+                }
               />
             </div>
 

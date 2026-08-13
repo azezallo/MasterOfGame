@@ -1,16 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import { DatabaseRepository } from '../persistence/database_repository';
-import { PersistenceService } from '../persistence/persistence_service';
 import { NpcService } from '../services/npc.service';
-import { UpdatePlayerNotesInputSchema } from '../schemas/npc.schema';
 
 async function getNpcService(req: Request): Promise<NpcService> {
-  const sessionId = (req.params.sessionId as string) || '';
-  const rawPlayerId = (req as any).user?.id;
-  const playerId = rawPlayerId !== undefined && rawPlayerId !== null ? String(rawPlayerId) : 'default_player';
+  const sessionId = (req.params.sessionId as string) || (req.query.sessionId as string);
+  const authReq = req as any;
+  const playerId =
+    authReq.user?.login ||
+    (authReq.user?.id ? String(authReq.user.id) : null) ||
+    (req.headers['x-player-id'] as string) ||
+    (req.query.playerId as string) ||
+    'default_player';
 
-  const persistenceService = new PersistenceService();
-  let repo = await persistenceService.loadSessionRepo(playerId, sessionId);
+  let repo = (req as any).dbRepo as DatabaseRepository;
   if (!repo) {
     repo = new DatabaseRepository();
     await repo.initializeDB(playerId, sessionId);
@@ -29,7 +31,7 @@ export const getNpcs = async (req: Request, res: Response, next: NextFunction) =
       location_id,
       role,
       relationship_type,
-      status,
+      status: (status && status !== 'all') ? status : undefined,
     });
 
     const isolatedNpcs = npcs.map(npc => npcService.toPublicIsolatedNpc(npc));
@@ -48,17 +50,16 @@ export const getNpcById = async (req: Request, res: Response, next: NextFunction
   try {
     const npcService = await getNpcService(req);
     const npcId = (req.params.id as string) || '';
-    const targetNpc = npcService.getNpc(npcId);
 
-    if (!targetNpc) {
+    const npc = npcService.getNpc(npcId);
+    if (!npc) {
       return res.status(404).json({
         success: false,
-        message: `NPC '${npcId}' not found`,
+        message: `NPC with ID '${npcId}' not found`,
       });
     }
 
-    const isolatedNpc = npcService.toPublicIsolatedNpc(targetNpc);
-
+    const isolatedNpc = npcService.toPublicIsolatedNpc(npc);
     return res.json({
       success: true,
       data: isolatedNpc,
@@ -73,22 +74,15 @@ export const updatePlayerNotes = async (req: Request, res: Response, next: NextF
   try {
     const npcService = await getNpcService(req);
     const npcId = (req.params.id as string) || '';
+    const { content } = req.body;
 
-    const validation = UpdatePlayerNotesInputSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation error',
-        errors: validation.error.issues,
-      });
-    }
-
-    const updatedNpc = npcService.updatePlayerNotes(npcId, validation.data.content);
-    const isolatedNpc = npcService.toPublicIsolatedNpc(updatedNpc);
-
+    const updatedNpc = npcService.updatePlayerNotes(npcId, content || '');
     return res.json({
       success: true,
-      data: isolatedNpc,
+      data: {
+        content: updatedNpc.knowledge.player_notes.content,
+        last_updated: updatedNpc.knowledge.player_notes.last_updated,
+      },
     });
   } catch (error) {
     next(error);

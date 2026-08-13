@@ -17,6 +17,7 @@
     "temperature": "Температура",
     "timeout": "Таймаут запиту (секунди)",
     "no_timeout": "Без таймауту (Чекати скільки завгодно)",
+    "max_context_tokens": "Максимальний розмір контексту (в токенах)",
     "embeddings": "МОДЕЛЬ ВЕКТОРИЗАЦІЇ (EMBEDDINGS - F017)",
     "embedding_provider": "Тип векторизатора",
     "test_connection": "Тестувати з'єднання",
@@ -278,6 +279,7 @@
     },
     "statuses": {
       "alive": "Живий",
+      "wounded": "Поранений",
       "dead": "Мертвий",
       "coma": "У комі",
       "missing": "Зниклий",
@@ -286,6 +288,7 @@
     },
     "status_plural": {
       "alive": "Живі",
+      "wounded": "Поранені",
       "dead": "Мертві",
       "coma": "У комі",
       "missing": "Зниклі",

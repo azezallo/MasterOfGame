@@ -283,7 +283,7 @@ export async function fetchNpcs(
     queryParams.append('active_only', 'true');
   }
 
-  const url = `${API_BASE_URL}/sessions/${sessionId}/npcs?${queryParams.toString()}`;
+  const url = `${API_BASE_URL}/api/v1/sessions/${sessionId}/npcs?${queryParams.toString()}`;
 
   try {
     const response = await fetch(url, {
@@ -307,7 +307,7 @@ export async function fetchNpcDossier(
   sessionId: string,
   npcId: string
 ): Promise<NpcData> {
-  const url = `${API_BASE_URL}/sessions/${sessionId}/npcs/${npcId}`;
+  const url = `${API_BASE_URL}/api/v1/sessions/${sessionId}/npcs/${npcId}`;
 
   try {
     const response = await fetch(url, {
@@ -332,7 +332,7 @@ export async function updateNpcPlayerNotes(
   npcId: string,
   notes: string
 ): Promise<{ success: boolean; notes: string; lastUpdated: number }> {
-  const url = `${API_BASE_URL}/sessions/${sessionId}/npcs/${npcId}/notes`;
+  const url = `${API_BASE_URL}/api/v1/sessions/${sessionId}/npcs/${npcId}/notes`;
 
   try {
     const response = await fetch(url, {

@@ -30,6 +30,51 @@ export class NpcRepository {
     this.db = db;
   }
 
+  private parseRowToNpc(row: DBNpcRow): NpcData | null {
+    const rawObj = safeJsonParse<any>(row.data, null);
+    if (!rawObj) return null;
+
+    const now = Math.floor(Date.now() / 1000);
+    const normalized = {
+      npc_id: row.npc_id || rawObj.npc_id || `npc_${Date.now()}`,
+      status: row.status || rawObj.status || 'alive',
+      created_at: row.created_at || rawObj.created_at || now,
+      updated_at: row.updated_at || rawObj.updated_at || now,
+      public_profile: {
+        name: row.name || rawObj.public_profile?.name || rawObj.name || 'Невідомий NPC',
+        role: row.role || rawObj.public_profile?.role || rawObj.role || 'Мешканець',
+        appearance: rawObj.public_profile?.appearance || rawObj.appearance || 'Звичайний вигляд',
+        public_description: rawObj.public_profile?.public_description || rawObj.public_description || 'Опис відсутній',
+      },
+      private_profile: rawObj.private_profile || {
+        traits: { moral_alignment: '', resilience: '', social_style: '' },
+        drivers: { primary_goals: [], critical_fears: [] },
+        attachments: { family_loyalty: '', organization_loyalty: '', core_values: '' },
+        current_status: { mood: 'calm', relationship_to_player: 'neutral', current_goal: '' },
+      },
+      knowledge: rawObj.knowledge || {
+        world_perception: { description: '', dynamic_updates: [] },
+        hidden_memory: { events: [], memory_summary: '', secrets: [] },
+        subjective_thoughts: { player_evaluation: '', topics_discussed: [], mood_impact: '' },
+        player_notes: { content: '', last_updated: 0 },
+      },
+      relationships: rawObj.relationships || [],
+      organizations: rawObj.organizations || [],
+      spatial_presence: rawObj.spatial_presence || {
+        current_location_id: row.current_location_id || rawObj.location_id || '',
+        default_routine: [],
+        override_event: null,
+      },
+    };
+
+    try {
+      return NpcSchema.parse(normalized);
+    } catch (err) {
+      console.error(`[NpcRepository] Schema parse fallback for npc_id="${row.npc_id}":`, err);
+      return normalized as NpcData;
+    }
+  }
+
   public save(npc: NpcData): void {
     const now = Math.floor(Date.now() / 1000);
     const stmt = this.db.prepare(`
@@ -70,22 +115,14 @@ export class NpcRepository {
     const stmt = this.db.prepare(`SELECT * FROM npcs WHERE npc_id = ?`);
     const row = stmt.get(npcId) as DBNpcRow | undefined;
     if (!row) return null;
-
-    try {
-      const parsedData = safeJsonParse(row.data, null);
-      if (!parsedData) return null;
-      return NpcSchema.parse(parsedData);
-    } catch (error) {
-      console.error(`Failed to parse NPC data for id ${npcId}`, error);
-      return null;
-    }
+    return this.parseRowToNpc(row);
   }
 
   public findAll(filter?: { status?: string | undefined; location_id?: string | undefined; role?: string | undefined }): NpcData[] {
     let sql = `SELECT * FROM npcs WHERE 1=1`;
     const params: any[] = [];
 
-    if (filter?.status) {
+    if (filter?.status && filter.status !== 'all') {
       sql += ` AND status = ?`;
       params.push(filter.status);
     }
@@ -103,13 +140,9 @@ export class NpcRepository {
     const stmt = this.db.prepare(sql);
     const rows = stmt.all(...params) as DBNpcRow[];
 
-    return rows.map(row => {
-      try {
-        return NpcSchema.parse(safeJsonParse(row.data, null));
-      } catch (err) {
-        return null;
-      }
-    }).filter((npc): npc is NpcData => npc !== null);
+    return rows
+      .map(row => this.parseRowToNpc(row))
+      .filter((npc): npc is NpcData => npc !== null);
   }
 
   public search(

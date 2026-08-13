@@ -11,6 +11,7 @@ export interface DBUserAISettingsRow {
   model_name: string;
   temperature: number;
   timeout_ms: number;
+  max_context_tokens: number;
   embedding_provider: string;
   is_configured: number;
   created_at: string;
@@ -36,12 +37,19 @@ export class AISettingsRepository {
             model_name TEXT NOT NULL DEFAULT 'Qwen2.5-7B-Instruct',
             temperature REAL NOT NULL DEFAULT 0.7,
             timeout_ms INTEGER NOT NULL DEFAULT 0,
+            max_context_tokens INTEGER NOT NULL DEFAULT 32000,
             embedding_provider TEXT NOT NULL DEFAULT 'fastembed',
             is_configured BOOLEAN NOT NULL DEFAULT 1,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
       `);
+
+      try {
+        this.db.exec(`ALTER TABLE user_ai_settings ADD COLUMN max_context_tokens INTEGER NOT NULL DEFAULT 32000;`);
+      } catch {
+        // Column already exists
+      }
     } catch (error) {
       throw new DatabaseError(`Failed to initialize user_ai_settings table: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -61,6 +69,7 @@ export class AISettingsRepository {
         modelName: row.model_name,
         temperature: row.temperature,
         timeoutMs: row.timeout_ms,
+        maxContextTokens: row.max_context_tokens ?? 32000,
         embeddingProvider: row.embedding_provider as EmbeddingProviderId,
         isConfigured: Boolean(row.is_configured),
         createdAt: row.created_at,
@@ -76,8 +85,8 @@ export class AISettingsRepository {
       const stmt = this.db.prepare(`
         INSERT INTO user_ai_settings (
           user_id, provider_id, custom_endpoint, encrypted_api_key, model_name,
-          temperature, timeout_ms, embedding_provider, is_configured, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          temperature, timeout_ms, max_context_tokens, embedding_provider, is_configured, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT(user_id) DO UPDATE SET
           provider_id = excluded.provider_id,
           custom_endpoint = excluded.custom_endpoint,
@@ -85,6 +94,7 @@ export class AISettingsRepository {
           model_name = excluded.model_name,
           temperature = excluded.temperature,
           timeout_ms = excluded.timeout_ms,
+          max_context_tokens = excluded.max_context_tokens,
           embedding_provider = excluded.embedding_provider,
           is_configured = excluded.is_configured,
           updated_at = CURRENT_TIMESTAMP
@@ -98,6 +108,7 @@ export class AISettingsRepository {
         settings.modelName,
         settings.temperature,
         settings.timeoutMs,
+        settings.maxContextTokens ?? 32000,
         settings.embeddingProvider,
         settings.isConfigured ? 1 : 0
       );

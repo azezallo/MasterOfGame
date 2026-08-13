@@ -161,7 +161,26 @@ export function useNpc({ sessionId, autoFetchActive = true }: UseNpcOptions) {
     if (autoFetchActive) {
       loadActiveNpcs();
     }
-  }, [autoFetchActive, loadActiveNpcs]);
+
+    const handleTurnCompleted = () => {
+      if (autoFetchActive) {
+        loadActiveNpcs();
+      }
+      if (isDirectoryOpen) {
+        loadDirectoryNpcs();
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('game:turn_completed', handleTurnCompleted);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('game:turn_completed', handleTurnCompleted);
+      }
+    };
+  }, [autoFetchActive, isDirectoryOpen, loadActiveNpcs, loadDirectoryNpcs]);
 
   useEffect(() => {
     if (isDirectoryOpen) {

@@ -88,6 +88,7 @@ export interface UserAISettings {
   modelName: string;
   temperature: number;
   timeoutMs: number;
+  maxContextTokens: number;
   embeddingProvider: EmbeddingProviderId;
   isConfigured: boolean;
   createdAt?: string;
@@ -101,6 +102,7 @@ export interface UserAISettingsDTO {
   modelName: string;
   temperature: number;
   timeoutMs: number;
+  maxContextTokens: number;
   embeddingProvider: EmbeddingProviderId;
   hasApiKey: boolean;
 }
@@ -111,6 +113,7 @@ export interface UpdateAISettingsPayload {
   modelName: string;
   temperature: number;
   timeoutMs: number;
+  maxContextTokens: number;
   embeddingProvider: EmbeddingProviderId;
   apiKey?: string | null;
 }

@@ -15,6 +15,7 @@ export const UpdateAISettingsSchema = z.object({
   modelName: z.string().min(1, 'Model name is required'),
   temperature: z.number().min(0).max(2).default(0.7),
   timeoutMs: z.number().min(0).default(0),
+  maxContextTokens: z.number().min(1000).max(2000000).default(32000),
   embeddingProvider: EmbeddingProviderSchema,
   apiKey: z.string().optional().nullable(),
 });

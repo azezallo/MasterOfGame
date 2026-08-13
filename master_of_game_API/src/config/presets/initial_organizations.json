@@ -1,24 +1,108 @@
 [
   {
-    "id": "org_mages_guild",
-    "name": "Гільдія Астральних Магів",
-    "type": "guild",
-    "is_secret": 0,
-    "is_known_to_player": 1,
-    "description": "Давній орден дослідників магічних потоків та артефактів.",
-    "hierarchy": "Веремія Ордену -> Магістри веж -> Адепти",
-    "objectives": "Дослідження магічного фону, збереження древніх заклять.",
-    "resources": "Магічна бібліографія, кристали мані, алхімічні лабораторії"
+    "id": "org_city_guard",
+    "name": "Міська Варта",
+    "type": "military",
+    "is_secret": false,
+    "is_known_to_player": true,
+    "description": "Офіційна міська варта міста, відповідальна за порядок.",
+    "hierarchy": [
+      {
+        "rank_id": "M1",
+        "rank_name": "Капітан варти",
+        "superior_id": null,
+        "privileges": ["Доступ до архіву варти", "Командування загонами"],
+        "duties": ["Забезпечення порядку в місті"]
+      },
+      {
+        "rank_id": "M2",
+        "rank_name": "Сержант",
+        "superior_id": "M1",
+        "privileges": ["Командування патрулем"],
+        "duties": ["Патрулювання вулиць"]
+      },
+      {
+        "rank_id": "M3",
+        "rank_name": "Рядовий вартовий",
+        "superior_id": "M2",
+        "privileges": ["Носіння зброї"],
+        "duties": ["Чергування на брамі"]
+      }
+    ],
+    "objectives": {
+      "public": ["Захист цивільних від злочинності", "Патрулювання міських вулиць"],
+      "secret": ["Розкриття підпільного ринку контрабанди"]
+    },
+    "resources": {
+      "wealth_level": "medium",
+      "manpower_level": "high",
+      "influence": "high"
+    }
   },
   {
-    "id": "org_shadow_syndicate",
-    "name": "Тіньовий Синдикат Ковалів",
-    "type": "syndicate",
-    "is_secret": 1,
-    "is_known_to_player": 0,
-    "description": "Таємна мережа торговців контрабандою та рідкісними рудами.",
-    "hierarchy": "Тіньова Рада -> Агенти міст -> Інформатори",
-    "objectives": "Контроль нелегального ринку чорної сталі та реліквій.",
-    "resources": "Контрабандні шляхи, сховки в підземеллях"
+    "id": "org_thieves_guild",
+    "name": "Гільдія Злодіїв",
+    "type": "underworld",
+    "is_secret": true,
+    "is_known_to_player": true,
+    "description": "Таємне братерство кишенькових злодіїв, скуповувачів краденого та інформаторів.",
+    "hierarchy": [
+      {
+        "rank_id": "M",
+        "rank_name": "Майстер Тіней",
+        "superior_id": null,
+        "privileges": ["Абсолютне право вето"],
+        "duties": ["Керівництво синдикатом"]
+      },
+      {
+        "rank_id": "S1",
+        "rank_name": "Глава підпілля",
+        "superior_id": "M",
+        "privileges": ["Частка з усіх операцій"],
+        "duties": ["Розподіл сфер впливу"]
+      },
+      {
+        "rank_id": "N",
+        "rank_name": "Нічний новачків",
+        "superior_id": "S1",
+        "privileges": ["Навчання підпіллю"],
+        "duties": ["Збір чуток"]
+      }
+    ],
+    "objectives": {
+      "public": ["Надання позик під відсотки"],
+      "secret": ["Повалення поточного намісника", "Контроль тіньової торгівлі та збір компромату"]
+    },
+    "resources": {
+      "wealth_level": "high",
+      "manpower_level": "medium",
+      "influence": "high"
+    }
+  },
+  {
+    "id": "org_merchant_guild",
+    "name": "Купецька Гільдія",
+    "type": "trade",
+    "is_secret": false,
+    "is_known_to_player": true,
+    "description": "Союз провідних торговців, караванерів та ремісників.",
+    "hierarchy": [
+      {
+        "rank_id": "T1",
+        "rank_name": "Голова торговельної палати",
+        "superior_id": null,
+        "privileges": ["Встановлення митних зборів"],
+        "duties": ["Регулювання цін"]
+      }
+    ],
+    "objectives": {
+      "public": ["Захист караванних шляхів", "Розвиток міського ринку"],
+      "secret": ["Монополізація торгівлі рідкісними рудами"]
+    },
+    "resources": {
+      "wealth_level": "very_high",
+      "manpower_level": "medium",
+      "influence": "high"
+    }
   }
 ]

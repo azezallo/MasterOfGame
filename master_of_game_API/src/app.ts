@@ -13,18 +13,34 @@ dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+  process.env.CLIENT_URL,
+].filter(Boolean) as string[];
+
 app.use(cors({
-  origin: 'http://localhost:5173', // Вкажіть конкретний домен замість '*'
-  credentials: true,                // Дозвольте передачу куків
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-player-id'],
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 
 // Routes
 app.use('/auth', authRoutes);
 app.use('/sessions', sessionRoutes);
+app.use('/api/v1/sessions', sessionRoutes);
 app.use('/api/v1/ai', aiSettingsRoutes);
 app.use('/api/v1/memory', semanticMemoryRoutes);
 app.use('/api/v1/chat', agenticLoopRoutes);

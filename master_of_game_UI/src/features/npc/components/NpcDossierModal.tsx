@@ -16,6 +16,7 @@ interface NpcDossierModalProps {
 
 const STATUS_CLASS_MAP: Record<NpcLifecycleStatus, string> = {
   alive: 'alive',
+  wounded: 'wounded',
   dead: 'dead',
   coma: 'coma',
   missing: 'missing',

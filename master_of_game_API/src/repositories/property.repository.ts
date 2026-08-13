@@ -69,8 +69,15 @@ export class PropertyRepository {
   }
 
   public getPropertyProfile(ownerType: string, ownerId: string): PropertyProfile | null {
-    const stmt = this.db.prepare(`SELECT * FROM properties WHERE owner_type = ? AND owner_id = ?`);
-    const row = stmt.get(ownerType, ownerId) as DBPropertyRow | undefined;
+    let stmt = this.db.prepare(`SELECT * FROM properties WHERE owner_type = ? AND owner_id = ?`);
+    let row = stmt.get(ownerType, ownerId) as DBPropertyRow | undefined;
+
+    // Fallback for player property: if not found by exact owner_id, fallback to any player record in this database
+    if (!row && ownerType === 'player') {
+      const fallbackStmt = this.db.prepare(`SELECT * FROM properties WHERE owner_type = 'player' LIMIT 1`);
+      row = fallbackStmt.get() as DBPropertyRow | undefined;
+    }
+
     if (!row) return null;
 
     return {

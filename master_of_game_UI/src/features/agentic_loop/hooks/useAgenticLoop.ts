@@ -79,6 +79,9 @@ export const useAgenticLoop = (sessionId?: string) => {
               turnId: sseEvent.data.turnId,
               shortLog: sseEvent.data.shortLog,
             }));
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('game:turn_completed'));
+            }
             break;
           case 'error':
             setTurnState((prev) => ({

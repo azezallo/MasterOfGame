@@ -28,6 +28,7 @@ export function useAISettings() {
     modelName: 'Qwen2.5-7B-Instruct',
     temperature: 0.7,
     timeoutMs: 0,
+    maxContextTokens: 32000,
     embeddingProvider: 'fastembed',
     apiKey: '',
   });
@@ -48,6 +49,7 @@ export function useAISettings() {
         modelName: data.modelName || 'Qwen2.5-7B-Instruct',
         temperature: data.temperature ?? 0.7,
         timeoutMs: data.timeoutMs ?? 0,
+        maxContextTokens: data.maxContextTokens ?? 32000,
         embeddingProvider: data.embeddingProvider || 'fastembed',
         apiKey: '',
       });
@@ -143,6 +145,7 @@ export function useAISettings() {
         modelName: formValues.modelName,
         temperature: formValues.temperature,
         timeoutMs: noTimeout ? 0 : formValues.timeoutMs,
+        maxContextTokens: formValues.maxContextTokens,
         embeddingProvider: formValues.embeddingProvider,
         apiKey: formValues.apiKey || undefined,
       });

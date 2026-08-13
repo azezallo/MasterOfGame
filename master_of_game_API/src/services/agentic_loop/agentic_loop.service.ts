@@ -7,6 +7,7 @@ import { SubagentOrchestratorService } from './subagent_orchestrator.service';
 import { CompressionService } from './compression.service';
 import { SemanticMemoryService } from '../semantic_memory.service';
 import { SubagentGroup } from '../../types/agentic_loop.types';
+import { LLMMessage } from '../../types/ai.types';
 import { logger } from '../../logger';
 
 export class AgenticLoopService {
@@ -64,8 +65,13 @@ export class AgenticLoopService {
       // Save Player Action to Long Context
       this.agenticLoopRepo.saveLongContextMessage(sessionId, turnNumber, 'player', actionText);
 
+      // Maintain cumulative conversation transcript across Re-Act iterations
+      const conversationMessages: LLMMessage[] = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: actionText },
+      ];
+
       // 2. Re-Act Loop (Max 3 iterations)
-      let currentInput = actionText;
       let iteration = 0;
       const maxIterations = 3;
       let masterDecisionText = '';
@@ -79,7 +85,7 @@ export class AgenticLoopService {
 
         if (this.llmProvider) {
           const startTime = Date.now();
-          logger.llm(`Sending Prompt to LLM [${this.modelName}]`, { iteration, promptSnippet: currentInput.slice(0, 100) });
+          logger.llm(`Sending Prompt to LLM [${this.modelName}]`, { iteration, promptSnippet: actionText.slice(0, 100) });
 
           const heartbeatInterval = setInterval(() => {
             try {
@@ -93,10 +99,7 @@ export class AgenticLoopService {
           try {
             const llmRes = await this.llmProvider.generate({
               model: this.modelName,
-              messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: currentInput },
-              ],
+              messages: conversationMessages,
               temperature: 0.7,
               timeoutMs: 0, // Disable request timeout for long reasoning models
             });
@@ -126,27 +129,47 @@ export class AgenticLoopService {
           .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '')
           .trim();
 
-        // Check if Master requests Subagent Delegation
-        const delegationMatch = masterDecisionText.match(/DELEGATE:(property|world|actor):(.*)/i);
-        if (delegationMatch) {
-          const group = delegationMatch[1].toLowerCase() as SubagentGroup;
-          const instruction = delegationMatch[2].trim();
+        // Match all DELEGATE lines emitted in a single response (Parallel Multi-Delegation)
+        const delegationMatches = Array.from(masterDecisionText.matchAll(/DELEGATE:(property|world|actor):(.*)/gi));
 
-          logger.subagent('Executing Subagent Delegation', { group, instruction, iteration });
+        if (delegationMatches.length > 0) {
+          conversationMessages.push({ role: 'assistant', content: masterDecisionText });
 
-          sendSSE('status', {
-            stage: 'subagent',
-            subagent: group,
-            message: `Сабагент ${group.toUpperCase()} оновлює стан: "${instruction}"`,
+          // Execute all subagent delegations in parallel via Promise.all
+          const subagentResults = await Promise.all(
+            delegationMatches.map(async (m) => {
+              const group = m[1].toLowerCase() as SubagentGroup;
+              const instruction = m[2].trim();
+
+              logger.subagent('Executing Subagent Delegation', { group, instruction, iteration });
+
+              sendSSE('status', {
+                stage: 'subagent',
+                subagent: group,
+                message: `Сабагент ${group.toUpperCase()} оновлює стан: "${instruction}"`,
+              });
+
+              const subagentRes = await this.orchestrator.executeSubagentInstruction(sessionId, group, instruction);
+              logger.subagent('Subagent Execution Finished', { group, success: subagentRes.success, resultData: subagentRes.data });
+
+              return { group, instruction, subagentRes };
+            })
+          );
+
+          const resultSummaries = subagentResults.map(
+            (r) => `- [${r.group.toUpperCase()}]: ${r.subagentRes.message}`
+          ).join('\n');
+
+          // Push combined subagent results back to conversation messages
+          conversationMessages.push({
+            role: 'user',
+            content: `РЕЗУЛЬТАТИ ВИКОНАННЯ САБАГЕНТАМИ:\n${resultSummaries}\n\nПочатковий запит гравця: "${actionText}". Якщо у початковому проханні є інші невиконані частини, видайте наступні команди DELEGATE:<group>:<instruction>. Якщо всі завдання виконано, видайте короткий підсумковий опис.`,
           });
 
-          const subagentRes = await this.orchestrator.executeSubagentInstruction(sessionId, group, instruction);
-          logger.subagent('Subagent Execution Finished', { group, success: subagentRes.success, resultData: subagentRes.data });
-
-          // Update input for next Re-Act iteration
-          currentInput = `РЕЗУЛЬТАТ ВИКОНАННЯ САБАГЕНТОМ [${group.toUpperCase()}]: ${subagentRes.message}. Знайдені дані: ${JSON.stringify(subagentRes.data || {})}`;
+          // Break loop to move to narrative generation
+          break;
         } else {
-          // Master is ready to generate narrative
+          // Master generated narrative text without DELEGATE commands
           break;
         }
       }
@@ -163,8 +186,33 @@ export class AgenticLoopService {
         .replace(/DELEGATE:(property|world|actor):.*/gi, '')
         .trim();
 
+      // If the last response was a DELEGATE command (no narrative text generated yet), generate final narrative summary via LLM!
+      if (!finalNarrative && this.llmProvider) {
+        try {
+          conversationMessages.push({
+            role: 'user',
+            content: 'Усі сабагенти успішно виконали свої завдання. Сформуйте для гравця короткий підсумковий опис про результати цих дій без використання знаків DELEGATE.',
+          });
+
+          const summaryRes = await this.llmProvider.generate({
+            model: this.modelName,
+            messages: conversationMessages,
+            temperature: 0.7,
+            timeoutMs: 0,
+          });
+
+          finalNarrative = (summaryRes.content || '')
+            .replace(/<think>[\s\S]*?<\/think>/gi, '')
+            .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '')
+            .replace(/DELEGATE:(property|world|actor):.*/gi, '')
+            .trim();
+        } catch (summaryErr: any) {
+          logger.error('Final Narrative Generation Failed', { error: summaryErr.message });
+        }
+      }
+
       if (!finalNarrative) {
-        finalNarrative = 'Ви роззираєтеся довкола, відчуваючи як атмосфера локації стає більш напруженою.';
+        finalNarrative = 'Всі дії успішно виконано сабагентами. Стан гри оновлено.';
       }
 
       // Stream narrative text in chunks

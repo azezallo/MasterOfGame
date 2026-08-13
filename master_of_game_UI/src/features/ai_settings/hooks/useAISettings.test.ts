@@ -9,6 +9,7 @@ describe('AI Settings Data Contracts & Helpers', () => {
       modelName: 'Qwen2.5-7B-Instruct',
       temperature: 0.7,
       timeoutMs: 0,
+      maxContextTokens: 32000,
       embeddingProvider: 'fastembed',
       apiKey: null,
     };
@@ -24,6 +25,7 @@ describe('AI Settings Data Contracts & Helpers', () => {
       modelName: '',
       temperature: 0.7,
       timeoutMs: 0,
+      maxContextTokens: 32000,
       embeddingProvider: 'fastembed',
     };
 

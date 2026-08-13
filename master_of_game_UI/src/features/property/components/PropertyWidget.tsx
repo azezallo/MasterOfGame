@@ -72,7 +72,7 @@ export const PropertyWidget: React.FC<PropertyWidgetProps> = ({
                 className={`${styles.encumbranceMiniBadge} ${styles[weightStatus]}`}
                 title={t(`property.weight.status.${weightStatus}`)}
               >
-                ⚖️ {property.pocket_inventory.weight_stats.total_weight_kg.toFixed(1)}kg
+                ⚖️ {(property.pocket_inventory?.weight_stats?.total_weight_kg ?? 0).toFixed(1)}kg
               </span>
             </div>
           )}

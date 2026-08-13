@@ -10,6 +10,7 @@ export interface AISettingsResponse {
   modelName: string;
   temperature: number;
   timeoutMs: number;
+  maxContextTokens: number;
   embeddingProvider: EmbeddingProviderId;
   hasApiKey: boolean;
 }
@@ -20,6 +21,7 @@ export interface SaveAISettingsRequest {
   modelName: string;
   temperature: number;
   timeoutMs: number;
+  maxContextTokens: number;
   embeddingProvider: EmbeddingProviderId;
   apiKey?: string | null;
 }
@@ -49,6 +51,7 @@ export const aiSettingsSchema = z.object({
   modelName: z.string().min(1, 'Обов\'язкове поле'),
   temperature: z.number().min(0).max(2),
   timeoutMs: z.number().min(0),
+  maxContextTokens: z.number().min(1000).max(2000000),
   embeddingProvider: z.enum(['fastembed', 'openai']),
   apiKey: z.string().optional().nullable(),
 });

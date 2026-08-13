@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export type NpcLifecycleStatus = 'alive' | 'dead' | 'coma' | 'missing' | 'captured' | 'archived';
+export type NpcLifecycleStatus = 'alive' | 'wounded' | 'dead' | 'coma' | 'missing' | 'captured' | 'archived';
 
 export interface NpcPublicProfile {
   name: string;

@@ -32,6 +32,7 @@ export class AISettingsService {
         modelName: 'Qwen2.5-7B-Instruct',
         temperature: 0.7,
         timeoutMs: 0,
+        maxContextTokens: 32000,
         embeddingProvider: 'fastembed',
         hasApiKey: false,
       };
@@ -44,6 +45,7 @@ export class AISettingsService {
       modelName: settings.modelName,
       temperature: settings.temperature,
       timeoutMs: settings.timeoutMs,
+      maxContextTokens: settings.maxContextTokens ?? 32000,
       embeddingProvider: settings.embeddingProvider,
       hasApiKey: Boolean(settings.encryptedApiKey),
     };
@@ -81,6 +83,7 @@ export class AISettingsService {
       modelName: validated.modelName,
       temperature: validated.temperature,
       timeoutMs: validated.timeoutMs,
+      maxContextTokens: validated.maxContextTokens ?? 32000,
       embeddingProvider: validated.embeddingProvider,
       isConfigured: true,
     };
@@ -94,6 +97,7 @@ export class AISettingsService {
       modelName: saved.modelName,
       temperature: saved.temperature,
       timeoutMs: saved.timeoutMs,
+      maxContextTokens: saved.maxContextTokens,
       embeddingProvider: saved.embeddingProvider,
       hasApiKey: Boolean(saved.encryptedApiKey),
     };
