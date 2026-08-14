@@ -2,18 +2,21 @@ import { Request, Response, NextFunction } from 'express';
 import { PersistenceService } from '../persistence/persistence_service';
 import { MagicService } from '../services/magic.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
-import { SpellCostInputSchema, ManaRegenCalcInputSchema } from '../schemas/magic.schema';
-import { AppError } from '../errors/app.errors';
+import { SpellCostInputSchema, ManaRegenCalcInputSchema, MagicItemPropertiesSchema } from '../schemas/magic.schema';
+import { AppError, AuthError } from '../errors/app.errors';
 
 async function getMagicService(req: Request): Promise<MagicService> {
   const sessionId = (Array.isArray(req.params.sessionId) ? req.params.sessionId[0] : req.params.sessionId) || '';
-  const rawPlayerId = (req as AuthenticatedRequest).user?.id;
-  const playerId = rawPlayerId !== undefined && rawPlayerId !== null ? String(rawPlayerId) : 'default_player';
+  const user = (req as AuthenticatedRequest).user;
+  if (!user || !user.id) {
+    throw new AuthError('User not authenticated');
+  }
+  const playerId = String(user.id);
 
   const persistenceService = new PersistenceService();
-  let repo = await persistenceService.loadSessionRepo(playerId, sessionId);
+  const repo = await persistenceService.loadSessionRepo(playerId, sessionId);
   if (!repo) {
-    throw new AppError('Session database connection failed', 404);
+    throw new AppError(`Session '${sessionId}' not found for player '${playerId}'`, 404);
   }
 
   const playerStateRepo = repo.getPlayerStateRepository();
@@ -61,7 +64,7 @@ export const recalculateRegen = async (req: Request, res: Response, next: NextFu
 export const evaluateMagicItem = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const magicService = new MagicService();
-    const itemProps = req.body.properties ?? req.body;
+    const itemProps = MagicItemPropertiesSchema.parse(req.body.properties ?? req.body);
     const result = magicService.evaluateMagicItemProperties(itemProps);
 
     return res.status(200).json({

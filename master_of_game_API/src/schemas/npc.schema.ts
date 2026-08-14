@@ -122,6 +122,7 @@ export type Knowledge = z.infer<typeof KnowledgeSchema>;
 // 5. Social & Organization Relationships
 export const NpcRelationshipSchema = z.object({
   target_npc_id: z.string(),
+  target_npc_name: z.string().optional(),
   relationship_type: z.string(),
   strength: z.number().min(-1.0).max(1.0).default(0),
   summary: z.string().default(''),

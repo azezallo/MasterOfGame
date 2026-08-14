@@ -24,7 +24,41 @@ export const MagicStatsSchema = z.object({
   base_regen: z.number().nonnegative().optional().default(10.0),
 });
 
-export const PlayerSkillsSchema = z.record(z.string(), z.number().int().min(0).max(100));
+export const SkillEntrySchema = z.object({
+  name: z.string().min(1),
+  value: z.number().int().min(0).max(100),
+});
+export type SkillEntry = z.infer<typeof SkillEntrySchema>;
+
+const LEGACY_SKILL_NAMES_MAP: Record<string, string> = {
+  fire_magic: 'Магія вогню',
+  sword_fighting: 'Фехтування мечем',
+  stealth: 'Приховане пересування',
+  energy_manipulation: 'Маніпуляція енергією',
+  spear_mastery: 'Володіння пікою',
+};
+
+// Pre-transform to handle legacy { "fire_magic": 50 } or array of objects [{ name: "Магія вогню", value: 50 }]
+export const PlayerSkillsSchema = z.preprocess((val) => {
+  if (Array.isArray(val)) {
+    return val.map((item) => {
+      if (typeof item === 'object' && item !== null && 'name' in item) {
+        return {
+          name: LEGACY_SKILL_NAMES_MAP[item.name] || item.name,
+          value: typeof item.value === 'number' ? item.value : 0,
+        };
+      }
+      return item;
+    });
+  }
+  if (typeof val === 'object' && val !== null) {
+    return Object.entries(val).map(([k, v]) => ({
+      name: LEGACY_SKILL_NAMES_MAP[k] || k,
+      value: typeof v === 'number' ? v : 0,
+    }));
+  }
+  return [];
+}, z.array(SkillEntrySchema));
 
 export const PlayerStateProfileSchema = z.object({
   physical_states: z.array(StateItemSchema),
@@ -44,6 +78,14 @@ export const UpdatePlayerStateInputSchema = z.object({
   add_psychological_states: z.array(z.string()).optional(),
   remove_psychological_states: z.array(z.string()).optional(),
   mana_delta: z.number().int().optional(),
+  mana_percent: z.number().optional(),
   update_attributes: PlayerAttributesSchema.partial().optional(),
-  update_skills: z.record(z.string(), z.number().int().min(0).max(100)).optional(),
+  update_skills: z.union([
+    z.array(SkillEntrySchema),
+    z.record(z.string(), z.number().int().min(0).max(100)),
+  ]).optional(),
+  skill_name: z.string().optional(),
+  skill_value: z.number().int().min(0).max(100).optional(),
+  skill_delta: z.number().int().optional(),
+  update_magic_stats: MagicStatsSchema.partial().optional(),
 });

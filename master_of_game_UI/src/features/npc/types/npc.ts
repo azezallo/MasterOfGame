@@ -67,6 +67,7 @@ export interface NpcKnowledge {
     content: string;
     last_updated: number;
   };
+  revealed_secrets?: NpcSecret[];
 }
 
 export interface NpcRelationship {

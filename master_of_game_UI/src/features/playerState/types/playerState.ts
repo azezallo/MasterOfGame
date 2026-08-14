@@ -22,7 +22,12 @@ export interface MagicStats {
   base_regen?: number;
 }
 
-export type PlayerSkills = Record<string, number>;
+export interface SkillEntry {
+  name: string;
+  value: number;
+}
+
+export type PlayerSkills = SkillEntry[];
 
 export interface PlayerStateProfile {
   physical_states: StateItem[];

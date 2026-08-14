@@ -14,7 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../logger';
 import { SessionMetadataService } from '../services/session_metadata.service';
 import { MapGeneratorService } from '../services/map_generator.service';
-import { PersistenceError, ValidationError } from '../errors/app_errors';
+import { PersistenceError, ValidationError } from '../errors/app.errors';
 
 export interface CombinedSessionState {
   playerState: PlayerState;
@@ -72,16 +72,8 @@ export class PersistenceService {
     if (repo) return repo;
 
     const dbPath = path.resolve(CONFIG.SAVES_DIR, playerId, `${sessionId}.db`);
-    
-    let dbExists = false;
-    try {
-      await fs.promises.access(dbPath);
-      dbExists = true;
-    } catch {
-      console.log(`[PersistenceService] Session DB not found at ${dbPath}`);
-    }
-    
-    if (dbExists) {
+
+    if (fs.existsSync(dbPath)) {
       repo = new DatabaseRepository();
       await repo.initializeDB(playerId, sessionId);
       PersistenceService.repos.set(sessionId, repo);

@@ -4,22 +4,37 @@ import path from 'path';
 import { DatabaseRepository } from '../persistence/database_repository';
 import { PlayerStateService } from '../services/player_state.service';
 import { PropertyService } from '../services/property.service';
+import { CONFIG } from '../config';
 
-describe('PlayerState Backend Integration with DatabaseRepository', () => {
+describe('PlayerStateService Integration', () => {
   let repo: DatabaseRepository;
-  let propertyService: PropertyService;
   let playerStateService: PlayerStateService;
-  const testDbPath = path.resolve(__dirname, '../../saves/test_player/test_session_ps.db');
+  let propertyService: PropertyService;
+
+  const testPlayerId = 'test_player';
+  const testSessionId = 'test_session_ps';
+  const testDbPath = path.resolve(CONFIG.SAVES_DIR, testPlayerId, `${testSessionId}.db`);
 
   beforeEach(async () => {
+    const saveDir = path.resolve(CONFIG.SAVES_DIR, testPlayerId);
+    if (!fs.existsSync(saveDir)) {
+      fs.mkdirSync(saveDir, { recursive: true });
+    }
+    if (fs.existsSync(testDbPath)) {
+      fs.unlinkSync(testDbPath);
+    }
     repo = new DatabaseRepository();
-    await repo.initializeDB('test_player', 'test_session_ps');
-
-    const playerStateRepo = repo.getPlayerStateRepository();
-    const propertyRepo = repo.getPropertyRepository();
-    const itemRepo = repo.getItemRepository();
-    propertyService = new PropertyService(propertyRepo, itemRepo, playerStateRepo);
-    playerStateService = new PlayerStateService(playerStateRepo, propertyService);
+    await repo.initializeDB(testPlayerId, testSessionId);
+    propertyService = new PropertyService(
+      repo.getPropertyRepository(),
+      repo.getItemRepository(),
+      repo.getPlayerStateRepository()
+    );
+    playerStateService = new PlayerStateService(
+      repo.getPlayerStateRepository(),
+      propertyService,
+      repo.getWorldStateRepository()
+    );
   });
 
   afterEach(() => {
@@ -34,9 +49,10 @@ describe('PlayerState Backend Integration with DatabaseRepository', () => {
 
     expect(state.attributes.strength).toBe(25);
     expect(state.derived_stats.max_carry_weight_kg).toBe(55.0);
-    expect(state.magic_stats.current_mana).toBe(25);
+    expect(state.magic_stats.current_mana).toBe(100);
     expect(state.magic_stats.mana_pool).toBe(100);
-    expect(state.skills.fire_magic).toBe(50);
+    const fireMagic = state.skills.find(s => s.name === 'Магія вогню');
+    expect(fireMagic?.value).toBe(50);
   });
 
   it('should update qualitative states with ISO timestamps', () => {
@@ -88,12 +104,34 @@ describe('PlayerState Backend Integration with DatabaseRepository', () => {
 
   it('should update skills correctly', () => {
     const updated = playerStateService.updatePlayerState('test_session_ps', {
-      update_skills: { fire_magic: 55, sword_fighting: 35 },
+      update_skills: [
+        { name: 'Магія вогню', value: 55 },
+        { name: 'Фехтування мечем', value: 35 },
+      ],
     });
 
-    expect(updated.skills.fire_magic).toBe(55);
-    expect(updated.skills.sword_fighting).toBe(35);
-    expect(updated.skills.stealth).toBe(15);
+    const fire = updated.skills.find(s => s.name === 'Магія вогню');
+    const sword = updated.skills.find(s => s.name === 'Фехтування мечем');
+    const stealth = updated.skills.find(s => s.name === 'Приховане пересування');
+    expect(fire?.value).toBe(55);
+    expect(sword?.value).toBe(35);
+    expect(stealth?.value).toBe(15);
+  });
+
+  it('should update skill via single skill shorthand (skill_name and skill_value / skill_delta)', () => {
+    const updated = playerStateService.updatePlayerState('test_session_ps', {
+      skill_name: 'Маніпуляція енергією',
+      skill_value: 45,
+    });
+    const energy = updated.skills.find(s => s.name === 'Маніпуляція енергією');
+    expect(energy?.value).toBe(45);
+
+    const boosted = playerStateService.updatePlayerState('test_session_ps', {
+      skill_name: 'Маніпуляція енергією',
+      skill_delta: 15,
+    });
+    const boostedEnergy = boosted.skills.find(s => s.name === 'Маніпуляція енергією');
+    expect(boostedEnergy?.value).toBe(60);
   });
 
   it('should synchronize max_carry_weight_kg with PropertyService', () => {

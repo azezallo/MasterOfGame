@@ -132,7 +132,11 @@
           "mana_flow": "number",
           "base_regen": "number"
         },
-        "PlayerSkills": "Record<string, number>",
+        "SkillEntry": {
+          "name": "string",
+          "value": "number"
+        },
+        "PlayerSkills": "Array<SkillEntry>",
         "PlayerStateProfile": {
           "physical_states": "Array<StateItem>",
           "body_states": "Array<StateItem>",

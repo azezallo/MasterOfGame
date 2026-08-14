@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { WorldStateRepository } from '../repositories/world_state.repository';
+import { PlayerStateRepository } from '../repositories/player_state.repository';
 import {
   TimeState,
   WeatherState,
@@ -12,7 +13,7 @@ import {
   ManageEventInput,
   ManageCalendarEventInput,
 } from '../types/world_state.types';
-import { AppError, ValidationError } from '../errors/app_errors';
+import { AppError, ValidationError } from '../errors/app.errors';
 
 const UKRAINIAN_MONTHS = [
   'Січня', 'Лютого', 'Березня', 'Квітня', 'Травня', 'Червня',
@@ -20,7 +21,10 @@ const UKRAINIAN_MONTHS = [
 ];
 
 export class WorldStateService {
-  constructor(private repo: WorldStateRepository) {}
+  constructor(
+    private repo: WorldStateRepository,
+    private playerStateRepo?: PlayerStateRepository
+  ) {}
 
   public getSeason(month: number): string {
     if (month === 12 || month === 1 || month === 2) return 'Зима';
@@ -168,7 +172,7 @@ export class WorldStateService {
     };
   }
 
-  public advanceTime(input: AdvanceTimeInput): WorldStateResponse {
+  public advanceTime(input: AdvanceTimeInput, sessionId?: string, manaDensity: number = 50): WorldStateResponse {
     const { currentDate: startDate, timeline: currentTimeline } = this.ensureStateInitialized();
 
     const addDays = input.days || 0;
@@ -188,6 +192,32 @@ export class WorldStateService {
     }
 
     this.repo.saveTimeAndWeather(newIsoDate, updatedTimeline);
+
+    // Passive Mana Regeneration calculation (Feature Specification F015)
+    if (this.playerStateRepo && sessionId) {
+      try {
+        const playerState = this.playerStateRepo.getPlayerState(sessionId);
+        if (playerState && playerState.magic_stats) {
+          const baseRegen = playerState.magic_stats.base_regen ?? 10.0;
+          const currentMana = playerState.magic_stats.current_mana ?? 0;
+          const manaPool = playerState.magic_stats.mana_pool ?? 100;
+
+          let newMana = currentMana;
+          if (manaDensity >= 100) {
+            newMana = manaPool;
+          } else if (manaDensity > 0) {
+            const multiplier = manaDensity / (100 - manaDensity);
+            const restored = Math.round(totalHoursToAdd * baseRegen * multiplier);
+            newMana = Math.min(manaPool, currentMana + restored);
+          }
+
+          playerState.magic_stats.current_mana = newMana;
+          this.playerStateRepo.savePlayerState(sessionId, playerState);
+        }
+      } catch (err: any) {
+        // Safe fallback if player state isn't initialized yet
+      }
+    }
 
     const calendarEvents = this.repo.getAllCalendarEvents();
     const startDay = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));

@@ -8,24 +8,28 @@ import { LLMProviderFactory } from '../providers/llm/llm_provider.factory';
 import { ILLMProvider } from '../providers/llm/llm_provider.interface';
 import { DatabaseRepository } from '../persistence/database_repository';
 import { PersistenceService } from '../persistence/persistence_service';
-import { ValidationError } from '../errors/app.errors';
+import { ValidationError, AppError, AuthError } from '../errors/app.errors';
+import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { SessionStreamBroker } from '../services/agentic_loop/session_stream_broker.service';
 
 async function getSessionRepo(sessionId: string, req: Request): Promise<DatabaseRepository> {
-  const rawPlayerId = (req as any).user?.id;
-  const playerId = rawPlayerId !== undefined && rawPlayerId !== null ? String(rawPlayerId) : 'default_player';
+  const user = (req as AuthenticatedRequest).user;
+  if (!user || !user.id) {
+    throw new AuthError('User not authenticated');
+  }
+  const playerId = String(user.id);
 
   const persistenceService = new PersistenceService();
-  let repo = await persistenceService.loadSessionRepo(playerId, sessionId);
+  const repo = await persistenceService.loadSessionRepo(playerId, sessionId);
   if (!repo) {
-    repo = new DatabaseRepository();
-    await repo.initializeDB(playerId, sessionId);
+    throw new AppError(`Session '${sessionId}' not found for player '${playerId}'`, 404);
   }
   return repo;
 }
 
 async function getLLMProviderAndModel(req: Request): Promise<{ provider?: ILLMProvider; modelName?: string }> {
-  const rawPlayerId = (req as any).user?.id;
-  const userId = rawPlayerId !== undefined && rawPlayerId !== null ? String(rawPlayerId) : 'default_player';
+  const user = (req as AuthenticatedRequest).user;
+  const userId = user && user.id ? String(user.id) : '1';
 
   const aiSettingsService = new AISettingsService();
   try {
@@ -89,6 +93,18 @@ export const compressContext = async (req: Request, res: Response, next: NextFun
   }
 };
 
+function formatTimestamp(raw?: string): string | undefined {
+  if (!raw) return undefined;
+  try {
+    const isoString = raw.includes('T') ? raw : raw.replace(' ', 'T') + (raw.endsWith('Z') ? '' : 'Z');
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return undefined;
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return undefined;
+  }
+}
+
 export const getHistory = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const sessionId = (req.query.sessionId as string) || (req.params.sessionId as string);
@@ -104,17 +120,33 @@ export const getHistory = async (req: Request, res: Response, next: NextFunction
       id: String(msg.id || `msg_${msg.turn_number}_${msg.role}`),
       type: msg.role === 'player' ? 'player' : 'master',
       text: msg.content,
-      timestamp: msg.created_at
-        ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        : undefined,
+      timestamp: formatTimestamp(msg.created_at),
     }));
+
+    const lastMsg = rawMessages[rawMessages.length - 1];
+    const isTurnInProgress = SessionStreamBroker.getInstance().isSessionActive(sessionId) || (lastMsg ? lastMsg.role === 'player' : false);
 
     return res.status(200).json({
       success: true,
       data: {
         messages,
+        isTurnInProgress,
       },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const reconnectStream = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const sessionId = (req.query.sessionId as string) || (req.params.sessionId as string);
+    if (!sessionId) {
+      return next(new ValidationError('sessionId parameter is required for stream reconnection'));
+    }
+
+    const broker = SessionStreamBroker.getInstance();
+    broker.addSubscriber(sessionId, res);
   } catch (error) {
     next(error);
   }

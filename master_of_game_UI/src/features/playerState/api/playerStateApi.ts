@@ -27,11 +27,11 @@ export const MOCK_PLAYER_STATE: PlayerStateProfile = {
     current_mana: 25,
     mana_flow: 5,
   },
-  skills: {
-    fire_magic: 50,
-    sword_fighting: 30,
-    stealth: 15,
-  },
+  skills: [
+    { name: 'Магія вогню', value: 50 },
+    { name: 'Фехтування мечем', value: 30 },
+    { name: 'Приховане пересування', value: 15 },
+  ],
 };
 
 export async function fetchPlayerState(sessionId: string): Promise<PlayerStateProfile> {

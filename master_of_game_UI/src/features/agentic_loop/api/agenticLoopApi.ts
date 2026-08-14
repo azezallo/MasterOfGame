@@ -103,7 +103,12 @@ export async function compressContext(
   return compressContextResponseSchema.parse(json);
 }
 
-export async function fetchHistory(sessionId: string): Promise<any[]> {
+export interface FetchHistoryResponse {
+  messages: any[];
+  isTurnInProgress: boolean;
+}
+
+export async function fetchHistory(sessionId: string): Promise<FetchHistoryResponse> {
   const response = await fetch(`${API_BASE_URL}/api/v1/chat/history?sessionId=${encodeURIComponent(sessionId)}`, {
     method: 'GET',
     headers: {
@@ -118,11 +123,79 @@ export async function fetchHistory(sessionId: string): Promise<any[]> {
   }
 
   const json = await response.json();
-  return json.data?.messages || [];
+  const messages = json.data?.messages || [];
+  const isTurnInProgress = Boolean(json.data?.isTurnInProgress);
+
+  return { messages, isTurnInProgress };
+}
+
+export async function reconnectStream(
+  sessionId: string,
+  onEvent: (event: SSEEvent) => void,
+  signal?: AbortSignal
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/chat/stream?sessionId=${encodeURIComponent(sessionId)}`, {
+    method: 'GET',
+    headers: {
+      Accept: 'text/event-stream',
+    },
+    credentials: 'include',
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorJson = await response.json().catch(() => ({}));
+    throw new Error(errorJson.message || `Failed to reconnect stream (${response.status})`);
+  }
+
+  if (!response.body) {
+    throw new Error('Response body is empty');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      let currentEvent: string | null = null;
+      let currentData: string = '';
+
+      for (const line of lines) {
+        const trimmed = line.replace(/\r$/, '').trim();
+        if (trimmed.startsWith('event:')) {
+          currentEvent = trimmed.slice(6).trim();
+        } else if (trimmed.startsWith('data:')) {
+          currentData += (currentData ? '\n' : '') + trimmed.slice(5).trim();
+        } else if (trimmed === '') {
+          if (currentEvent && currentData) {
+            try {
+              const parsedData = JSON.parse(currentData);
+              onEvent({ event: currentEvent as any, data: parsedData });
+            } catch {
+              onEvent({ event: currentEvent as any, data: currentData as any });
+            }
+          }
+          currentEvent = null;
+          currentData = '';
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 export const agenticLoopApi = {
   streamTurn,
+  reconnectStream,
   compressContext,
   fetchHistory,
 };

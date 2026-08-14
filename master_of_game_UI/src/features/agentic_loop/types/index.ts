@@ -5,7 +5,9 @@ export type SubagentGroup = 'property' | 'world' | 'actor';
 export type TurnStage =
   | 'idle'
   | 'pre_fetch'
+  | 'master_eval'
   | 'subagent'
+  | 'master_gen'
   | 'narrative'
   | 'completed'
   | 'error';

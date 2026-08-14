@@ -51,9 +51,11 @@ export const NpcDossierModal: React.FC<NpcDossierModalProps> = ({
   const classKey = STATUS_CLASS_MAP[npc.status] || 'alive';
   const statusLabel = t(`npc.statuses.${npc.status}`, { defaultValue: npc.status });
 
-  const secrets = (npc.knowledge?.hidden_memory?.secrets || []).filter(
-    (s) => s.discovery_status !== 'hidden'
-  );
+  const secrets =
+    npc.knowledge?.revealed_secrets ||
+    (npc.knowledge?.hidden_memory?.secrets || []).filter(
+      (s) => s.discovery_status !== 'hidden'
+    );
 
   const relationships = npc.relationships || [];
 
@@ -152,19 +154,35 @@ export const NpcDossierModal: React.FC<NpcDossierModalProps> = ({
               </p>
             ) : (
               <div className={styles.relationshipsList}>
-                {relationships.map((rel) => (
-                  <div key={rel.target_npc_id} className={styles.relCard}>
-                    <div className={styles.relHeader}>
-                      <span className={styles.relName}>
-                        {rel.target_npc_name || rel.target_npc_id}
-                      </span>
-                      <span className={styles.relType}>
-                        {rel.relationship_type}
-                      </span>
+                {relationships.map((rel, idx) => {
+                  const displayName =
+                    rel.target_npc_name ||
+                    (rel.target_npc_id && !rel.target_npc_id.startsWith('npc_')
+                      ? rel.target_npc_id
+                      : 'Персонаж');
+
+                  const relTypeMap: Record<string, string> = {
+                    acquaintance: 'Знайомий/а',
+                    ally: 'Союзник',
+                    friend: 'Друг',
+                    enemy: 'Ворог',
+                    rival: 'Суперник',
+                    family: 'Родич',
+                    spouse: 'Чоловік / Дружина',
+                    neutral: 'Нейтральний',
+                  };
+                  const displayType = relTypeMap[String(rel.relationship_type).toLowerCase()] || rel.relationship_type;
+
+                  return (
+                    <div key={rel.target_npc_id || `rel_${idx}`} className={styles.relCard}>
+                      <div className={styles.relHeader}>
+                        <span className={styles.relName}>{displayName}</span>
+                        <span className={styles.relType}>{displayType}</span>
+                      </div>
+                      <p className={styles.relSummary}>{rel.summary}</p>
                     </div>
-                    <p className={styles.relSummary}>{rel.summary}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

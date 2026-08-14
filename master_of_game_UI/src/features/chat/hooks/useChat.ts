@@ -1,18 +1,29 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ChatMessage } from '../types';
-import { useAgenticLoop, agenticLoopApi } from '@/features/agentic_loop';
+import { useAgenticLoop, agenticLoopApi, type SSEEvent } from '@/features/agentic_loop';
 
 export const useChat = (sessionId: string) => {
   const { t } = useTranslation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
+
+  // Live Reconnection SSE stream states
+  const [reconnectStage, setReconnectStage] = useState<string | null>(null);
+  const [reconnectSubagent, setReconnectSubagent] = useState<any | null>(null);
+  const [reconnectMessage, setReconnectMessage] = useState<string | null>(null);
+  const [reconnectText, setReconnectText] = useState<string>('');
+
   const lastProcessedTurnIdRef = useRef<string | null>(null);
+  const reconnectControllerRef = useRef<AbortController | null>(null);
 
   const defaultInitialMessage: ChatMessage = {
     id: 'welcome_1',
     type: 'master',
-    text: t('chat.default_initial_message', 'Ви прокидаєтесь у тьмяно освітленій кімнаті. Холодна кам\'яна підлога неприємно холодить спину. Повітря просякнуте запахом вогкості та старої сталі.'),
+    text: t(
+      'chat.default_initial_message',
+      'Ви прокидаєтесь у тьмяно освітленій кімнаті. Холодна кам\'яна підлога неприємно холодить спину. Повітря просякнуте запахом вогкості та старої сталі.'
+    ),
   };
 
   const agenticLoop = useAgenticLoop(sessionId);
@@ -35,16 +46,88 @@ export const useChat = (sessionId: string) => {
     if (!sessionId) return;
 
     let isMounted = true;
-    const loadHistory = async () => {
+    const loadHistoryAndReconnect = async () => {
       setIsLoadingHistory(true);
       try {
-        const historyMessages = await agenticLoopApi.fetchHistory(sessionId);
-        if (isMounted) {
-          if (historyMessages && historyMessages.length > 0) {
-            setMessages(historyMessages);
-          } else {
-            setMessages([defaultInitialMessage]);
+        const { messages: historyMessages, isTurnInProgress } = await agenticLoopApi.fetchHistory(
+          sessionId
+        );
+        if (!isMounted) return;
+
+        if (historyMessages && historyMessages.length > 0) {
+          setMessages(historyMessages);
+        } else {
+          setMessages([defaultInitialMessage]);
+        }
+
+        // Auto-reconnect to live SSE stream if a turn is currently in progress!
+        if (isTurnInProgress) {
+          setReconnectStage('master_eval');
+          setReconnectMessage(
+            t('agentic_loop.messages.reconnect', 'Відновлення зв\'язку з живим стрімом Майстра...')
+          );
+          setReconnectText('');
+
+          if (reconnectControllerRef.current) {
+            reconnectControllerRef.current.abort();
           }
+
+          const controller = new AbortController();
+          reconnectControllerRef.current = controller;
+
+          const handleReconnectEvent = (event: SSEEvent) => {
+            if (!isMounted) return;
+
+            switch (event.event) {
+              case 'status':
+                if (event.data.stage === 'idle') {
+                  setReconnectStage(null);
+                  setReconnectMessage(null);
+                  setReconnectSubagent(null);
+                } else {
+                  setReconnectStage(event.data.stage);
+                  setReconnectSubagent(event.data.subagent || null);
+                  setReconnectMessage(event.data.message || null);
+                }
+                break;
+              case 'chunk':
+                setReconnectStage('narrative');
+                setReconnectText((prev) => prev + event.data.delta);
+                break;
+              case 'done':
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('game:turn_completed'));
+                }
+                break;
+              case 'error':
+                setReconnectStage(null);
+                setReconnectMessage(null);
+                setReconnectSubagent(null);
+                break;
+            }
+          };
+
+          try {
+            await agenticLoopApi.reconnectStream(sessionId, handleReconnectEvent, controller.signal);
+          } catch {
+            // Reconnection stream error
+          } finally {
+            if (isMounted) {
+              try {
+                const finalHist = await agenticLoopApi.fetchHistory(sessionId);
+                if (finalHist && finalHist.messages && finalHist.messages.length > 0) {
+                  setMessages(finalHist.messages);
+                }
+              } catch {}
+              setReconnectStage(null);
+              setReconnectMessage(null);
+              setReconnectSubagent(null);
+              setReconnectText('');
+            }
+          }
+        } else {
+          setReconnectStage(null);
+          setReconnectMessage(null);
         }
       } catch (err) {
         console.error('Failed to load chat history', err);
@@ -58,9 +141,13 @@ export const useChat = (sessionId: string) => {
       }
     };
 
-    loadHistory();
+    loadHistoryAndReconnect();
+
     return () => {
       isMounted = false;
+      if (reconnectControllerRef.current) {
+        reconnectControllerRef.current.abort();
+      }
     };
   }, [sessionId]);
 
@@ -85,10 +172,9 @@ export const useChat = (sessionId: string) => {
 
   useEffect(() => {
     if (stage === 'error' && error) {
-      // Auto-recover check: If backend completed turn asynchronously after SSE disconnection, fetch history
       const timer = setTimeout(async () => {
         try {
-          const historyMessages = await agenticLoopApi.fetchHistory(sessionId);
+          const { messages: historyMessages } = await agenticLoopApi.fetchHistory(sessionId);
           if (historyMessages && historyMessages.length > 0) {
             setMessages(historyMessages);
             return;
@@ -111,7 +197,7 @@ export const useChat = (sessionId: string) => {
 
   const sendMessage = useCallback(
     async (text: string) => {
-      if (!text.trim() || isStreaming) return;
+      if (!text.trim() || isStreaming || Boolean(reconnectStage)) return;
 
       const playerMsg: ChatMessage = {
         id: `player_${Date.now()}`,
@@ -123,7 +209,7 @@ export const useChat = (sessionId: string) => {
       setMessages((prev) => [...prev, playerMsg]);
       await submitTurn(text.trim());
     },
-    [isStreaming, submitTurn]
+    [isStreaming, reconnectStage, submitTurn]
   );
 
   const compressContext = useCallback(async () => {
@@ -141,14 +227,20 @@ export const useChat = (sessionId: string) => {
     return res;
   }, [agenticCompressContext]);
 
+  const effectiveStage = reconnectStage || stage;
+  const effectiveSubagent = reconnectSubagent || subagent;
+  const effectiveStatusMessage = reconnectMessage || statusMessage;
+  const effectiveNarrativeText = reconnectText || narrativeText;
+  const effectiveIsStreaming = isStreaming || Boolean(reconnectStage);
+
   return {
     messages,
     isLoadingHistory,
-    isStreaming,
-    stage,
-    subagent,
-    statusMessage,
-    narrativeText,
+    isStreaming: effectiveIsStreaming,
+    stage: effectiveStage as any,
+    subagent: effectiveSubagent,
+    statusMessage: effectiveStatusMessage,
+    narrativeText: effectiveNarrativeText,
     error,
     isCompressing,
     compressedLogsCount,

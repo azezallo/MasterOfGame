@@ -5,7 +5,7 @@ import { CONFIG } from '../config';
 import fs from 'fs';
 import path from 'path';
 import { logger } from '../logger';
-import { PersistenceError } from '../errors/app_errors';
+import { PersistenceError } from '../errors/app.errors';
 
 export class SessionMetadataService {
   /**

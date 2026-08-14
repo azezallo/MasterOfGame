@@ -22,7 +22,12 @@ export interface MagicStats {
   base_regen: number;
 }
 
-export type PlayerSkills = Record<string, number>;
+export interface SkillEntry {
+  name: string;
+  value: number;
+}
+
+export type PlayerSkills = SkillEntry[];
 
 export interface PlayerStateProfile {
   physical_states: StateItem[];
@@ -42,6 +47,11 @@ export interface UpdatePlayerStateInput {
   add_psychological_states?: string[];
   remove_psychological_states?: string[];
   mana_delta?: number;
+  mana_percent?: number;
   update_attributes?: Partial<PlayerAttributes>;
-  update_skills?: Record<string, number>;
+  update_skills?: SkillEntry[] | Record<string, number>;
+  skill_name?: string;
+  skill_value?: number;
+  skill_delta?: number;
+  update_magic_stats?: Partial<MagicStats>;
 }

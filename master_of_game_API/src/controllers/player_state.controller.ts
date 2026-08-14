@@ -1,20 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
-import { DatabaseRepository } from '../persistence/database_repository';
+
 import { PersistenceService } from '../persistence/persistence_service';
 import { PlayerStateService } from '../services/player_state.service';
 import { PropertyService } from '../services/property.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { AppError, AuthError } from '../errors/app.errors';
 
 async function getPlayerStateService(req: Request): Promise<PlayerStateService> {
   const sessionId = (Array.isArray(req.params.sessionId) ? req.params.sessionId[0] : req.params.sessionId) || '';
-  const rawPlayerId = (req as AuthenticatedRequest).user?.id;
-  const playerId = rawPlayerId !== undefined && rawPlayerId !== null ? String(rawPlayerId) : 'default_player';
+  const user = (req as AuthenticatedRequest).user;
+  if (!user || !user.id) {
+    throw new AuthError('User not authenticated');
+  }
+  const playerId = String(user.id);
 
   const persistenceService = new PersistenceService();
-  let repo = await persistenceService.loadSessionRepo(playerId, sessionId);
+  const repo = await persistenceService.loadSessionRepo(playerId, sessionId);
   if (!repo) {
-    repo = new DatabaseRepository();
-    await repo.initializeDB(playerId, sessionId);
+    throw new AppError(`Session '${sessionId}' not found for player '${playerId}'`, 404);
   }
 
   const playerStateRepo = repo.getPlayerStateRepository();

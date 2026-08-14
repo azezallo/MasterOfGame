@@ -6,7 +6,7 @@ const router = Router();
 
 router.use(authMiddleware as any);
 
-router.post('/index', indexRecord as any);
-router.post('/search', searchMemory as any);
+router.post('/index', indexRecord);
+router.post('/search', searchMemory);
 
 export default router;

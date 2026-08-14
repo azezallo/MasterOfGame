@@ -1,21 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
-import { DatabaseRepository } from '../persistence/database_repository';
+import { z } from 'zod';
+
+import { PersistenceService } from '../persistence/persistence_service';
 import { NpcService } from '../services/npc.service';
+import { AppError, AuthError } from '../errors/app.errors';
+import { AuthenticatedRequest } from '../middleware/auth.middleware';
 
 async function getNpcService(req: Request): Promise<NpcService> {
-  const sessionId = (req.params.sessionId as string) || (req.query.sessionId as string);
-  const authReq = req as any;
-  const playerId =
-    authReq.user?.login ||
-    (authReq.user?.id ? String(authReq.user.id) : null) ||
-    (req.headers['x-player-id'] as string) ||
-    (req.query.playerId as string) ||
-    'default_player';
+  const sessionId = (req.params.sessionId as string) || (req.query.sessionId as string) || '';
+  const user = (req as AuthenticatedRequest).user;
+  if (!user || !user.id) {
+    throw new AuthError('User not authenticated');
+  }
+  const playerId = String(user.id);
 
-  let repo = (req as any).dbRepo as DatabaseRepository;
+  const persistenceService = new PersistenceService();
+  const repo = await persistenceService.loadSessionRepo(playerId, sessionId);
   if (!repo) {
-    repo = new DatabaseRepository();
-    await repo.initializeDB(playerId, sessionId);
+    throw new AppError(`Session '${sessionId}' not found for player '${playerId}'`, 404);
   }
   const npcRepo = repo.getNpcRepository();
   return new NpcService(npcRepo);
@@ -74,7 +76,7 @@ export const updatePlayerNotes = async (req: Request, res: Response, next: NextF
   try {
     const npcService = await getNpcService(req);
     const npcId = (req.params.id as string) || '';
-    const { content } = req.body;
+    const { content } = z.object({ content: z.string() }).parse(req.body);
 
     const updatedNpc = npcService.updatePlayerNotes(npcId, content || '');
     return res.json({

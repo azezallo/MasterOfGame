@@ -7,6 +7,7 @@ import { SubagentOrchestratorService } from '../services/agentic_loop/subagent_o
 import { CompressionService } from '../services/agentic_loop/compression.service';
 import { SemanticMemoryService } from '../services/semantic_memory.service';
 import { SemanticMemoryRepository } from '../repositories/semantic_memory.repository';
+import { WorldStateService } from '../services/world_state.service';
 import { ILLMProvider } from '../providers/llm/llm_provider.interface';
 import { CONFIG } from '../config';
 
@@ -242,7 +243,22 @@ describe('F012 Agentic Loop Services', () => {
 
     const weatherRes = await orchestrator.executeSubagentInstruction(testSessionId, 'world', 'Зміни погоду на зливу');
     expect(weatherRes.success).toBe(true);
-    expect(weatherRes.message).toContain('downpour');
+    expect(weatherRes.message).toContain('злива');
+  });
+
+  it('should regenerate mana passively when time advances via WorldStateService', async () => {
+    const playerRepo = repo.getPlayerStateRepository();
+    const playerState = playerRepo.getPlayerState(testSessionId);
+    playerState.magic_stats.current_mana = 20;
+    playerRepo.savePlayerState(testSessionId, playerState);
+
+    const worldRepo = repo.getWorldStateRepository();
+    const worldService = new WorldStateService(worldRepo, playerRepo);
+    worldService.advanceTime({ hours: 5 }, testSessionId);
+
+    const updatedState = playerRepo.getPlayerState(testSessionId);
+    // 5 hours * 10 base_regen * (50/50) = 50 restored mana -> 20 + 50 = 70
+    expect(updatedState.magic_stats.current_mana).toBe(70);
   });
 
   it('should compress session context according to 80/20 rule', async () => {

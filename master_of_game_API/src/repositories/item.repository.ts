@@ -144,6 +144,10 @@ export class ItemRepository {
     };
   }
 
+  public findById(itemId: string): ItemInstance | null {
+    return this.getItem(itemId);
+  }
+
   public getItems(itemIds: string[]): ItemInstance[] {
     if (itemIds.length === 0) return [];
     const placeholders = itemIds.map(() => '?').join(',');

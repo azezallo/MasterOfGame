@@ -22,3 +22,9 @@ export class AuthError extends AppError {
     super(message, statusCode);
   }
 }
+
+export class PersistenceError extends AppError {
+  constructor(message: string) {
+    super(message, 500, false);
+  }
+}

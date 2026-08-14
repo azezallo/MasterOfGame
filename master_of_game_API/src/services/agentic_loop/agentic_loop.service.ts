@@ -1,24 +1,23 @@
-import { Response } from 'express';
+
 import { DatabaseRepository } from '../../persistence/database_repository';
 import { AgenticLoopRepository } from '../../repositories/agentic_loop.repository';
-import { ILLMProvider } from '../../providers/llm/llm_provider.interface';
 import { ContextAssemblyService } from './context_assembly.service';
 import { SubagentOrchestratorService } from './subagent_orchestrator.service';
 import { CompressionService } from './compression.service';
 import { SemanticMemoryService } from '../semantic_memory.service';
-import { SubagentGroup } from '../../types/agentic_loop.types';
-import { LLMMessage } from '../../types/ai.types';
+import { ILLMProvider } from '../../providers/llm/llm_provider.interface';
+import { LLMMessage, SubagentGroup, TurnStage } from '../../types/agentic_loop.types';
 import { logger } from '../../logger';
+import { SessionStreamBroker, SSEWritable } from './session_stream_broker.service';
 
 export class AgenticLoopService {
-  private repo: DatabaseRepository;
   private agenticLoopRepo: AgenticLoopRepository;
   private llmProvider?: ILLMProvider;
   private modelName: string;
+  private memoryService?: SemanticMemoryService;
   private contextAssembly: ContextAssemblyService;
   private orchestrator: SubagentOrchestratorService;
   private compressionService: CompressionService;
-  private memoryService?: SemanticMemoryService;
 
   constructor(
     repo: DatabaseRepository,
@@ -26,7 +25,6 @@ export class AgenticLoopService {
     memoryService?: SemanticMemoryService,
     modelName: string = 'Qwen2.5-7B-Instruct'
   ) {
-    this.repo = repo;
     this.agenticLoopRepo = repo.getAgenticLoopRepository();
     this.llmProvider = llmProvider;
     this.modelName = modelName;
@@ -36,34 +34,30 @@ export class AgenticLoopService {
     this.compressionService = new CompressionService(repo, llmProvider);
   }
 
-  public async runStreamTurn(sessionId: string, actionText: string, res: Response): Promise<void> {
+  public async runStreamTurn(sessionId: string, actionText: string, res?: SSEWritable): Promise<void> {
     const turnNumber = this.agenticLoopRepo.getNextTurnNumber(sessionId);
+    const broker = SessionStreamBroker.getInstance();
 
     logger.info('Turn Execution Started', { sessionId, turnNumber, actionText });
 
-    // Setup SSE Headers
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders?.();
+    // Save Player Action to Long Context immediately upon turn initialization
+    this.agenticLoopRepo.saveLongContextMessage(sessionId, turnNumber, 'player', actionText);
 
-    const sendSSE = (event: string, data: any) => {
-      res.write(`event: ${event}\n`);
-      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    broker.startSession(sessionId, turnNumber, actionText);
+    if (res) {
+      broker.addSubscriber(sessionId, res);
+    }
+
+    const sendStatus = (stage: TurnStage, message: string, subagent?: SubagentGroup) => {
+      broker.broadcastStatus(sessionId, { stage, subagent, message });
     };
 
     try {
       // 1. Stage: Pre-fetch & Context Assembly
-      sendSSE('status', {
-        stage: 'pre_fetch',
-        message: 'Майстер шукає спогади у F017 та збирає контекст...',
-      });
+      sendStatus('pre_fetch', 'Майстер шукає спогади у F017 та збирає контекст...');
 
       const systemPrompt = await this.contextAssembly.assembleMasterSystemPrompt(sessionId, actionText);
       logger.llm('System Prompt Assembled', { sessionId, turnNumber, promptLength: systemPrompt.length });
-
-      // Save Player Action to Long Context
-      this.agenticLoopRepo.saveLongContextMessage(sessionId, turnNumber, 'player', actionText);
 
       // Maintain cumulative conversation transcript across Re-Act iterations
       const conversationMessages: LLMMessage[] = [
@@ -78,10 +72,10 @@ export class AgenticLoopService {
 
       while (iteration < maxIterations) {
         iteration++;
-        sendSSE('status', {
-          stage: 'master_eval',
-          message: `Аналіз ситуації Майстром (${this.modelName}, Ітерація ${iteration}/${maxIterations})...`,
-        });
+        sendStatus(
+          'master_eval',
+          `Аналіз ситуації Майстром (${this.modelName}, Ітерація ${iteration}/${maxIterations})...`
+        );
 
         if (this.llmProvider) {
           const startTime = Date.now();
@@ -89,10 +83,7 @@ export class AgenticLoopService {
 
           const heartbeatInterval = setInterval(() => {
             try {
-              sendSSE('status', {
-                stage: 'master_eval',
-                message: `Очікування відповіді від ШІ-моделі (${this.modelName})...`,
-              });
+              sendStatus('master_eval', `Очікування відповіді від ШІ-моделі (${this.modelName})...`);
             } catch {}
           }, 3000);
 
@@ -143,13 +134,16 @@ export class AgenticLoopService {
 
               logger.subagent('Executing Subagent Delegation', { group, instruction, iteration });
 
-              sendSSE('status', {
-                stage: 'subagent',
-                subagent: group,
-                message: `Сабагент ${group.toUpperCase()} оновлює стан: "${instruction}"`,
-              });
+              sendStatus('subagent', `Сабагент ${group.toUpperCase()} оновлює стан: "${instruction}"`, group);
 
-              const subagentRes = await this.orchestrator.executeSubagentInstruction(sessionId, group, instruction);
+              const subagentRes = await this.orchestrator.executeSubagentInstruction(
+                sessionId,
+                group,
+                instruction,
+                (progress) => {
+                  sendStatus('subagent', progress.message, progress.subagent);
+                }
+              );
               logger.subagent('Subagent Execution Finished', { group, success: subagentRes.success, resultData: subagentRes.data });
 
               return { group, instruction, subagentRes };
@@ -175,10 +169,7 @@ export class AgenticLoopService {
       }
 
       // 3. Stage: Master Narrative Generation
-      sendSSE('status', {
-        stage: 'master_gen',
-        message: 'Наративний Майстер створює відповідь...',
-      });
+      sendStatus('master_gen', 'Наративний Майстер створює відповідь...');
 
       let finalNarrative = masterDecisionText
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
@@ -219,7 +210,7 @@ export class AgenticLoopService {
       const chunkSize = 20;
       for (let i = 0; i < finalNarrative.length; i += chunkSize) {
         const delta = finalNarrative.slice(i, i + chunkSize);
-        sendSSE('chunk', { delta });
+        broker.broadcastChunk(sessionId, delta);
         await new Promise((r) => setTimeout(r, 15));
       }
 
@@ -237,23 +228,21 @@ export class AgenticLoopService {
             turn_number: turnNumber,
             role: 'master',
             content: finalNarrative,
-            tags: ['turn_narrative'],
           });
-        } catch {}
+        } catch (memErr: any) {
+          logger.error('Failed to index turn in semantic memory', { error: memErr.message });
+        }
       }
 
-      logger.info('Turn Execution Successfully Completed', { sessionId, turnNumber, finalNarrativeLength: finalNarrative.length });
-
-      sendSSE('done', {
+      broker.broadcastDone(sessionId, {
         turnId: `turn_${turnNumber}`,
         shortLog: shortLogText,
       });
 
-      res.end();
-    } catch (error: any) {
-      logger.error('Turn Execution Error', { sessionId, error: error.message });
-      sendSSE('error', { message: error.message || 'Turn execution failed' });
-      res.end();
+      logger.info('Turn Execution Completed Successfully', { sessionId, turnNumber });
+    } catch (err: any) {
+      logger.error('Turn Execution Errored', { sessionId, error: err.message });
+      broker.broadcastError(sessionId, { message: err.message });
     }
   }
 }

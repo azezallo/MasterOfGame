@@ -44,6 +44,15 @@ export const TurnProgressIndicator: React.FC<TurnProgressIndicatorProps> = ({
             </span>
           </div>
         );
+      case 'master_eval':
+        return (
+          <div className={styles.stageItem}>
+            <span className={styles.icon}>🧠</span>
+            <span className={styles.stageTitle}>
+              {t('agentic_loop.stages.master_eval', 'Аналіз ситуації ШІ-Майстром')}
+            </span>
+          </div>
+        );
       case 'subagent':
         return (
           <div className={styles.stageItem}>
@@ -58,6 +67,7 @@ export const TurnProgressIndicator: React.FC<TurnProgressIndicatorProps> = ({
             )}
           </div>
         );
+      case 'master_gen':
       case 'narrative':
         return (
           <div className={styles.stageItem}>

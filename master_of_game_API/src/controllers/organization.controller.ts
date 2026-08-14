@@ -1,19 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
-import { DatabaseRepository } from '../persistence/database_repository';
+
 import { PersistenceService } from '../persistence/persistence_service';
 import { OrganizationService } from '../services/organization.service';
 import { UpdateOrganizationNotesInputSchema } from '../schemas/organization.schema';
+import { AppError, AuthError } from '../errors/app.errors';
+import { AuthenticatedRequest } from '../middleware/auth.middleware';
 
 async function getOrganizationService(req: Request): Promise<OrganizationService> {
-  const sessionId = (req.params.sessionId as string) || '';
-  const rawPlayerId = (req as any).user?.id;
-  const playerId = rawPlayerId !== undefined && rawPlayerId !== null ? String(rawPlayerId) : 'default_player';
+  const sessionId = (req.params.sessionId as string) || (req.query.sessionId as string) || '';
+  const user = (req as AuthenticatedRequest).user;
+  if (!user || !user.id) {
+    throw new AuthError('User not authenticated');
+  }
+  const playerId = String(user.id);
 
   const persistenceService = new PersistenceService();
-  let repo = await persistenceService.loadSessionRepo(playerId, sessionId);
+  const repo = await persistenceService.loadSessionRepo(playerId, sessionId);
   if (!repo) {
-    repo = new DatabaseRepository();
-    await repo.initializeDB(playerId, sessionId);
+    throw new AppError(`Session '${sessionId}' not found for player '${playerId}'`, 404);
   }
   const orgRepo = repo.getOrganizationRepository();
   const npcRepo = repo.getNpcRepository();

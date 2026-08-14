@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePlayerState } from '../hooks/usePlayerState';
+import { useWorldState } from '@/features/worldState';
 import {
   getManaNarrative,
   getSkillNarrative,
@@ -16,11 +17,18 @@ interface PlayerStatePanelProps {
 export const PlayerStatePanel: React.FC<PlayerStatePanelProps> = ({ sessionId }) => {
   const { t } = useTranslation();
   const { playerState, loading, error, refetch } = usePlayerState(sessionId);
+  const { worldState } = useWorldState({ sessionId });
 
   const formatRelativeTime = (isoString: string): string => {
     if (!isoString) return '';
-    const date = new Date(isoString);
-    const diffMinutes = Math.floor((Date.now() - date.getTime()) / (1000 * 60));
+    const effectDate = new Date(isoString);
+    const currentGameDate = worldState?.time?.current_date ? new Date(worldState.time.current_date) : null;
+    const referenceTime = currentGameDate && !isNaN(currentGameDate.getTime()) ? currentGameDate.getTime() : Date.now();
+
+    const diffMs = referenceTime - effectDate.getTime();
+    if (diffMs < 0) return t('player_state.time.just_now', 'щойно');
+
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
     if (diffMinutes < 1) return t('player_state.time.just_now', 'щойно');
     if (diffMinutes < 60) return t('player_state.time.minutes_ago', { count: diffMinutes, defaultValue: `${diffMinutes} хв тому` });
     const diffHours = Math.floor(diffMinutes / 60);
@@ -45,9 +53,6 @@ export const PlayerStatePanel: React.FC<PlayerStatePanelProps> = ({ sessionId })
       <div className={styles.container}>
         <div className={styles.header}>
           <h3 className={styles.title}>👤 {t('player_state.title', 'Стан персонажа')}</h3>
-          <button onClick={refetch} className={styles.refreshButton}>
-            {t('player_state.buttons.refresh', 'Оновити')}
-          </button>
         </div>
         <div className={styles.emptyState}>{error}</div>
       </div>
@@ -120,9 +125,6 @@ export const PlayerStatePanel: React.FC<PlayerStatePanelProps> = ({ sessionId })
         <h3 className={styles.title}>
           <span className={styles.titleIcon}>✨</span> {t('player_state.title', 'Стан Персонажа')}
         </h3>
-        <button onClick={refetch} className={styles.refreshButton}>
-          {t('player_state.buttons.refresh', 'Оновити')}
-        </button>
       </div>
 
       {/* Mana Card */}
@@ -193,17 +195,25 @@ export const PlayerStatePanel: React.FC<PlayerStatePanelProps> = ({ sessionId })
       <div className={styles.section}>
         <h4 className={styles.sectionTitle}>{t('player_state.sections.skills', 'Навички')}</h4>
         <div className={styles.skillsList}>
-          {Object.entries(playerState.skills).map(([skillKey, level]) => {
-            const narrative = getSkillNarrative(level, t);
-            return (
-              <div key={skillKey} className={styles.skillRow}>
-                <span className={styles.skillName}>{t(`player_state.skills.${skillKey}`, skillKey)}</span>
-                <span className={`${styles.skillTierBadge} ${getSkillTierClass(narrative.tier)}`}>
-                  {narrative.title}
-                </span>
-              </div>
-            );
-          })}
+          {(() => {
+            const skillsList = Array.isArray(playerState.skills)
+              ? playerState.skills
+              : typeof playerState.skills === 'object' && playerState.skills !== null
+              ? Object.entries(playerState.skills).map(([k, v]) => ({ name: k, value: v as number }))
+              : [];
+
+            return skillsList.map((skill, index) => {
+              const narrative = getSkillNarrative(skill.value, t);
+              return (
+                <div key={skill.name || index} className={styles.skillRow}>
+                  <span className={styles.skillName}>{skill.name}</span>
+                  <span className={`${styles.skillTierBadge} ${getSkillTierClass(narrative.tier)}`}>
+                    {narrative.title}
+                  </span>
+                </div>
+              );
+            });
+          })()}
         </div>
       </div>
     </div>
