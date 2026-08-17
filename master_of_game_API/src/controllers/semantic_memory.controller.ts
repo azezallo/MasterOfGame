@@ -7,14 +7,15 @@ import { PersistenceService } from '../persistence/persistence_service';
 import { ValidationError, AppError, AuthError } from '../errors/app.errors';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 
+const persistenceService = new PersistenceService();
+
+
 async function getSemanticMemoryService(sessionId: string, req: Request): Promise<SemanticMemoryService> {
   const user = (req as AuthenticatedRequest).user;
   if (!user || !user.id) {
     throw new AuthError('User not authenticated');
   }
   const playerId = String(user.id);
-
-  const persistenceService = new PersistenceService();
   const repo = await persistenceService.loadSessionRepo(playerId, sessionId);
   if (!repo) {
     throw new AppError(`Session '${sessionId}' not found for player '${playerId}'`, 404);

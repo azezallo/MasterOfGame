@@ -83,8 +83,8 @@ export interface ValidationResult {
 export interface UserAISettings {
   userId: string;
   providerId: LLMProviderId;
-  customEndpoint?: string;
-  encryptedApiKey?: string | null;
+  customEndpoint?: string | undefined;
+  encryptedApiKey?: string | null | undefined;
   modelName: string;
   temperature: number;
   timeoutMs: number;
@@ -98,7 +98,7 @@ export interface UserAISettings {
 export interface UserAISettingsDTO {
   isConfigured: boolean;
   providerId: LLMProviderId;
-  customEndpoint?: string;
+  customEndpoint?: string | undefined;
   modelName: string;
   temperature: number;
   timeoutMs: number;
@@ -109,17 +109,17 @@ export interface UserAISettingsDTO {
 
 export interface UpdateAISettingsPayload {
   providerId: LLMProviderId;
-  customEndpoint?: string;
+  customEndpoint?: string | undefined;
   modelName: string;
   temperature: number;
   timeoutMs: number;
   maxContextTokens: number;
   embeddingProvider: EmbeddingProviderId;
-  apiKey?: string | null;
+  apiKey?: string | null | undefined;
 }
 
 export interface TestConnectionPayload {
   providerId: LLMProviderId;
-  customEndpoint?: string;
-  apiKey?: string | null;
+  customEndpoint?: string | undefined;
+  apiKey?: string | null | undefined;
 }

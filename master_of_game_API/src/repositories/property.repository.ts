@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import { PropertyProfile } from '../schemas/property.schema';
+import { logger } from '../logger';
 
 export interface DBPropertyRow {
   property_profile_id: string;
@@ -20,7 +21,7 @@ function safeJsonParse<T>(jsonString: string | null | undefined, fallback: T): T
   try {
     return JSON.parse(jsonString);
   } catch (err) {
-    console.error('[PropertyRepository] JSON parse failure:', err, 'Raw value:', jsonString);
+    logger.error('[PropertyRepository] JSON parse failure:', { error: err, rawValue: jsonString });
     return fallback;
   }
 }

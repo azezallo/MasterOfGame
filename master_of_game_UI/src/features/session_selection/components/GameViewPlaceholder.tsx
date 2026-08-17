@@ -1,18 +1,12 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import styles from './GameViewPlaceholder.module.css';
 
 export const GameViewPlaceholder: React.FC = () => {
+  const { t } = useTranslation();
   return (
-    <div style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      height: '400px', 
-      border: '2px dashed #4a4a4a', 
-      borderRadius: '8px',
-      margin: '20px 0',
-      color: '#888'
-    }}>
-      <p>В процесі</p>
+    <div className={styles.container}>
+      <p>{t('session.placeholder_in_progress', 'В процесі')}</p>
     </div>
   );
 };

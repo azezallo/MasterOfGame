@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import dotenv from 'dotenv';
+import { logger } from '../logger';
 
 dotenv.config();
 
@@ -26,9 +27,9 @@ const schema = `
 
 try {
   db.exec(schema);
-  console.log('Database migration successful');
+  logger.info('Database migration successful');
 } catch (error) {
-  console.error('Database migration failed', error);
+  logger.error('Database migration failed', error);
   process.exit(1);
 } finally {
   db.close();

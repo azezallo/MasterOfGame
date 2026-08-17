@@ -3,6 +3,7 @@ import { SessionMetadataService } from '../services/session_metadata.service';
 import { CONFIG } from '../config';
 import fs from 'fs';
 import path from 'path';
+import { logger } from '../logger';
 
 async function testSessionCreation() {
   const playerId = 'test-player-123';
@@ -20,29 +21,29 @@ async function testSessionCreation() {
     const metadataService = new SessionMetadataService();
 
     const sessionId = await persistenceService.createSession(playerId, gameName, characterName);
-    console.log(`Created session with ID: ${sessionId}`);
+    logger.info(`Created session with ID: ${sessionId}`);
 
     // Verify file exists
     const dbPath = path.resolve(CONFIG.SAVES_DIR, playerId, `${sessionId}.db`);
     if (fs.existsSync(dbPath)) {
-      console.log(`Database file exists at: ${dbPath}`);
+      logger.info(`Database file exists at: ${dbPath}`);
     } else {
-      console.error(`Database file DOES NOT exist at: ${dbPath}`);
+      logger.error(`Database file DOES NOT exist at: ${dbPath}`);
       process.exit(1);
     }
 
     // Verify metadata
     const metadata = await metadataService.getMetadata(playerId, sessionId);
     if (metadata && metadata.gameName === gameName && metadata.characterName === characterName) {
-      console.log(`Metadata verified: gameName=${metadata.gameName}, characterName=${metadata.characterName}`);
+      logger.info(`Metadata verified: gameName=${metadata.gameName}, characterName=${metadata.characterName}`);
     } else {
-      console.error(`Metadata verification failed:`, metadata);
+      logger.error(`Metadata verification failed:`, metadata);
       process.exit(1);
     }
 
-    console.log('Test passed successfully!');
+    logger.info('Test passed successfully!');
   } catch (error) {
-    console.error('Test failed:', error);
+    logger.error('Test failed:', error);
     process.exit(1);
   }
 }

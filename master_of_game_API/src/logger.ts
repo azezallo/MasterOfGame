@@ -12,8 +12,17 @@ function ensureLogDir(): void {
   } catch {}
 }
 
+let logStream: fs.WriteStream | null = null;
+
+function getLogStream(): fs.WriteStream {
+  if (!logStream) {
+    ensureLogDir();
+    logStream = fs.createWriteStream(LOG_FILE, { flags: 'a', highWaterMark: 16384 });
+  }
+  return logStream;
+}
+
 function writeToFile(level: string, message: string, meta?: any): void {
-  ensureLogDir();
   try {
     const entry = JSON.stringify({
       timestamp: new Date().toISOString(),
@@ -21,7 +30,7 @@ function writeToFile(level: string, message: string, meta?: any): void {
       message,
       ...(meta || {}),
     });
-    fs.appendFileSync(LOG_FILE, entry + '\n', 'utf-8');
+    getLogStream().write(entry + '\n');
   } catch {}
 }
 

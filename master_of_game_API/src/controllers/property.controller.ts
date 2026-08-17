@@ -6,6 +6,9 @@ import { PayRentInputSchema, StorageTransferInputSchema, ToggleBackpackInputSche
 import { AppError, AuthError } from '../errors/app.errors';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 
+const persistenceService = new PersistenceService();
+
+
 async function getPropertyService(req: Request): Promise<PropertyService> {
   const sessionId = (req.params.sessionId as string) || (req.query.sessionId as string) || '';
   const user = (req as AuthenticatedRequest).user;
@@ -13,8 +16,6 @@ async function getPropertyService(req: Request): Promise<PropertyService> {
     throw new AuthError('User not authenticated');
   }
   const playerId = String(user.id);
-
-  const persistenceService = new PersistenceService();
   const repo = await persistenceService.loadSessionRepo(playerId, sessionId);
   if (!repo) {
     throw new AppError(`Session '${sessionId}' not found for player '${playerId}'`, 404);
@@ -45,8 +46,7 @@ export const getPlayerProperty = async (req: Request, res: Response, next: NextF
 export const payRent = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const propertyService = await getPropertyService(req);
-    const rawPlayerId = (req as AuthenticatedRequest).user?.id;
-    const playerId = rawPlayerId !== undefined && rawPlayerId !== null ? String(rawPlayerId) : 'default_player';
+    const playerId = String((req as AuthenticatedRequest).user!.id);
     const body = PayRentInputSchema.parse(req.body);
 
     const updatedProfile = propertyService.payRent(playerId, body.property_id, body.days_to_pay);
@@ -63,8 +63,7 @@ export const payRent = async (req: Request, res: Response, next: NextFunction) =
 export const toggleBackpack = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const propertyService = await getPropertyService(req);
-    const rawPlayerId = (req as AuthenticatedRequest).user?.id;
-    const playerId = rawPlayerId !== undefined && rawPlayerId !== null ? String(rawPlayerId) : 'default_player';
+    const playerId = String((req as AuthenticatedRequest).user!.id);
     const body = ToggleBackpackInputSchema.parse({ ...req.body, owner_id: playerId });
 
     const updatedProfile = propertyService.toggleBackpack(body);
@@ -81,8 +80,7 @@ export const toggleBackpack = async (req: Request, res: Response, next: NextFunc
 export const storageTransfer = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const propertyService = await getPropertyService(req);
-    const rawPlayerId = (req as AuthenticatedRequest).user?.id;
-    const playerId = rawPlayerId !== undefined && rawPlayerId !== null ? String(rawPlayerId) : 'default_player';
+    const playerId = String((req as AuthenticatedRequest).user!.id);
     const body = StorageTransferInputSchema.parse(req.body);
 
     const updatedProfile = propertyService.transferToFromStorage(

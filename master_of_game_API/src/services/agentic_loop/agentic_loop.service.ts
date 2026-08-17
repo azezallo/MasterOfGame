@@ -6,15 +6,16 @@ import { SubagentOrchestratorService } from './subagent_orchestrator.service';
 import { CompressionService } from './compression.service';
 import { SemanticMemoryService } from '../semantic_memory.service';
 import { ILLMProvider } from '../../providers/llm/llm_provider.interface';
-import { LLMMessage, SubagentGroup, TurnStage } from '../../types/agentic_loop.types';
+import { SubagentGroup, TurnStage } from '../../types/agentic_loop.types';
+import { LLMMessage } from '../../types/ai.types';
 import { logger } from '../../logger';
 import { SessionStreamBroker, SSEWritable } from './session_stream_broker.service';
 
 export class AgenticLoopService {
   private agenticLoopRepo: AgenticLoopRepository;
-  private llmProvider?: ILLMProvider;
+  private llmProvider?: ILLMProvider | undefined;
   private modelName: string;
-  private memoryService?: SemanticMemoryService;
+  private memoryService?: SemanticMemoryService | undefined;
   private contextAssembly: ContextAssemblyService;
   private orchestrator: SubagentOrchestratorService;
   private compressionService: CompressionService;
@@ -60,7 +61,7 @@ export class AgenticLoopService {
       logger.llm('System Prompt Assembled', { sessionId, turnNumber, promptLength: systemPrompt.length });
 
       // Maintain cumulative conversation transcript across Re-Act iterations
-      const conversationMessages: LLMMessage[] = [
+      const conversationMessages: any /*LLMMessage*/[] = [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: actionText },
       ];

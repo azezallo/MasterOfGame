@@ -123,11 +123,9 @@ describe('Comprehensive Subagent Tools Audit Test Suite', () => {
   it('6. create_or_update_npc & update_npc_secret: should save secrets into hidden_memory.secrets array', async () => {
     const orchestrator = new SubagentOrchestratorService(repo);
 
-    // Create NPC with secret description
+    // Create NPC without secrets (secrets are handled exclusively via update_npc_secret)
     const res = await (orchestrator as any).dispatchToolCall(testSessionId, 'create_or_update_npc', {
       name: 'Коваль Гриць',
-      secret_description: 'Колишній фальшивомонетник з підпільної майстерні',
-      secret_discovery_status: 'hidden',
       relationship_to_player: 'friendly',
     });
     expect(res.success).toBe(true);
@@ -137,19 +135,29 @@ describe('Comprehensive Subagent Tools Audit Test Suite', () => {
     expect(npcs.length).toBe(1);
 
     const npc = npcs[0];
-    expect(npc.knowledge.hidden_memory.secrets.length).toBe(1);
-    expect(npc.knowledge.hidden_memory.secrets[0].description).toBe('Колишній фальшивомонетник з підпільної майстерні');
+    expect(npc.knowledge.hidden_memory.secrets.length).toBe(0);
     expect(npc.private_profile.current_status.relationship_to_player).toBe('friendly');
 
-    // Add another secret via dedicated tool update_npc_secret
-    const secRes = await (orchestrator as any).dispatchToolCall(testSessionId, 'update_npc_secret', {
+    // Add first secret via dedicated tool update_npc_secret
+    const secRes1 = await (orchestrator as any).dispatchToolCall(testSessionId, 'update_npc_secret', {
       name: 'Коваль Гриць',
+      action: 'add',
+      secret_description: 'Колишній фальшивомонетник з підпільної майстерні',
+      discovery_status: 'hidden',
+    });
+    expect(secRes1.success).toBe(true);
+
+    // Add second secret via dedicated tool update_npc_secret
+    const secRes2 = await (orchestrator as any).dispatchToolCall(testSessionId, 'update_npc_secret', {
+      name: 'Коваль Гриць',
+      action: 'add',
       secret_description: 'Ховає під горном фальшиву печатку барона',
     });
-    expect(secRes.success).toBe(true);
+    expect(secRes2.success).toBe(true);
 
     const updatedNpc = npcRepo.search('Коваль Гриць')[0];
     expect(updatedNpc.knowledge.hidden_memory.secrets.length).toBe(2);
+    expect(updatedNpc.knowledge.hidden_memory.secrets[0].description).toBe('Колишній фальшивомонетник з підпільної майстерні');
     expect(updatedNpc.knowledge.hidden_memory.secrets[1].description).toBe('Ховає під горном фальшиву печатку барона');
   });
 

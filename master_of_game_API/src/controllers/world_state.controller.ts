@@ -11,6 +11,9 @@ import {
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { AppError, AuthError } from '../errors/app.errors';
 
+const persistenceService = new PersistenceService();
+
+
 async function getWorldStateService(req: Request): Promise<WorldStateService> {
   const sessionId = (Array.isArray(req.params.sessionId) ? req.params.sessionId[0] : req.params.sessionId) || '';
   const user = (req as AuthenticatedRequest).user;
@@ -18,8 +21,6 @@ async function getWorldStateService(req: Request): Promise<WorldStateService> {
     throw new AuthError('User not authenticated');
   }
   const playerId = String(user.id);
-
-  const persistenceService = new PersistenceService();
   const repo = await persistenceService.loadSessionRepo(playerId, sessionId);
   if (!repo) {
     throw new AppError(`Session '${sessionId}' not found for player '${playerId}'`, 404);

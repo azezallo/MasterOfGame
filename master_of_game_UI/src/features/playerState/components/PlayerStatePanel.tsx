@@ -16,7 +16,7 @@ interface PlayerStatePanelProps {
 
 export const PlayerStatePanel: React.FC<PlayerStatePanelProps> = ({ sessionId }) => {
   const { t } = useTranslation();
-  const { playerState, loading, error, refetch } = usePlayerState(sessionId);
+  const { playerState, loading, error } = usePlayerState(sessionId);
   const { worldState } = useWorldState({ sessionId });
 
   const formatRelativeTime = (isoString: string): string => {

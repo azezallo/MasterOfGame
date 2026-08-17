@@ -2,6 +2,10 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import { CONFIG } from '../config';
+import { PlayerStateProfile } from '../types/player_state.types';
+
+type PlayerStatePartial = PlayerStateProfile & { name?: string, level?: number, experience?: number, health?: number };
+
 import { SessionMetadata } from '../models/session';
 import { LocationRepository } from '../repositories/location.repository';
 import { ItemRepository } from '../repositories/item.repository';
@@ -533,13 +537,13 @@ export class DatabaseRepository {
     if (state.physical_states && state.attributes) {
       repo.savePlayerState(this.sessionId, state);
     } else {
-      const existing = repo.getPlayerState(this.sessionId);
+      const existing = repo.getPlayerState(this.sessionId) as PlayerStatePartial;
       const merged = {
         ...existing,
-        name: state.name || (existing as any).name || 'Hero',
+        name: state.name || existing.name || 'Hero',
         attributes: state.attributes ? { ...existing.attributes, ...state.attributes } : existing.attributes,
       };
-      repo.savePlayerState(this.sessionId, merged as any);
+      repo.savePlayerState(this.sessionId, merged);
     }
   }
 
@@ -547,14 +551,14 @@ export class DatabaseRepository {
     const targetDb = db || this.db;
     if (!targetDb || !this.sessionId) throw new Error('Database not initialized');
     const repo = new PlayerStateRepository(targetDb);
-    const profile = repo.getPlayerState(this.sessionId);
+    const profile = repo.getPlayerState(this.sessionId) as PlayerStatePartial;
 
     return {
       playerId: this.playerId,
-      name: (profile as any).name || 'Hero',
-      level: (profile as any).level || 1,
-      experience: (profile as any).experience || 0,
-      health: (profile as any).health || 100,
+      name: profile.name || 'Hero',
+      level: profile.level || 1,
+      experience: profile.experience || 0,
+      health: profile.health || 100,
       mana: profile.magic_stats?.current_mana ?? 25,
       attributes: profile.attributes,
       physical_states: profile.physical_states,
@@ -565,12 +569,5 @@ export class DatabaseRepository {
       skills: profile.skills,
       inventory: [],
     };
-  }
-
-  public getOrganizationRepository(): OrganizationRepository {
-    if (!this.db) throw new Error('Database not initialized');
-    const orgRepo = new OrganizationRepository(this.db);
-    orgRepo.seedDefaultOrganizations();
-    return orgRepo;
   }
 }

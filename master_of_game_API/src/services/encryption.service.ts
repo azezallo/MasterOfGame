@@ -23,7 +23,7 @@ export class EncryptionService {
     if (parts.length !== 3) {
       throw new Error('Invalid encrypted text format');
     }
-    const [ivHex, authTagHex, encryptedHex] = parts;
+    const [ivHex, authTagHex, encryptedHex] = parts as [string, string, string];
     const iv = Buffer.from(ivHex, 'hex');
     const authTag = Buffer.from(authTagHex, 'hex');
     const encrypted = Buffer.from(encryptedHex, 'hex');

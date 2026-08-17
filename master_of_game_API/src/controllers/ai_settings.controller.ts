@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { AISettingsService } from '../services/ai_settings.service';
 import { AuthError } from '../errors/app.errors';
 
+
 const aiSettingsService = new AISettingsService();
 
 export const getSettings = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {

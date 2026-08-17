@@ -6,6 +6,9 @@ import { NpcService } from '../services/npc.service';
 import { AppError, AuthError } from '../errors/app.errors';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 
+const persistenceService = new PersistenceService();
+
+
 async function getNpcService(req: Request): Promise<NpcService> {
   const sessionId = (req.params.sessionId as string) || (req.query.sessionId as string) || '';
   const user = (req as AuthenticatedRequest).user;
@@ -13,8 +16,6 @@ async function getNpcService(req: Request): Promise<NpcService> {
     throw new AuthError('User not authenticated');
   }
   const playerId = String(user.id);
-
-  const persistenceService = new PersistenceService();
   const repo = await persistenceService.loadSessionRepo(playerId, sessionId);
   if (!repo) {
     throw new AppError(`Session '${sessionId}' not found for player '${playerId}'`, 404);
@@ -27,13 +28,21 @@ async function getNpcService(req: Request): Promise<NpcService> {
 export const getNpcs = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const npcService = await getNpcService(req);
-    const { query, location_id, role, relationship_type, status } = req.query as any;
+    const GetNpcsQuerySchema = z.object({
+      query: z.string().optional(),
+      location_id: z.string().optional(),
+      role: z.string().optional(),
+      relationship_type: z.string().optional(),
+      status: z.string().optional()
+    });
+    
+    const { query, location_id, role, relationship_type, status } = GetNpcsQuerySchema.parse(req.query);
 
     const npcs = npcService.searchNpcs(query, {
       location_id,
       role,
       relationship_type,
-      status: (status && status !== 'all') ? status : undefined,
+      status: (status && status !== 'all') ? (status as any) : undefined,
     });
 
     const isolatedNpcs = npcs.map(npc => npcService.toPublicIsolatedNpc(npc));

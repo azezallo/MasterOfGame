@@ -5,7 +5,7 @@ import { getMasterSystemPromptTemplate } from '../../config';
 
 export class ContextAssemblyService {
   private agenticLoopRepo: AgenticLoopRepository;
-  private memoryService?: SemanticMemoryService;
+  private memoryService?: SemanticMemoryService | undefined;
 
   constructor(repo: DatabaseRepository, memoryService?: SemanticMemoryService) {
     this.agenticLoopRepo = repo.getAgenticLoopRepository();

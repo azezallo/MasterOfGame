@@ -186,7 +186,7 @@ export const useChat = (sessionId: string) => {
           {
             id: `error_${Date.now()}`,
             type: 'system',
-            text: `Помилка виконання ходу: ${error}`,
+            text: t('chat.error_turn', 'Помилка виконання ходу: {{error}}', { error }),
           },
         ]);
       }, 1500);
@@ -220,7 +220,7 @@ export const useChat = (sessionId: string) => {
         {
           id: `compress_${Date.now()}`,
           type: 'system',
-          text: `Главу успішно завершено! Стиснено записів логу: ${res.compressedLogsCount}.`,
+          text: t('chat.chapter_completed', 'Главу успішно завершено! Стиснено записів логу: {{count}}.', { count: res.compressedLogsCount }),
         },
       ]);
     }

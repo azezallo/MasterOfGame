@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { ErrorRequestHandler } from 'express';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -8,6 +8,7 @@ import aiSettingsRoutes from './routes/ai_settings.routes';
 import semanticMemoryRoutes from './routes/semantic_memory.routes';
 import agenticLoopRoutes from './routes/agentic_loop.routes';
 import { AppError } from './errors/app.errors';
+import { logger } from './logger';
 
 dotenv.config();
 
@@ -46,18 +47,19 @@ app.use('/api/v1/memory', semanticMemoryRoutes);
 app.use('/api/v1/chat', agenticLoopRoutes);
 
 // Global Error Handler
-app.use((err: any, req: any, res:any, next: any) => {
+const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       success: false,
       message: err.message,
     });
   }
-  console.error(err);
+  logger.error(err);
   return res.status(500).json({
     success: false,
     message: 'Internal server error',
   });
-});
+};
+app.use(errorHandler);
 
 export default app;

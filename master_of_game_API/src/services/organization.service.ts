@@ -225,8 +225,8 @@ export class OrganizationService {
       mermaid_graph: generateMermaidGraph(org.hierarchy),
       affiliation: affiliation,
       player_notes: affiliation?.player_notes || '',
-      created_at: org.created_at,
-      updated_at: org.updated_at,
+      ...(org.created_at !== undefined && { created_at: org.created_at }),
+      ...(org.updated_at !== undefined && { updated_at: org.updated_at }),
     };
   }
 }

@@ -1,4 +1,5 @@
 import { ILLMProvider } from './llm_provider.interface';
+import { logger } from '../../logger';
 import {
   LLMProviderId,
   LLMCompletionRequest,
@@ -135,7 +136,7 @@ export class OpenAICompatibleProvider implements ILLMProvider {
             return { content: accumulated };
           }
         } catch (streamErr) {
-          console.error('[OpenAICompatibleProvider] Fallback stream failed:', streamErr);
+          logger.error('[OpenAICompatibleProvider] Fallback stream failed:', streamErr);
         }
       }
 

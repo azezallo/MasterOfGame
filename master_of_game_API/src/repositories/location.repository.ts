@@ -1,6 +1,7 @@
 import { Database } from 'better-sqlite3';
 import type { LocationData } from '../types/location.types';
 import { LocationSchema } from '../schemas/location.schema';
+import { logger } from '../logger';
 
 export interface DBLocationRow {
   id: string;
@@ -56,7 +57,7 @@ export class LocationRepository {
       const parsedData = JSON.parse(row.data);
       return LocationSchema.parse(parsedData);
     } catch (error) {
-      console.error(`Failed to parse location data for id ${id}`, error);
+      logger.error(`Failed to parse location data for id ${id}`, error);
       return null;
     }
   }
@@ -73,7 +74,7 @@ export class LocationRepository {
       try {
          return LocationSchema.parse(JSON.parse(row.data));
       } catch (error) {
-         console.error(`Failed to parse location data for id ${row.id}`, error);
+         logger.error(`Failed to parse location data for id ${row.id}`, error);
          return null;
       }
     }).filter((loc): loc is LocationData => loc !== null);

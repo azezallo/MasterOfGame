@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './DesignSystemPopup.module.css';
 import type { DesignSystemPopupProps } from '../types';
 import type { Message } from '@/components/ui/dialog/types';
@@ -12,6 +13,7 @@ import { Spinner } from '@/components/ui/spinner/Spinner';
 import { Modal } from '@/components/ui/modal/Modal';
 
 export const DesignSystemPopup: React.FC<DesignSystemPopupProps> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const mockMessages: Message[] = [
@@ -27,14 +29,14 @@ export const DesignSystemPopup: React.FC<DesignSystemPopupProps> = ({ isOpen, on
     <div className={styles.designSystemOverlay}>
       <div className={styles.designSystemContainer}>
         <div className={styles.designSystemHeader}>
-          <h2 className={styles.headerTitle}>Design System Preview</h2>
+          <h2 className={styles.headerTitle}>{t('design_system.title', 'Design System Preview')}</h2>
           <button className={styles.closeButton} onClick={onClose}>&times;</button>
         </div>
         <div className={styles.designSystemContent}>
-          <p>Огляд компонентів дизайн-системи:</p>
+          <p>{t('design_system.overview', 'Огляд компонентів дизайн-системи:')}</p>
           
           <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>Buttons</h3>
+            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>{t('design_system.buttons', 'Buttons')}</h3>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <Button variant="primary">Primary Action</Button>
               <Button variant="secondary">Secondary Action</Button>
@@ -44,7 +46,7 @@ export const DesignSystemPopup: React.FC<DesignSystemPopupProps> = ({ isOpen, on
           </div>
 
           <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>Inputs</h3>
+            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>{t('design_system.inputs', 'Inputs')}</h3>
             <Input label="Звичайний ввід" placeholder="Введіть текст..." />
             <Input label="Пергаментний ввід" variant="parchment" placeholder="Старий текст..." />
             <div style={{ marginTop: '10px' }}>
@@ -57,7 +59,7 @@ export const DesignSystemPopup: React.FC<DesignSystemPopupProps> = ({ isOpen, on
           </div>
 
           <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>Selection</h3>
+            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>{t('design_system.selection', 'Selection')}</h3>
             <Checkbox label="Варіант з чекбоксом" />
             <Checkbox label="Інший чекбокс" />
             <div style={{ marginTop: '10px' }}>
@@ -67,25 +69,25 @@ export const DesignSystemPopup: React.FC<DesignSystemPopupProps> = ({ isOpen, on
           </div>
 
           <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>Dialogue System</h3>
+            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>{t('design_system.dialogue_system', 'Dialogue System')}</h3>
             <Dialogue messages={mockMessages} onSendMessage={(content) => console.log(content)} />
           </div>
 
           <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>Loaders</h3>
+            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>{t('design_system.loaders', 'Loaders')}</h3>
             <Spinner />
           </div>
 
           <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>Modals</h3>
+            <h3 style={{ color: 'var(--color-gold-dim)', marginBottom: '10px' }}>{t('design_system.modals', 'Modals')}</h3>
             <Button onClick={() => setIsModalOpen(true)}>Open Modal Preview</Button>
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Modal Preview">
-              <p>Це приклад модального вікна, яке використовує нашу дизайн-систему.</p>
+              <p>{t('design_system.modal_preview_text', 'Це приклад модального вікна, яке використовує нашу дизайн-систему.')}</p>
             </Modal>
           </div>
         </div>
         <div className={styles.designSystemFooter}>
-          <button className={styles.closeButton} onClick={onClose}>Close</button>
+          <button className={styles.closeButton} onClick={onClose}>{t('common.close', 'Close')}</button>
         </div>
       </div>
     </div>

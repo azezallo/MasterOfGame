@@ -6,7 +6,7 @@ import { CompressionResult } from '../../types/agentic_loop.types';
 export class CompressionService {
   private repo: DatabaseRepository;
   private agenticLoopRepo: AgenticLoopRepository;
-  private llmProvider?: ILLMProvider;
+  private llmProvider?: ILLMProvider | undefined;
 
   constructor(repo: DatabaseRepository, llmProvider?: ILLMProvider) {
     this.repo = repo;
@@ -39,7 +39,7 @@ export class CompressionService {
     let newSummaryText = '';
     if (this.llmProvider) {
       try {
-        const response = await this.llmProvider.generate({
+        const response = await this.llmProvider.generate({ model: "default",
           messages: [
             {
               role: 'system',
@@ -52,7 +52,7 @@ export class CompressionService {
           ],
           temperature: 0.3,
         });
-        newSummaryText = response.text.trim();
+        newSummaryText = (response.content || '').trim();
       } catch {
         newSummaryText = `Саммарі сесії: ${logsToCompress.map((l) => l.content).join('; ')}`;
       }

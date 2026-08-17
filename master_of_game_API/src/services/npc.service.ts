@@ -235,10 +235,6 @@ export class NpcService {
 
     secret.discovery_status = 'discovered_by_player';
 
-    if (!npc.public_profile.public_description.includes(secret.description)) {
-      npc.public_profile.public_description += ` (Відомо: ${secret.description})`;
-    }
-
     npc.updated_at = Math.floor(Date.now() / 1000);
     this.npcRepo.save(npc);
     return npc;

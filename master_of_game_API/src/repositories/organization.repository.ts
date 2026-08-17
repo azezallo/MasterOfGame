@@ -9,6 +9,7 @@ import {
 } from '../types/organization.types';
 import { OrganizationSchema } from '../schemas/organization.schema';
 import { getInitialOrganizationsPreset } from '../config';
+import { logger } from '../logger';
 
 interface DBOrganizationRow {
   id: string;
@@ -39,7 +40,7 @@ function safeJsonParse<T>(jsonString: string | null | undefined, fallback: T): T
   try {
     return JSON.parse(jsonString);
   } catch (err) {
-    console.error('[OrganizationRepository] JSON parse failure:', err, 'Raw value:', jsonString);
+    logger.error('[OrganizationRepository] JSON parse failure:', { error: err, rawValue: jsonString });
     return fallback;
   }
 }
@@ -102,7 +103,7 @@ export class OrganizationRepository {
   }
 
   public seedDefaultOrganizations(): void {
-    const countRow = (this.db.prepare('SELECT count(*) as count FROM organizations').get() as any)?.count;
+    const countRow = (this.db.prepare('SELECT count(*) as count FROM organizations').get() as { count: number })?.count;
     if (countRow > 0) return;
 
     const presetOrganizations = getInitialOrganizationsPreset();

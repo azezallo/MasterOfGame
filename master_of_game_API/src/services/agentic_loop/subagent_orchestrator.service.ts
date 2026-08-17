@@ -32,12 +32,12 @@ export const ALL_SUBAGENT_TOOLS: LLMToolDefinition[] = [
     type: 'function',
     function: {
       name: 'get_property_profile',
-      description: 'ДРУГОРЯДНИЙ/ІНСПЕКЦІЙНИЙ ІНСТРУМЕНТ: Повертає поточний стан майна сутності (гравця чи NPC: монети, вміст кишень та рюкзака).',
+      description: 'ІНСПЕКЦІЙНИЙ: Повертає майно сутності (монети, інвентар кишень та рюкзака). За замовчуванням owner_type="player".',
       parameters: {
         type: 'object',
         properties: {
-          owner_type: { type: 'string', description: 'Тип власника (player або npc)' },
-          owner_name: { type: 'string', description: 'Ім\'я NPC якщо шукаємо майно персонажа' },
+          owner_type: { type: 'string', enum: ['player', 'npc'], description: 'Власник майна. За замовчуванням "player".' },
+          owner_name: { type: 'string', description: 'Ім\'я NPC (обов\'язково якщо owner_type="npc")' },
         },
       },
     },
@@ -87,59 +87,55 @@ export const ALL_SUBAGENT_TOOLS: LLMToolDefinition[] = [
     type: 'function',
     function: {
       name: 'update_player_state',
-      description: 'ОСНОВНИЙ ІНСТРУМЕНТ ACTOR: Оновлює ману, HP, навички, атрибути та будь-які фізичні, тілесні або психологічні стани гравця.',
+      description: 'МУТАЦІЙНИЙ ACTOR: Зміна показників гравця. Мана: mana_delta або mana_percent. Навичка: skill_name + skill_value або skill_delta. Стани: add/remove фізичних, тілесних, психологічних.',
       parameters: {
         type: 'object',
         properties: {
           add_physical_states: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Нові фізичні ефекти (напр. ["Тяжке виснаження", "Глибоке поранення"])',
+            description: 'Додати фізичні стани (напр. ["Виснаження", "Глибоке поранення"])',
           },
           remove_physical_states: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Фізичні ефекти для видалення (напр. ["виснаження"])',
+            description: 'Зняти фізичні стани (напр. ["Виснаження"])',
           },
           add_body_states: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Тілесні стани для додавання (напр. ["Опік лівої руки"])',
+            description: 'Додати тілесні стани (напр. ["Опік лівої руки"])',
           },
           remove_body_states: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Тілесні стани для видалення',
+            description: 'Зняти тілесні стани',
           },
           add_psychological_states: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Психологічні стани для додавання (напр. ["Шок", "Панічний страх"])',
+            description: 'Додати психологічні стани (напр. ["Шок", "Панічний страх"])',
           },
           remove_psychological_states: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Психологічні стани для видалення',
+            description: 'Зняти психологічні стани',
           },
           mana_delta: {
             type: 'number',
-            description: 'Абсолютна зміна мани (напр. -15 для зняття 15 мани, +30 для відновлення)',
+            description: 'Зміна мани в абсолютних одиницях (напр. -15 або +30)',
           },
           mana_percent: {
             type: 'number',
-            description: 'Відсоткова зміна мани (напр. -50 якщо треба зняти половину/50% мани)',
-          },
-          update_skills: {
-            type: 'array',
-            description: 'Масив оновлення навичок (напр. [{"name": "Магія вогню", "value": 60}, {"name": "Володіння пікою", "value": 45}])',
+            description: 'Зміна мани у відсотках (напр. -50 = зняти половину)',
           },
           skill_name: {
             type: 'string',
-            description: 'Назва окремої навички природною мовою для зміни чи додавання (напр. "Магія вогню", "Володіння пікою")',
+            description: 'Назва навички (напр. "Магія вогню", "Володіння мечем")',
           },
           skill_value: {
             type: 'number',
-            description: 'Нове абсолютне значення навички від 0 до 100',
+            description: 'Нове абсолютне значення навички (0-100)',
           },
           skill_delta: {
             type: 'number',
@@ -147,7 +143,7 @@ export const ALL_SUBAGENT_TOOLS: LLMToolDefinition[] = [
           },
           update_attributes: {
             type: 'object',
-            description: 'Об\'єкт оновлення атрибутів (напр. {"strength": 30, "agility": 25})',
+            description: 'Оновлення атрибутів (напр. {"strength": 30, "agility": 25})',
           },
         },
       },
@@ -157,33 +153,25 @@ export const ALL_SUBAGENT_TOOLS: LLMToolDefinition[] = [
     type: 'function',
     function: {
       name: 'create_or_update_npc',
-      description: 'ОСНОВНИЙ ІНСТРУМЕНТ ACTOR: Створює нового NPC або оновлює існуючого (профіль, таємниці у secrets, ставлення та соціальні зв\'язки).',
+      description: 'МУТАЦІЙНИЙ ACTOR: Створення нового NPC або оновлення існуючого. Пошук існуючого NPC виконується автоматично за name. Для таємниць НЕ використовуй цей тул — використовуй update_npc_secret.',
       parameters: {
         type: 'object',
         properties: {
-          npc_id: { type: 'string', description: 'ID NPC для точного оновлення (необов\'язково)' },
-          name: { type: 'string', description: 'Повне ім\'я NPC' },
+          npc_id: { type: 'string', description: 'ID NPC для точного оновлення (якщо відомий)' },
+          name: { type: 'string', description: 'Повне ім\'я NPC (обов\'язково)' },
           role: { type: 'string', description: 'Роль або професія NPC' },
           appearance: { type: 'string', description: 'Зовнішній вигляд NPC' },
           description: { type: 'string', description: 'Публічний опис NPC' },
-          status: { type: 'string', description: 'Статус (alive, wounded, dead)' },
-          location_id: { type: 'string', description: 'Локація перебування NPC' },
-
-          // Secrets parameters (Recorded in hidden_memory.secrets)
-          secret_description: { type: 'string', description: 'Прихована таємниця NPC для запису у приватне поле hidden_memory.secrets' },
-          secret_discovery_status: { type: 'string', description: 'Статус таємниці (hidden, discovered_by_player)' },
-
-          // Social & Status parameters
-          relationship_to_player: { type: 'string', description: 'Ставлення до гравця (friendly, hostile, neutral, loyal, suspicious)' },
-          mood: { type: 'string', description: 'Емоційний стан NPC (calm, angry, fearful, excited)' },
+          status: { type: 'string', enum: ['alive', 'wounded', 'dead', 'coma', 'missing', 'captured', 'archived'], description: 'Життєвий статус NPC' },
+          location_id: { type: 'string', description: 'ID локації перебування NPC' },
+          relationship_to_player: { type: 'string', enum: ['friendly', 'hostile', 'neutral', 'loyal', 'suspicious'], description: 'Ставлення до гравця' },
+          mood: { type: 'string', enum: ['calm', 'angry', 'fearful', 'excited', 'sad', 'panicked'], description: 'Емоційний стан NPC' },
           current_goal: { type: 'string', description: 'Поточна мета NPC' },
-
-          // Inter-NPC Relationship parameters
-          target_name: { type: 'string', description: 'Ім\'я іншого NPC для створення соціального зв\'язку' },
-          target_npc_id: { type: 'string', description: 'ID іншого NPC для соціального зв\'язку' },
-          relationship_type: { type: 'string', description: 'Тип зв\'язку між персонажами (ally, rival, family, enemy, acquaintance)' },
-          relationship_summary: { type: 'string', description: 'Короткий опис зв\'язку між персонажами' },
-          relationship_strength: { type: 'number', description: 'Сила зв\'язку (від -1.0 до 1.0)' },
+          target_name: { type: 'string', description: 'Ім\'я іншого NPC для зв\'язку' },
+          target_npc_id: { type: 'string', description: 'ID іншого NPC для зв\'язку' },
+          relationship_type: { type: 'string', enum: ['ally', 'rival', 'family', 'enemy', 'acquaintance', 'business_partner'], description: 'Тип зв\'язку між NPC' },
+          relationship_summary: { type: 'string', description: 'Опис зв\'язку між NPC' },
+          relationship_strength: { type: 'number', description: 'Сила зв\'язку (-1.0 до 1.0)' },
         },
         required: ['name'],
       },
@@ -193,17 +181,18 @@ export const ALL_SUBAGENT_TOOLS: LLMToolDefinition[] = [
     type: 'function',
     function: {
       name: 'update_npc_secret',
-      description: 'ОСНОВНИЙ ІНСТРУМЕНТ ACTOR: Додавання нової прихованої таємниці у приватну пам\'ять NPC або її розкриття для гравця.',
+      description: 'ОСНОВНИЙ ІНСТРУМЕНТ ACTOR: Управління таємницями NPC. Дві дії: (1) action="add" — додати нову приховану таємницю (потрібні: name + secret_description). (2) action="reveal" — розкрити існуючу таємницю гравцю (потрібні: name + secret_id з досьє NPC). Для розкриття СПОЧАТКУ виклич get_npc_dossier щоб знайти secret_id.',
       parameters: {
         type: 'object',
         properties: {
-          npc_id: { type: 'string', description: 'ID NPC' },
-          name: { type: 'string', description: 'Ім\'я NPC' },
-          secret_id: { type: 'string', description: 'Технічний ID таємниці (для розкриття)' },
-          secret_description: { type: 'string', description: 'Текст прихованої таємниці' },
-          discovery_status: { type: 'string', description: 'Статус (hidden, discovered_by_player)' },
-          action: { type: 'string', description: 'Дія: add (додати нову) або reveal (розкрити гравцю)' },
+          action: { type: 'string', enum: ['add', 'reveal'], description: 'Обов\'язково. "add" = додати нову таємницю. "reveal" = розкрити існуючу таємницю гравцю.' },
+          npc_id: { type: 'string', description: 'ID NPC (якщо відомий)' },
+          name: { type: 'string', description: 'Ім\'я NPC для пошуку' },
+          secret_id: { type: 'string', description: 'Технічний ID таємниці з досьє NPC (обов\'язково при action="reveal")' },
+          secret_description: { type: 'string', description: 'Текст нової таємниці (обов\'язково при action="add")' },
+          discovery_status: { type: 'string', enum: ['hidden', 'discovered_by_player'], description: 'Статус таємниці при додаванні. За замовчуванням "hidden".' },
         },
+        required: ['action'],
       },
     },
   },
@@ -211,19 +200,19 @@ export const ALL_SUBAGENT_TOOLS: LLMToolDefinition[] = [
     type: 'function',
     function: {
       name: 'update_npc_relationship',
-      description: 'ОСНОВНИЙ ІНСТРУМЕНТ ACTOR: Зміна ставлення NPC до гравця або встановлення соціальних зв\'язків з іншим персонажем.',
+      description: 'МУТАЦІЙНИЙ ACTOR: Два режими. (1) Ставлення до гравця: name + relationship_to_player. (2) Зв\'язок між NPC: name + target_name + relationship_type.',
       parameters: {
         type: 'object',
         properties: {
-          npc_id: { type: 'string', description: 'ID NPC' },
+          npc_id: { type: 'string', description: 'ID NPC (якщо відомий)' },
           name: { type: 'string', description: 'Ім\'я NPC' },
-          relationship_to_player: { type: 'string', description: 'Ставлення до гравця (friendly, hostile, neutral, loyal, suspicious)' },
-          mood: { type: 'string', description: 'Настрій NPC (calm, angry, fearful)' },
+          relationship_to_player: { type: 'string', enum: ['friendly', 'hostile', 'neutral', 'loyal', 'suspicious'], description: 'Нове ставлення до гравця' },
+          mood: { type: 'string', enum: ['calm', 'angry', 'fearful', 'excited', 'sad', 'panicked'], description: 'Настрій NPC' },
           target_name: { type: 'string', description: 'Ім\'я іншого NPC для зв\'язку' },
           target_npc_id: { type: 'string', description: 'ID іншого NPC для зв\'язку' },
-          relationship_type: { type: 'string', description: 'Тип зв\'язку (ally, rival, family, enemy, acquaintance)' },
+          relationship_type: { type: 'string', enum: ['ally', 'rival', 'family', 'enemy', 'acquaintance', 'business_partner'], description: 'Тип зв\'язку між NPC' },
           strength: { type: 'number', description: 'Сила відносин (-1.0 до 1.0)' },
-          summary: { type: 'string', description: 'Опис відносин між персонажами' },
+          summary: { type: 'string', description: 'Опис відносин' },
         },
       },
     },
@@ -232,14 +221,14 @@ export const ALL_SUBAGENT_TOOLS: LLMToolDefinition[] = [
     type: 'function',
     function: {
       name: 'add_npc_memory_event',
-      description: 'ОСНОВНИЙ ІНСТРУМЕНТ ACTOR: Запис нової пережитої події або спогаду у приватну пам\'ять NPC.',
+      description: 'МУТАЦІЙНИЙ ACTOR: Записати подію у приватну пам\'ять NPC. Потрібно: name або npc_id + event_description.',
       parameters: {
         type: 'object',
         properties: {
-          npc_id: { type: 'string', description: 'ID NPC' },
-          name: { type: 'string', description: 'Ім\'я NPC' },
+          npc_id: { type: 'string', description: 'ID NPC (якщо відомий)' },
+          name: { type: 'string', description: 'Ім\'я NPC для пошуку' },
           event_description: { type: 'string', description: 'Опис пережитої події' },
-          source_type: { type: 'string', description: 'Джерело спогаду (direct_interaction, rumor, witnessed)' },
+          source_type: { type: 'string', enum: ['direct_interaction', 'rumor', 'witnessed', 'world_event'], description: 'Джерело спогаду. За замовчуванням "direct_interaction".' },
         },
         required: ['event_description'],
       },
@@ -249,35 +238,36 @@ export const ALL_SUBAGENT_TOOLS: LLMToolDefinition[] = [
     type: 'function',
     function: {
       name: 'update_property_finances_and_items',
-      description: 'ОСНОВНИЙ ІНСТРУМЕНТ PROPERTY: Додавання/списання монет та додавання/видалення предметів з інвентарю сутності (гравця чи NPC).',
+      description: 'МУТАЦІЙНИЙ PROPERTY: Зміна монет та інвентарю гравця або NPC. Монети: coins_delta (напр. +50 або -20) АБО coins_set. Предмети: add_item_name для додавання, remove_item_name для видалення. За замовчуванням owner_type="player".',
       parameters: {
         type: 'object',
         properties: {
-          owner_type: { type: 'string', description: 'Власник майна (player або npc)' },
-          owner_name: { type: 'string', description: 'Ім\'я NPC якщо оновлюємо майно персонажа' },
+          owner_type: { type: 'string', enum: ['player', 'npc'], description: 'Власник майна. За замовчуванням "player".' },
+          owner_name: { type: 'string', description: 'Ім\'я NPC (обов\'язково якщо owner_type="npc")' },
           coins_delta: {
             type: 'number',
-            description: 'Зміна монет (позитивне число для нарахування, негативне для витрат)',
+            description: 'Зміна монет (+50 додати, -20 зняти). НЕ використовуй разом з coins_set.',
           },
           coins_set: {
             type: 'number',
-            description: 'Встановлення точної кількості монет',
+            description: 'Встановити точну кількість монет. НЕ використовуй разом з coins_delta.',
           },
           add_item_name: {
             type: 'string',
-            description: 'Назва нового предмета для додавання в інвентар',
+            description: 'Назва предмета для додавання в інвентар',
           },
           item_category: {
             type: 'string',
-            description: 'Категорія предмета (weapon, potion, armor, key, document, misc)',
+            enum: ['weapon', 'potion', 'armor', 'key', 'document', 'misc'],
+            description: 'Категорія предмета. За замовчуванням "misc".',
           },
           remove_item_name: {
             type: 'string',
-            description: 'Назва предмета для вилучення/видалення з інвентарю',
+            description: 'Назва предмета для видалення з інвентарю',
           },
           quantity: {
             type: 'number',
-            description: 'Кількість предмета (за замовчуванням 1)',
+            description: 'Кількість предмета. За замовчуванням 1.',
           },
         },
       },
@@ -287,37 +277,40 @@ export const ALL_SUBAGENT_TOOLS: LLMToolDefinition[] = [
     type: 'function',
     function: {
       name: 'update_world_environment',
-      description: 'ОСНОВНИЙ ІНСТРУМЕНТ WORLD: Зміна погоди, клімату, часу доби, небесних явищ та подій у світі.',
+      description: 'МУТАЦІЙНИЙ WORLD: Зміна погоди, часу та подій. Можна комбінувати декілька змін в одному виклику (напр. погода + час).',
       parameters: {
         type: 'object',
         properties: {
           weather_type: {
             type: 'string',
-            description: 'Тип погоди (downpour, thunderstorm, fog, clear, rain, blizzard, solar_flare)',
+            enum: ['clear', 'rain', 'downpour', 'thunderstorm', 'fog', 'blizzard', 'solar_flare'],
+            description: 'Тип погоди',
           },
           weather_intensity: {
             type: 'number',
-            description: 'Інтенсивність погоди від 0 до 100',
+            description: 'Інтенсивність погоди (0-100)',
           },
           time_of_day: {
             type: 'string',
-            description: 'Час доби (morning, day, evening, night)',
+            enum: ['morning', 'day', 'evening', 'night'],
+            description: 'Встановити час доби',
           },
           advance_hours: {
             type: 'number',
-            description: 'Просування часу вперед на вказану кількість годин',
+            description: 'Просунути час на N годин',
           },
           advance_days: {
             type: 'number',
-            description: 'Просування часу вперед на вказану кількість днів',
+            description: 'Просунути час на N днів',
           },
           event_action: {
             type: 'string',
-            description: 'Дія над подіями світу (create, update, resolve)',
+            enum: ['create', 'update', 'resolve'],
+            description: 'Дія над подією світу',
           },
           event_title: {
             type: 'string',
-            description: 'Назва світової події',
+            description: 'Назва світової події (потрібно для event_action)',
           },
           event_description: {
             type: 'string',
@@ -331,13 +324,13 @@ export const ALL_SUBAGENT_TOOLS: LLMToolDefinition[] = [
     type: 'function',
     function: {
       name: 'update_organization_reputation',
-      description: 'ОСНОВНИЙ ІНСТРУМЕНТ WORLD/ACTOR: Зміна репутації гравця у фракції чи організації або відкриття таємної організації.',
+      description: 'МУТАЦІЙНИЙ WORLD/ACTOR: Зміна репутації гравця у фракції. Потрібно: organization_name або organization_id + reputation_delta.',
       parameters: {
         type: 'object',
         properties: {
-          organization_id: { type: 'string', description: 'ID організації (напр. org_city_guard, org_thieves_guild, org_merchant_guild)' },
-          organization_name: { type: 'string', description: 'Назва організації для пошуку (напр. "Міська варта", "Гільдія злодіїв")' },
-          reputation_delta: { type: 'number', description: 'Зміна репутації (від -100 до +100)' },
+          organization_id: { type: 'string', description: 'ID організації (напр. org_city_guard)' },
+          organization_name: { type: 'string', description: 'Назва організації (напр. "Міська варта")' },
+          reputation_delta: { type: 'number', description: 'Зміна репутації (-100 до +100)' },
           rank_id: { type: 'string', description: 'Новий ранг у фракції' },
           description: { type: 'string', description: 'Опис події взаємодії' },
           is_known_to_player: { type: 'boolean', description: 'Чи стала організація відомою гравцеві' },
@@ -349,9 +342,9 @@ export const ALL_SUBAGENT_TOOLS: LLMToolDefinition[] = [
 
 export class SubagentOrchestratorService {
   private repo: DatabaseRepository;
-  private memoryService?: SemanticMemoryService;
-  private llmProvider?: ILLMProvider;
-  private modelName?: string;
+  private memoryService?: SemanticMemoryService | undefined;
+  private llmProvider?: ILLMProvider | undefined;
+  private modelName?: string | undefined;
 
   constructor(
     repo: DatabaseRepository,
@@ -399,34 +392,82 @@ export class SubagentOrchestratorService {
 
   private getGroupSystemPrompt(subagentGroup: SubagentGroup): string {
     if (subagentGroup === 'actor') {
-      return `Ви — Спеціалізований Сабагент Сутностей, Показників, NPC та Навичок (ACTOR).
-ВАШІ ОСНОВНІ ІНСТРУМЕНТИ: 'update_player_state', 'create_or_update_npc', 'update_npc_secret', 'update_npc_relationship', 'add_npc_memory_event', 'update_organization_reputation'.
-ВАШІ ДРУГОРЯДНІ/ІНСПЕКЦІЙНІ ІНСТРУМЕНТИ: 'get_player_state', 'get_npc_dossier', 'get_property_profile', 'get_world_state', 'search_memory'.
+      return `Ви — Сабагент ACTOR. Ваша задача: отримати інструкцію → за потреби інспектувати поточний стан → викликати МУТАЦІЙНИЙ інструмент для зміни стану. ЗАВЖДИ завершуйте виклик мутаційного інструменту!
 
-ПРАВИЛА РОБОТИ:
-1. Для додавання або відкриття прихованої таємниці NPC використовуйте спеціальне поле 'secret_description' в 'create_or_update_npc' або тул 'update_npc_secret'. НЕ записуйте приховані таємниці у звичайний публічний опис 'description'!
-2. Для оновлення ставлення до гравця використовуйте поле 'relationship_to_player' або тул 'update_npc_relationship'. Для відношень між персонажами використовуйте 'target_name' та 'relationship_type'.
-3. Для підняття навичок ('update_skills'), мани чи характеристик використовуйте 'update_player_state'.
-4. НЕ обмежуйтеся лише інспекцією, обов'язково виконайте підсумкову зміну стану!`;
+ІНСПЕКЦІЙНІ ІНСТРУМЕНТИ (читання даних перед змінами):
+- get_npc_dossier: Отримати досьє NPC (профіль, таємниці з secret_id, відносини)
+- get_player_state: Перевірити HP, ману, навички, стани гравця
+- get_property_profile: Перевірити інвентар та монети
+- search_memory: Пошук у векторній пам'яті
+
+МУТАЦІЙНІ ІНСТРУМЕНТИ (зміна стану — ОБОВ'ЯЗКОВО виклич один після інспекції):
+
+1. update_player_state — Мана, HP, навички, фізичні/психологічні стани гравця.
+   Приклади: mana_delta=-15, add_physical_states=["Виснаження"], skill_name="Магія вогню" + skill_delta=+5
+
+2. create_or_update_npc — Створення нового NPC або редагування існуючого (профіль, локація, настрій, мета).
+   Потрібно: name. Опціонально: role, appearance, description, status, location_id, mood, relationship_to_player, current_goal.
+   Для зв'язків між NPC: target_name + relationship_type + relationship_strength.
+
+3. update_npc_secret — Додати або розкрити таємницю NPC.
+   Додати нову: action="add", name="...", secret_description="..."
+   Розкрити існуючу: action="reveal", name="...", secret_id="..." (secret_id бери з результату get_npc_dossier → knowledge.hidden_memory.secrets)
+
+4. update_npc_relationship — Змінити ставлення NPC до гравця або зв'язок між NPC.
+   До гравця: name + relationship_to_player + mood.
+   Між NPC: name + target_name + relationship_type + strength.
+
+5. add_npc_memory_event — Записати подію у приватну пам'ять NPC.
+   Потрібно: name або npc_id, event_description.
+
+6. update_organization_reputation — Змінити репутацію гравця у фракції.
+   Потрібно: organization_name або organization_id, reputation_delta.
+
+ВАЖЛИВО:
+- Якщо потрібні дані для мутації (наприклад secret_id) — спочатку виклич інспекційний інструмент, потім мутаційний.
+- НЕ завершуй роботу після інспекції — ОБОВ'ЯЗКОВО виклич мутаційний інструмент!
+- Таємниці НЕ записуй у публічний опис description — використовуй update_npc_secret.`;
     }
 
     if (subagentGroup === 'property') {
-      return `Ви — Спеціалізований Сабагент Майна та Інвентарю (PROPERTY).
-ВАШ ОСНОВНИЙ ІНСТРУМЕНТ: 'update_property_finances_and_items'.
-ВАШІ ДРУГОРЯДНІ/ІНСПЕКЦІЙНІ ІНСТРУМЕНТИ: 'get_property_profile', 'get_player_state', 'search_memory'.
+      return `Ви — Сабагент PROPERTY. Ваша задача: отримати інструкцію → за потреби інспектувати поточний стан → викликати МУТАЦІЙНИЙ інструмент. ЗАВЖДИ завершуйте мутаційним викликом!
 
-ПРАВИЛА РОБОТИ:
-1. За потреби використовуйте 'get_property_profile' для інспекції інвентарю/монет.
-2. Для додавання або ВИДАЛЕННЯ предметів та монет у гравця чи NPC викликайте ваш основний інструмент 'update_property_finances_and_items'.`;
+ІНСПЕКЦІЙНІ ІНСТРУМЕНТИ (читання):
+- get_property_profile: Перевірити монети та інвентар (owner_type="player" за замовчуванням, для NPC: owner_type="npc" + owner_name)
+- get_player_state: Перевірити показники гравця
+
+МУТАЦІЙНИЙ ІНСТРУМЕНТ (ОБОВ'ЯЗКОВО виклич після інспекції):
+
+update_property_finances_and_items — Зміна монет та предметів.
+  Монети: coins_delta=+50 (додати) або coins_delta=-20 (зняти). АБО coins_set=100 (встановити).
+  Додати предмет: add_item_name="Магічний факел", item_category="misc"
+  Видалити предмет: remove_item_name="Магічний факел"
+  Для NPC: owner_type="npc", owner_name="Ім'я NPC"
+
+ВАЖЛИВО:
+- coins_delta та coins_set — взаємовиключні, використовуй тільки один.
+- НЕ завершуй роботу після інспекції — ОБОВ'ЯЗКОВО виклич мутаційний інструмент!`;
     }
 
-    return `Ви — Спеціалізований Сабагент Світу та Погоди (WORLD).
-ВАШІ ОСНОВНІ ІНСТРУМЕНТИ: 'update_world_environment', 'update_organization_reputation'.
-ВАШІ ДРУГОРЯДНІ/ІНСПЕКЦІЙНІ ІНСТРУМЕНТИ: 'get_world_state', 'search_memory'.
+    return `Ви — Сабагент WORLD. Ваша задача: отримати інструкцію → за потреби інспектувати поточний стан → викликати МУТАЦІЙНИЙ інструмент. ЗАВЖДИ завершуйте мутаційним викликом!
 
-ПРАВИЛА РОБОТИ:
-1. За потреби використовуйте 'get_world_state' для перевірки часу/погоди.
-2. Для внесення змін викликайте ваш основний інструмент 'update_world_environment' або 'update_organization_reputation'.`;
+ІНСПЕКЦІЙНІ ІНСТРУМЕНТИ (читання):
+- get_world_state: Перевірити поточний час, дату та погоду
+- search_memory: Пошук у векторній пам'яті
+
+МУТАЦІЙНІ ІНСТРУМЕНТИ (ОБОВ'ЯЗКОВО виклич один після інспекції):
+
+1. update_world_environment — Зміна погоди, часу та подій. Можна комбінувати.
+   Погода: weather_type="rain", weather_intensity=70
+   Час: time_of_day="night" АБО advance_hours=3 АБО advance_days=1
+   Події: event_action="create" + event_title + event_description
+
+2. update_organization_reputation — Зміна репутації гравця у фракції.
+   Потрібно: organization_name + reputation_delta (напр. +25 або -15)
+   Опціонально: rank_id, description, is_known_to_player
+
+ВАЖЛИВО:
+- НЕ завершуй роботу після інспекції — ОБОВ'ЯЗКОВО виклич мутаційний інструмент!`;
   }
 
   private async executeViaLLM(
@@ -457,7 +498,7 @@ export class SubagentOrchestratorService {
       });
 
       if (res.toolCalls && res.toolCalls.length > 0) {
-        const toolCall = res.toolCalls[0];
+        const toolCall = res.toolCalls[0]!;
         const fnName = toolCall.function.name;
         const args = typeof toolCall.function.arguments === 'string'
           ? JSON.parse(toolCall.function.arguments)
@@ -477,7 +518,7 @@ export class SubagentOrchestratorService {
           messages.push({
             role: 'assistant',
             content: null,
-            tool_calls: [toolCall],
+            tool_calls: [toolCall as any],
           });
           messages.push({
             role: 'tool',
@@ -542,7 +583,7 @@ export class SubagentOrchestratorService {
         if (ownerType === 'npc' && args.owner_name) {
           const npcRepo = this.repo.getNpcRepository();
           const matches = npcRepo.search(args.owner_name);
-          if (matches.length > 0) ownerId = matches[0].npc_id;
+          if (matches.length > 0) ownerId = (matches[0] ? matches[0]!.npc_id : ownerId);
         }
         const profile = propertyRepo.getPropertyProfile(ownerType, ownerId);
         return {
@@ -573,7 +614,7 @@ export class SubagentOrchestratorService {
         if (!npc && args.name) {
           const searchResults = npcRepo.search(args.name);
           if (searchResults.length > 0) {
-            npc = searchResults[0];
+            npc = searchResults[0] || null;
           }
         }
         if (!npc) {
@@ -643,7 +684,7 @@ export class SubagentOrchestratorService {
         if (!existing && args.name) {
           const searchResults = npcRepo.search(args.name);
           if (searchResults.length > 0) {
-            existing = searchResults[0];
+            existing = searchResults[0] || null;
           }
         }
 
@@ -688,19 +729,7 @@ export class SubagentOrchestratorService {
           if (args.location_id) existing.spatial_presence.current_location_id = args.location_id;
         }
 
-        // 1. Secrets Handling (Recorded in hidden_memory.secrets)
-        const secDesc = args.secret_description || args.secret;
-        if (secDesc) {
-          if (!existing.knowledge.hidden_memory.secrets) {
-            existing.knowledge.hidden_memory.secrets = [];
-          }
-          existing.knowledge.hidden_memory.secrets.push({
-            secret_id: args.secret_id || `sec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-            description: secDesc,
-            source: 'narrative',
-            discovery_status: args.secret_discovery_status || 'discovered_by_player',
-          });
-        }
+        // Secrets are handled exclusively via 'update_npc_secret' tool — not here.
 
         // 2. Relationship to Player & Mood
         if (args.relationship_to_player) {
@@ -867,7 +896,7 @@ export class SubagentOrchestratorService {
           const npcRepo = this.repo.getNpcRepository();
           const name = args.owner_name || args.npc_name;
           const matches = npcRepo.search(name);
-          if (matches.length > 0) ownerId = matches[0].npc_id;
+          if (matches.length > 0) ownerId = (matches[0] ? matches[0]!.npc_id : ownerId);
         }
 
         let profile = propertyRepo.getPropertyProfile(ownerType, ownerId);
@@ -889,10 +918,10 @@ export class SubagentOrchestratorService {
 
         // Coins Update (Set or Delta)
         if (typeof args.coins_set === 'number') {
-          profile.finances.coins = Math.max(0, args.coins_set);
+          profile!.finances.coins = Math.max(0, args.coins_set);
         } else if (typeof args.coins_delta === 'number') {
           const currentCoins = profile.finances?.coins ?? 100;
-          profile.finances.coins = Math.max(0, currentCoins + args.coins_delta);
+          profile!.finances.coins = Math.max(0, currentCoins + args.coins_delta);
         }
 
         // Add Item Handler
@@ -916,10 +945,10 @@ export class SubagentOrchestratorService {
             location_context: { current_owner_type: ownerType as any, current_owner_id: ownerId },
           });
           this.repo.saveItem({ itemId, quantity: qty, metadata: { name: args.add_item_name, category: cat } });
-          if (!profile.pocket_inventory.pockets_and_belt.items) {
-            profile.pocket_inventory.pockets_and_belt.items = [];
+          if (!profile!.pocket_inventory.pockets_and_belt.items) {
+            profile!.pocket_inventory.pockets_and_belt.items = [];
           }
-          profile.pocket_inventory.pockets_and_belt.items.push({ item_id: itemId, quantity: qty });
+          profile!.pocket_inventory.pockets_and_belt.items.push({ item_id: itemId, quantity: qty });
         }
 
         // Remove Item Handler
@@ -930,7 +959,7 @@ export class SubagentOrchestratorService {
           const matchesName = (itemId: string): boolean => {
             const itemRecord = itemRepo.getItem(itemId);
             if (itemRecord) {
-              const name = itemRecord.public_profile?.name || (itemRecord as any).metadata?.name;
+              const name = itemRecord.public_profile?.name || (itemRecord as unknown as { metadata?: { name?: string } }).metadata?.name;
               if (name && name.toLowerCase().includes(rName)) {
                 return true;
               }
@@ -938,13 +967,13 @@ export class SubagentOrchestratorService {
             return itemId.toLowerCase().includes(rName);
           };
 
-          if (profile.pocket_inventory.pockets_and_belt?.items) {
-            profile.pocket_inventory.pockets_and_belt.items = profile.pocket_inventory.pockets_and_belt.items.filter(
+          if (profile!.pocket_inventory.pockets_and_belt?.items) {
+            profile!.pocket_inventory.pockets_and_belt.items = profile!.pocket_inventory.pockets_and_belt.items.filter(
               (i) => !matchesName(i.item_id)
             );
           }
-          if (profile.pocket_inventory.backpack?.items) {
-            profile.pocket_inventory.backpack.items = profile.pocket_inventory.backpack.items.filter(
+          if (profile!.pocket_inventory.backpack?.items) {
+            profile!.pocket_inventory.backpack.items = profile!.pocket_inventory.backpack.items.filter(
               (i) => !matchesName(i.item_id)
             );
           }
@@ -1037,9 +1066,9 @@ export class SubagentOrchestratorService {
         let org = orgId ? orgRepo.findById(orgId) : null;
         if (!org && (args.organization_name || args.organization_id)) {
           const searchTerm = (args.organization_name || args.organization_id).toLowerCase().trim();
-          const allOrgs = orgRepo.getAll();
-          org = allOrgs.find(o => o.organization_id.toLowerCase() === searchTerm || o.name.toLowerCase().includes(searchTerm)) || null;
-          if (org) orgId = org.organization_id;
+          const allOrgs = orgRepo.findAll();
+          org = allOrgs.find((o: any) => o.id.toLowerCase() === searchTerm || o.name.toLowerCase().includes(searchTerm)) || null;
+          if (org) orgId = org.id;
         }
         if (!org) {
           return { success: false, message: `Організацію "${args.organization_name || args.organization_id}" не знайдено` };

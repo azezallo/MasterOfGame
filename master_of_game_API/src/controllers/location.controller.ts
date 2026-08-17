@@ -5,6 +5,9 @@ import { LocationService } from '../services/location.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { z } from 'zod';
 
+const persistenceService = new PersistenceService();
+
+
 const getMapLocationsSchema = z.object({
   params: z.object({
     sessionId: z.string().uuid('Invalid session ID format')
@@ -32,8 +35,6 @@ export const getMapLocations = async (req: AuthenticatedRequest, res: Response, 
     if (!playerId) {
       return res.status(401).json({ success: false, message: 'User not authenticated' });
     }
-
-    const persistenceService = new PersistenceService();
     const repo = await persistenceService.loadSessionRepo(playerId, sessionId);
     if (!repo) {
       return res.status(404).json({ success: false, message: 'Session not found or not loaded' });

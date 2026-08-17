@@ -35,19 +35,20 @@ export class EmbeddingService {
       const idx = Math.abs(hash1) % this.dimensions;
       const sign = (hash2 & 1) === 0 ? 1 : -1;
 
-      vector[idx] += sign * 1.0;
+      vector[idx] = (vector[idx] || 0) + sign * 1.0;
     }
 
     // L2 Normalization
     let sumSq = 0;
     for (let i = 0; i < this.dimensions; i++) {
-      sumSq += vector[i] * vector[i];
+      const v = vector[i] || 0;
+      sumSq += v * v;
     }
 
     if (sumSq > 0) {
       const norm = Math.sqrt(sumSq);
       for (let i = 0; i < this.dimensions; i++) {
-        vector[i] /= norm;
+        vector[i] = (vector[i] || 0) / norm;
       }
     }
 
@@ -73,8 +74,8 @@ export class EmbeddingService {
     let normA = 0;
     let normB = 0;
     for (let i = 0; i < vecA.length; i++) {
-      const a = vecA[i];
-      const b = vecB[i];
+      const a = vecA[i] || 0;
+      const b = vecB[i] || 0;
       dot += a * b;
       normA += a * a;
       normB += b * b;

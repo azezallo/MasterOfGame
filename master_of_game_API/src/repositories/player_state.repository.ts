@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import { PlayerStateProfile } from '../types/player_state.types';
 import { PlayerStateProfileSchema } from '../schemas/player_state.schema';
 import { getInitialPlayerStatePreset } from '../config';
+import { logger } from '../logger';
 
 export interface DBPlayerStateRow {
   session_id: string;
@@ -41,7 +42,7 @@ export class PlayerStateRepository {
       const parsed = JSON.parse(row.data);
       return PlayerStateProfileSchema.parse(parsed);
     } catch (err) {
-      console.error('[PlayerStateRepository] Failed to parse player state data, returning default preset:', err);
+      logger.error('[PlayerStateRepository] Failed to parse player state data, returning default preset:', err);
       const defaultPreset = getInitialPlayerStatePreset() as PlayerStateProfile;
       this.savePlayerState(sessionId, defaultPreset);
       return defaultPreset;

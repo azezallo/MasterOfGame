@@ -1,5 +1,6 @@
 import { LocationRepository } from '../repositories/location.repository';
 import { LocationData, TransitionAccessStatus, LockDetails, EnvironmentalState, StateModification } from '../types/location.types';
+import { logger } from '../logger';
 
 export type ContextMode = 'NAVIGATION_MODE' | 'DETAILED_MODE' | 'REGIONAL_MODE';
 
@@ -100,7 +101,7 @@ export class LocationService {
     // TODO [F006]: Implement player movement with time progression
     // integrate with PersistenceService to update playerState.current_location
     // TODO: Advance game time by travelTimeMinutes in session metadata
-    console.log(`Player moved to ${destinationLocationId}. Time passed: ${travelTimeMinutes} minutes. ${travelSummary || ''}`);
+    logger.info(`Player moved to ${destinationLocationId}. Time passed: ${travelTimeMinutes} minutes. ${travelSummary || ''}`);
   }
 
   public updateLocationState(locationId: string, updates: {

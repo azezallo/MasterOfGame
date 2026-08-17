@@ -41,7 +41,7 @@ export class AISettingsService {
     return {
       isConfigured: settings.isConfigured,
       providerId: settings.providerId,
-      customEndpoint: settings.customEndpoint,
+      ...(settings.customEndpoint !== undefined && { customEndpoint: settings.customEndpoint }),
       modelName: settings.modelName,
       temperature: settings.temperature,
       timeoutMs: settings.timeoutMs,
@@ -78,7 +78,7 @@ export class AISettingsService {
     const settingsToSave: UserAISettings = {
       userId: stringUserId,
       providerId: validated.providerId,
-      customEndpoint: validated.customEndpoint || undefined,
+      ...(validated.customEndpoint !== undefined && validated.customEndpoint !== null && { customEndpoint: validated.customEndpoint }),
       encryptedApiKey,
       modelName: validated.modelName,
       temperature: validated.temperature,
@@ -93,7 +93,7 @@ export class AISettingsService {
     return {
       isConfigured: saved.isConfigured,
       providerId: saved.providerId,
-      customEndpoint: saved.customEndpoint,
+      ...(saved.customEndpoint !== undefined && { customEndpoint: saved.customEndpoint }),
       modelName: saved.modelName,
       temperature: saved.temperature,
       timeoutMs: saved.timeoutMs,
@@ -112,11 +112,11 @@ export class AISettingsService {
     const validated = parseResult.data;
 
     const provider = LLMProviderFactory.getProvider(validated.providerId, {
-      customEndpoint: validated.customEndpoint || undefined,
-      apiKey: validated.apiKey || undefined,
+      ...(validated.customEndpoint !== undefined && validated.customEndpoint !== null && { customEndpoint: validated.customEndpoint }),
+      ...(validated.apiKey !== undefined && validated.apiKey !== null && { apiKey: validated.apiKey }),
     });
 
-    return provider.validateCredentials(validated.customEndpoint || undefined, validated.apiKey || undefined);
+    return provider.validateCredentials(validated.customEndpoint as any, validated.apiKey as any);
   }
 
   public async getDecryptedSettings(userId: string | number): Promise<{ settings: UserAISettings; apiKey?: string }> {
@@ -131,6 +131,6 @@ export class AISettingsService {
       apiKey = this.encryptionService.decrypt(settings.encryptedApiKey);
     }
 
-    return { settings, apiKey };
+    return { settings, ...(apiKey !== undefined && { apiKey }) };
   }
 }

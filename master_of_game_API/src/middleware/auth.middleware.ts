@@ -11,7 +11,7 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-export const authMiddleware = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const sessionId = req.cookies?.session_id;
 
   if (!sessionId) {
@@ -23,7 +23,7 @@ export const authMiddleware = async (req: AuthenticatedRequest, res: Response, n
     if (!sessionData) {
       return next(new AuthError('Session ID is missing'));
     }
-    req.user = {
+    (req as AuthenticatedRequest).user = {
       id: sessionData.player.id,
       login: sessionData.player.login,
     };

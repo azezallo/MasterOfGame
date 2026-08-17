@@ -15,6 +15,7 @@ interface DBSessionRow {
 }
 
 export class AuthRepository {
+  private static initialized = false;
   private db: Database.Database;
 
   constructor() {
@@ -23,6 +24,7 @@ export class AuthRepository {
   }
 
   private init(): void {
+    if (AuthRepository.initialized) return;
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS players (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,6 +40,7 @@ export class AuthRepository {
         FOREIGN KEY(login) REFERENCES players(login)
       );
     `);
+    AuthRepository.initialized = true;
   }
 
   public findByLogin(login: string): { id: number; login: string; password_hash: string; salt: string } | null {

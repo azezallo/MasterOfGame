@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { RegisterSchema, LoginSchema } from '../types';
 import type { RegisterData, LoginData, AuthError, AuthMode } from '../types';
 import type { GetMeResponse } from '@/api/contracts/auth';
@@ -6,6 +7,7 @@ import { authService } from '../services/auth.service';
 import { handleZodError } from '@/utils/zod';
 
 export const useAuth = () => {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<AuthMode>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
@@ -52,7 +54,7 @@ export const useAuth = () => {
       setMode('login');
     } catch {
       setIsLoading(false);
-      setError({ message: 'Помилка реєстрації' });
+      setError({ message: t('auth.register_error', 'Помилка реєстрації') });
     }
   };
 
@@ -75,7 +77,7 @@ export const useAuth = () => {
       setError(null);
     } catch {
       setIsLoading(false);
-      setError({ message: 'Помилка входу' });
+      setError({ message: t('auth.login_error', 'Помилка входу') });
     }
   };
 

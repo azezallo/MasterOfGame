@@ -7,8 +7,8 @@ import { HashService } from './hash.service';
 export class AuthService {
   private authRepo: AuthRepository;
 
-  constructor() {
-    this.authRepo = new AuthRepository();
+  constructor(authRepo?: AuthRepository) {
+    this.authRepo = authRepo || new AuthRepository();
   }
 
   /**

@@ -100,7 +100,7 @@ export class AgenticLoopRepository {
 
   public getNextTurnNumber(sessionId: string): number {
     const stmt = this.db.prepare(`SELECT MAX(turn_number) as max_turn FROM short_logs WHERE session_id = ?`);
-    const row = stmt.get(sessionId) as any;
+    const row = stmt.get(sessionId) as { max_turn: number } | undefined;
     return (row?.max_turn || 0) + 1;
   }
 }

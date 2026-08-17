@@ -1,9 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 
 import { PersistenceService } from '../persistence/persistence_service';
 import { ItemService } from '../services/item.service';
 import { AppError, AuthError } from '../errors/app.errors';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+
+const persistenceService = new PersistenceService();
+
 
 async function getItemService(req: Request): Promise<ItemService> {
   const sessionId = (req.params.sessionId as string) || (req.query.sessionId as string) || '';
@@ -12,8 +16,6 @@ async function getItemService(req: Request): Promise<ItemService> {
     throw new AuthError('User not authenticated');
   }
   const playerId = String(user.id);
-
-  const persistenceService = new PersistenceService();
   const repo = await persistenceService.loadSessionRepo(playerId, sessionId);
   if (!repo) {
     throw new AppError(`Session '${sessionId}' not found for player '${playerId}'`, 404);
@@ -27,7 +29,14 @@ async function getItemService(req: Request): Promise<ItemService> {
 export const getItems = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const itemService = await getItemService(req);
-    const { owner_type, owner_id, category, query } = req.query as any;
+    const GetItemsQuerySchema = z.object({
+      owner_type: z.string().optional(),
+      owner_id: z.string().optional(),
+      category: z.string().optional(),
+      query: z.string().optional()
+    });
+    
+    const { owner_type, owner_id, category, query } = GetItemsQuerySchema.parse(req.query);
 
     const items = itemService.searchItems({
       query,

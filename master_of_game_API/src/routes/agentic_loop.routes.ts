@@ -4,7 +4,7 @@ import { authMiddleware } from '../middleware/auth.middleware';
 
 const router = Router();
 
-router.use(authMiddleware as any);
+router.use(authMiddleware);
 
 router.get('/history', getHistory);
 router.get('/stream', reconnectStream);

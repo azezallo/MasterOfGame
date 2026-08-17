@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import { NpcData, NpcRelationship } from '../types/npc.types';
 import { NpcSchema } from '../schemas/npc.schema';
+import { logger } from '../logger';
 
 export interface DBNpcRow {
   npc_id: string;
@@ -18,7 +19,7 @@ function safeJsonParse<T>(jsonString: string | null | undefined, fallback: T): T
   try {
     return JSON.parse(jsonString);
   } catch (err) {
-    console.error('[NpcRepository] JSON parse failure:', err, 'Raw value:', jsonString);
+    logger.error('[NpcRepository] JSON parse failure:', { error: err, rawValue: jsonString });
     return fallback;
   }
 }
@@ -70,7 +71,7 @@ export class NpcRepository {
     try {
       return NpcSchema.parse(normalized);
     } catch (err) {
-      console.error(`[NpcRepository] Schema parse fallback for npc_id="${row.npc_id}":`, err);
+      logger.error(`[NpcRepository] Schema parse fallback for npc_id="${row.npc_id}":`, err);
       return normalized as NpcData;
     }
   }

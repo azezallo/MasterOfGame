@@ -42,12 +42,12 @@ export class SemanticMemoryService {
     const requestedLimit = payload.limit ?? 3;
     const effectiveLimit = Math.min(requestedLimit, 3); // Hard cap at 3 to prevent LLM context overflow
 
-    const matches = this.repository.searchByVector(payload.session_id, queryVector, {
-      tagsFilter: payload.tags_filter,
-      roleFilter: payload.role_filter,
-      worldTimeRange: payload.world_time_range,
-      limit: effectiveLimit,
-    });
+    const options: any = { limit: effectiveLimit };
+    if (payload.tags_filter !== undefined) options.tagsFilter = payload.tags_filter;
+    if (payload.role_filter !== undefined) options.roleFilter = payload.role_filter;
+    if (payload.world_time_range !== undefined) options.worldTimeRange = payload.world_time_range;
+
+    const matches = this.repository.searchByVector(payload.session_id, queryVector, options);
 
     return matches.map(match => ({
       turn: match.turn_number,

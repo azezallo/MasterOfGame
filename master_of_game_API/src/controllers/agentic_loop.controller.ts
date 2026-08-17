@@ -12,14 +12,15 @@ import { ValidationError, AppError, AuthError } from '../errors/app.errors';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { SessionStreamBroker } from '../services/agentic_loop/session_stream_broker.service';
 
+const persistenceService = new PersistenceService();
+
+
 async function getSessionRepo(sessionId: string, req: Request): Promise<DatabaseRepository> {
   const user = (req as AuthenticatedRequest).user;
   if (!user || !user.id) {
     throw new AuthError('User not authenticated');
   }
   const playerId = String(user.id);
-
-  const persistenceService = new PersistenceService();
   const repo = await persistenceService.loadSessionRepo(playerId, sessionId);
   if (!repo) {
     throw new AppError(`Session '${sessionId}' not found for player '${playerId}'`, 404);

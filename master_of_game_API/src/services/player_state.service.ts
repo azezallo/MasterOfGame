@@ -83,7 +83,7 @@ export class PlayerStateService {
       profile.attributes = {
         ...profile.attributes,
         ...validatedInput.update_attributes,
-      };
+      } as import('../types/player_state.types').PlayerAttributes;
     }
     // Formula: max_carry_weight_kg = 5.0 + strength * 2.0
     const calculatedWeight = 5.0 + profile.attributes.strength * 2.0;

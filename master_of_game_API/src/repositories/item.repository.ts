@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
-import { ItemTemplate, ItemInstance } from '../schemas/item.schema';
+import { ItemTemplate, ItemInstance, ItemCategory } from '../schemas/item.schema';
+import { logger } from '../logger';
 
 export interface DBItemTemplateRow {
   template_id: string;
@@ -28,7 +29,7 @@ function safeJsonParse<T>(jsonString: string | null | undefined, fallback: T): T
   try {
     return JSON.parse(jsonString);
   } catch (err) {
-    console.error('[ItemRepository] JSON parse failure:', err, 'Raw value:', jsonString);
+    logger.error('[ItemRepository] JSON parse failure:', { error: err, rawValue: jsonString });
     return fallback;
   }
 }
@@ -72,7 +73,7 @@ export class ItemRepository {
 
     return {
       template_id: row.template_id,
-      category: row.category as any,
+      category: row.category as ItemCategory,
       public_profile: safeJsonParse(row.public_profile, DEFAULT_PUBLIC_PROFILE),
       physical_properties: safeJsonParse(row.physical_properties, DEFAULT_PHYSICAL_PROPERTIES),
       special_mechanics: safeJsonParse(row.special_mechanics, null),
@@ -84,7 +85,7 @@ export class ItemRepository {
     const rows = stmt.all() as DBItemTemplateRow[];
     return rows.map(row => ({
       template_id: row.template_id,
-      category: row.category as any,
+      category: row.category as ItemCategory,
       public_profile: safeJsonParse(row.public_profile, DEFAULT_PUBLIC_PROFILE),
       physical_properties: safeJsonParse(row.physical_properties, DEFAULT_PHYSICAL_PROPERTIES),
       special_mechanics: safeJsonParse(row.special_mechanics, null),
@@ -133,7 +134,7 @@ export class ItemRepository {
     return {
       item_id: row.item_id,
       template_id: row.template_id,
-      category: row.category as any,
+      category: row.category as ItemCategory,
       public_profile: safeJsonParse(row.public_profile, DEFAULT_PUBLIC_PROFILE),
       private_profile: safeJsonParse(row.private_profile, null),
       physical_properties: safeJsonParse(row.physical_properties, DEFAULT_PHYSICAL_PROPERTIES),
@@ -157,7 +158,7 @@ export class ItemRepository {
     return rows.map(row => ({
       item_id: row.item_id,
       template_id: row.template_id,
-      category: row.category as any,
+      category: row.category as ItemCategory,
       public_profile: safeJsonParse(row.public_profile, DEFAULT_PUBLIC_PROFILE),
       private_profile: safeJsonParse(row.private_profile, null),
       physical_properties: safeJsonParse(row.physical_properties, DEFAULT_PHYSICAL_PROPERTIES),
@@ -183,7 +184,7 @@ export class ItemRepository {
     let results = rows.map(row => ({
       item_id: row.item_id,
       template_id: row.template_id,
-      category: row.category as any,
+      category: row.category as ItemCategory,
       public_profile: safeJsonParse(row.public_profile, DEFAULT_PUBLIC_PROFILE),
       private_profile: safeJsonParse(row.private_profile, null),
       physical_properties: safeJsonParse(row.physical_properties, DEFAULT_PHYSICAL_PROPERTIES),

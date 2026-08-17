@@ -101,7 +101,8 @@ describe('NpcService Unit Tests', () => {
     const updated = npcService.revealNpcSecret('npc_secret_01', 'sec_01');
     const secret = updated.knowledge.hidden_memory.secrets.find(s => s.secret_id === 'sec_01');
     expect(secret?.discovery_status).toBe('discovered_by_player');
-    expect(updated.public_profile.public_description).toContain('Справжній агент ордену');
+    // Revealed secrets are shown separately on UI — public_description must NOT be modified
+    expect(updated.public_profile.public_description).toBe('Опис.');
   });
 
   it('should isolate private data for PublicIsolatedNpc transformer', () => {

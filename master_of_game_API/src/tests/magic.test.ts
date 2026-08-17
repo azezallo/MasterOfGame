@@ -4,6 +4,7 @@ import { PersistenceService } from '../persistence/persistence_service';
 import { CONFIG } from '../config';
 import fs from 'fs';
 import path from 'path';
+import { logger } from '../logger';
 
 const TEST_SUBDIR = 'magic_test';
 const TEST_SAVES_DIR = path.resolve(CONFIG.SAVES_DIR, TEST_SUBDIR);
@@ -43,7 +44,7 @@ describe('F015 Magic System Unit & Integration Tests', () => {
       try {
         fs.rmSync(TEST_SAVES_DIR, { recursive: true, force: true });
       } catch (e) {
-        console.error(`Failed to cleanup ${TEST_SAVES_DIR}:`, e);
+        logger.error(`Failed to cleanup ${TEST_SAVES_DIR}:`, e);
       }
     }
   });
