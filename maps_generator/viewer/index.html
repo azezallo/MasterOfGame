@@ -67,12 +67,15 @@
     <div id="controls">
         <div class="control-group">
             <label><input type="radio" name="layer" id="layer-elevation" value="elevation"> Висота (Grayscale)</label>
-            <label><input type="radio" name="layer" id="layer-temperature" value="temperature"> Температура</label>
-            <label><input type="radio" name="layer" id="layer-moisture" value="moisture"> Вологість</label>
-            <label><input type="radio" name="layer" id="layer-biomes" value="biomes" checked> Біоми</label>
+            <label><input type="radio" name="layer" value="temperature"> Температура</label>
+            <label><input type="radio" name="layer" value="moisture"> Вологість</label>
+            <label><input type="radio" name="layer" value="biomes" checked> Біоми</label>
+            <label><input type="radio" name="layer" value="political"> Політична</label>
         </div>
         <div class="control-group" style="margin-top: 10px;">
             <label><input type="checkbox" id="layer-rivers" checked> Показати річки та озера</label>
+            <label style="margin-left: 20px;"><input type="checkbox" id="layer-magic"> Магічне Поле</label>
+            <input type="range" id="magic-opacity" min="0" max="1" step="0.05" value="0.7" style="vertical-align: middle;">
         </div>
     </div>
 

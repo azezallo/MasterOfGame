@@ -25,19 +25,33 @@ export interface MapGenerationConfig {
         minRiverStartElevation: number;
         riverMoistureBonus: number;
     };
+    magic: {
+        seed: number;
+        peaksCount: number;
+        valleysCount: number;
+        minDistance: number;
+        blurPasses: number;
+    };
+    political: {
+        seed: number;
+        factionCount: number;
+        citiesPerFaction: number;
+        villagesPerCity: number;
+        maxInfluenceRadius: number; // For Wildlands
+    };
     islandMask: boolean;
 }
 
 export const MapConfig: MapGenerationConfig = {
     // Map dimensions (1 pixel = 1 km)
-    width: 500,
-    height: 500,
+    width: 300,
+    height: 200,
     
     oceanLevel: 0.35, // Below this height is water
 
     // Perlin noise FBM settings for elevation
     elevation: {
-        seed: 12345,
+        seed: 12347,
         octaves: 6,
         persistence: 0.4,
         lacunarity: 2.0,
@@ -62,6 +76,22 @@ export const MapConfig: MapGenerationConfig = {
         riverCount: 20,
         minRiverStartElevation: 0.5,
         riverMoistureBonus: 0.5
+    },
+    
+    magic: {
+        seed: 7777,
+        peaksCount: 3,
+        valleysCount: 3,
+        minDistance: 15,
+        blurPasses: 30
+    },
+    
+    political: {
+        seed: 8887,
+        factionCount: 4,
+        citiesPerFaction: 3,
+        villagesPerCity: 2,
+        maxInfluenceRadius: 40
     },
     
     // If true, forces the edges of the map to drop off into the ocean

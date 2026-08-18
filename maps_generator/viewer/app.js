@@ -49,13 +49,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 const temp = mapData.temperature[y][x].toFixed(3);
                 const moist = mapData.moisture[y][x].toFixed(3);
                 const biome = mapData.biomes[y][x];
+                const mana = (mapData.magic[y][x] * 100).toFixed(0);
+                
+                let magicText = `Магія: ${mana}%`;
+                if (mana >= 90) magicText += " (Вузол Сили)";
+                else if (mana <= 10) magicText += " (Мертва Зона)";
+                
+                let politicalText = "";
+                if (mapData.political) {
+                    const faction = mapData.political.factionMap[y][x];
+                    const settlement = mapData.political.settlementMap[y][x];
+                    
+                    if (elev > mapData.config.oceanLevel) {
+                        if (faction !== null) {
+                            politicalText += `<br>Фракція: ${faction}`;
+                        } else {
+                            politicalText += `<br><i>Дикі Землі (Wildlands)</i>`;
+                        }
+                    }
+                    
+                    if (settlement) {
+                        const types = { 'capital': 'Столиця', 'city': 'Місто', 'village': 'Село' };
+                        politicalText += `<br><b>Поселення: ${types[settlement]}</b>`;
+                    }
+                    if (mapData.political.roadMap[y][x]) {
+                        politicalText += `<br><i>Дорога</i>`;
+                    }
+                }
                 
                 tooltip.innerHTML = `
                     <b>X: ${x}, Y: ${y}</b><br>
-                    Біом: ${biome}<br>
                     Висота: ${elev}<br>
                     Температура: ${temp}<br>
-                    Вологість: ${moist}
+                    Вологість: ${moist}<br>
+                    Біом: ${biome}<br>
+                    ${magicText}
+                    ${politicalText}
                 `;
                 tooltip.style.display = 'block';
                 tooltip.style.left = (e.pageX + 15) + 'px';
@@ -75,6 +104,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const riversCheckbox = document.getElementById('layer-rivers');
+    const magicCheckbox = document.getElementById('layer-magic');
+    const magicOpacity = document.getElementById('magic-opacity');
 
     // Function to render the active layers
     function render() {
@@ -85,6 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         const showRivers = riversCheckbox.checked;
+        const showMagic = magicCheckbox.checked;
+        const mOpacity = parseFloat(magicOpacity.value);
 
         for (let i = 0; i < tiles.length; i++) {
             const { element, x, y } = tiles[i];
@@ -112,12 +145,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 const biome = mapData.biomes[y][x];
                 element.style.backgroundColor = BIOME_COLORS[biome] || '#ff00ff';
             }
+            else if (activeLayer === 'political') {
+                const elev = mapData.elevation[y][x];
+                if (elev <= mapData.config.oceanLevel) {
+                    element.style.backgroundColor = '#1a3b5c'; // Ocean color
+                } else {
+                    const factionColors = ['#ff9999', '#99ccff', '#99ff99', '#ffff99', '#e6ccff', '#ffcc99'];
+                    const faction = mapData.political.factionMap[y][x];
+                    
+                    if (faction !== null) {
+                        element.style.backgroundColor = factionColors[faction % factionColors.length];
+                    } else {
+                        element.style.backgroundColor = '#aaaaaa';
+                    }
+                }
+            }
             
-            // Clear previous river/lake indicators
+            // Clear previous indicators
             element.innerHTML = '';
             
-            // Overlay rivers and lakes
-            if (showRivers) {
+            // Overlay Rivers/Lakes (if not in political mode, or if we want them always, let's keep them if checked)
+            if (showRivers && activeLayer !== 'political') {
                 if (mapData.lakes[y][x]) {
                     const lakeMarker = document.createElement('div');
                     lakeMarker.style.width = '100%';
@@ -133,12 +181,89 @@ document.addEventListener('DOMContentLoaded', () => {
                     element.appendChild(riverMarker);
                 }
             }
+            
+            // Overlay magic density
+            if (showMagic) {
+                const mana = mapData.magic[y][x];
+                const magicOverlay = document.createElement('div');
+                magicOverlay.style.width = '100%';
+                magicOverlay.style.height = '100%';
+                magicOverlay.style.position = 'absolute';
+                magicOverlay.style.top = '0';
+                magicOverlay.style.left = '0';
+                // Purple color: rgba(138, 43, 226)
+                magicOverlay.style.backgroundColor = `rgba(138, 43, 226, ${mana * mOpacity})`;
+                magicOverlay.style.pointerEvents = 'none'; // so tooltips still work
+                
+                // Ensure the cell has position relative to contain the absolute overlay
+                element.style.position = 'relative';
+                element.appendChild(magicOverlay);
+            }
+            
+            // Overlay Roads and Settlements (Political features)
+            if (activeLayer === 'political' || activeLayer === 'biomes') {
+                element.style.position = 'relative';
+                
+                if (mapData.political) {
+                    // Roads
+                    if (mapData.political.roadMap[y][x]) {
+                        const roadMarker = document.createElement('div');
+                        roadMarker.style.width = '100%';
+                        roadMarker.style.height = '100%';
+                        roadMarker.style.backgroundColor = '#8B4513'; // SaddleBrown
+                        roadMarker.style.position = 'absolute';
+                        roadMarker.style.top = '0';
+                        roadMarker.style.left = '0';
+                        roadMarker.style.opacity = '0.6';
+                        roadMarker.style.pointerEvents = 'none';
+                        element.appendChild(roadMarker);
+                    }
+                    
+                    // Settlements
+                    const settlement = mapData.political.settlementMap[y][x];
+                    if (settlement) {
+                        const sMarker = document.createElement('div');
+                        sMarker.style.position = 'absolute';
+                        sMarker.style.top = '0';
+                        sMarker.style.left = '0';
+                        sMarker.style.width = '100%';
+                        sMarker.style.height = '100%';
+                        sMarker.style.display = 'flex';
+                        sMarker.style.alignItems = 'center';
+                        sMarker.style.justifyContent = 'center';
+                        sMarker.style.pointerEvents = 'none';
+                        
+                        if (settlement === 'capital') {
+                            sMarker.innerHTML = '★';
+                            sMarker.style.color = '#fff';
+                            sMarker.style.fontSize = '12px';
+                            sMarker.style.textShadow = '0 0 2px #000';
+                            sMarker.style.backgroundColor = 'rgba(0,0,0,0.5)'; // Darken background slightly to stand out
+                        } else if (settlement === 'city') {
+                            sMarker.innerHTML = '●';
+                            sMarker.style.color = '#fff';
+                            sMarker.style.fontSize = '8px';
+                            sMarker.style.textShadow = '0 0 1px #000';
+                            sMarker.style.backgroundColor = 'rgba(0,0,0,0.3)';
+                        } else if (settlement === 'village') {
+                            sMarker.innerHTML = '▪';
+                            sMarker.style.color = '#eee';
+                            sMarker.style.fontSize = '6px';
+                            sMarker.style.textShadow = '0 0 1px #000';
+                        }
+                        
+                        element.appendChild(sMarker);
+                    }
+                }
+            }
         }
     }
 
     // Bind events
     radios.forEach(r => r.addEventListener('change', render));
     riversCheckbox.addEventListener('change', render);
+    magicCheckbox.addEventListener('change', render);
+    magicOpacity.addEventListener('input', render);
 
     // Initial render
     render();

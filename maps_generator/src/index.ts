@@ -4,6 +4,8 @@ import { generateTemperatureMap } from './layers/temperature';
 import { generateMoistureMap } from './layers/moisture';
 import { generateBiomeMap } from './layers/biomes';
 import { generateRivers, applyRiverMoisture } from './layers/hydrology';
+import { generateMagicMap } from './layers/magic';
+import { generatePoliticalMap } from './layers/political';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -82,6 +84,12 @@ function main() {
     console.log('Generating biome map...');
     const biomeMap = generateBiomeMap(MapConfig, heightmap, tempMap, moistureMap);
     
+    console.log('Generating magic map...');
+    const manaMap = generateMagicMap(MapConfig);
+    
+    console.log('Generating political map...');
+    const politicalMap = generatePoliticalMap(MapConfig, heightmap);
+    
     const payload = {
         config: MapConfig,
         elevation: heightmap,
@@ -89,7 +97,9 @@ function main() {
         moisture: moistureMap,
         biomes: biomeMap,
         rivers: riverMap,
-        lakes: lakesMap
+        lakes: lakesMap,
+        magic: manaMap,
+        political: politicalMap
     };
     
     exportData(payload);
