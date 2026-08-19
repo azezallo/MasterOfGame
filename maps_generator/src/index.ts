@@ -6,6 +6,7 @@ import { generateBiomeMap } from './layers/biomes';
 import { generateRivers, applyRiverMoisture } from './layers/hydrology';
 import { generateMagicMap } from './layers/magic';
 import { generatePoliticalMap } from './layers/political';
+import { renderMapToImage } from './render/mapRenderer';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -65,7 +66,7 @@ function exportData(payload: any) {
     console.log(`Successfully exported map data to ${outPath}`);
 }
 
-function main() {
+async function main() {
     console.log('Generating elevation map...');
     const heightmap = generateHeightmap(MapConfig);
     
@@ -103,6 +104,9 @@ function main() {
     };
     
     exportData(payload);
+    
+    console.log('Rendering static map background...');
+    await renderMapToImage(payload);
 }
 
-main();
+main().catch(console.error);
