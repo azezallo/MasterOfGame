@@ -53,6 +53,112 @@ function generateHeightmap(config: MapGenerationConfig) {
     return mapData;
 }
 
+function compressPayload(payload: any, factor: number) {
+    const origWidth = payload.config.width;
+    const origHeight = payload.config.height;
+    const newWidth = Math.ceil(origWidth / factor);
+    const newHeight = Math.ceil(origHeight / factor);
+
+    const newElevation = Array(newHeight).fill(0).map(() => Array(newWidth).fill(0));
+    const newBiomes = Array(newHeight).fill(0).map(() => Array(newWidth).fill('OCEAN'));
+    const newFactionMap = Array(newHeight).fill(0).map(() => Array(newWidth).fill(null));
+    const newLakes = Array(newHeight).fill(0).map(() => Array(newWidth).fill(false));
+
+    for (let ny = 0; ny < newHeight; ny++) {
+        for (let nx = 0; nx < newWidth; nx++) {
+            const startX = nx * factor;
+            const startY = ny * factor;
+            const endX = Math.min(startX + factor, origWidth);
+            const endY = Math.min(startY + factor, origHeight);
+
+            let maxElev = 0;
+            const biomeCounts = new Map<string, number>();
+            const factionCounts = new Map<number, number>();
+            let hasLake = false;
+
+            for (let y = startY; y < endY; y++) {
+                for (let x = startX; x < endX; x++) {
+                    const e = payload.elevation[y][x];
+                    if (e > maxElev) maxElev = e;
+
+                    const b = payload.biomes[y][x];
+                    biomeCounts.set(b, (biomeCounts.get(b) || 0) + 1);
+
+                    const f = payload.political.factionMap[y][x];
+                    if (f !== null) {
+                        factionCounts.set(f, (factionCounts.get(f) || 0) + 1);
+                    }
+                    
+                    if (payload.lakes[y][x]) hasLake = true;
+                }
+            }
+
+            newElevation[ny][nx] = maxElev;
+            newLakes[ny][nx] = hasLake;
+
+            // Biome logic: Land > Ocean priority
+            let bestBiome = 'OCEAN';
+            let bestBiomeCount = -1;
+            for (const [b, count] of biomeCounts.entries()) {
+                if (b === 'OCEAN') continue; // Skip ocean for max finding
+                if (count > bestBiomeCount) {
+                    bestBiomeCount = count;
+                    bestBiome = b;
+                }
+            }
+            if (bestBiomeCount === -1) {
+                bestBiome = 'OCEAN'; // Only ocean present
+            }
+            newBiomes[ny][nx] = bestBiome;
+
+            // Faction logic
+            let bestFaction = null;
+            let bestFactionCount = -1;
+            for (const [f, count] of factionCounts.entries()) {
+                if (count > bestFactionCount) {
+                    bestFactionCount = count;
+                    bestFaction = f;
+                }
+            }
+            newFactionMap[ny][nx] = bestFaction;
+        }
+    }
+
+    // Filter settlements (only capitals)
+    const newSettlements = payload.political.settlements
+        .filter((s: any) => s.type === 'capital')
+        .map((s: any) => ({
+            ...s,
+            x: Math.floor(s.x / factor),
+            y: Math.floor(s.y / factor)
+        }));
+        
+    // Generate new settlementMap for capitals only
+    const newSettlementMap = Array(newHeight).fill(0).map(() => Array(newWidth).fill(null));
+    for (const s of newSettlements) {
+        if (s.y >= 0 && s.y < newHeight && s.x >= 0 && s.x < newWidth) {
+            newSettlementMap[s.y][s.x] = 'capital';
+        }
+    }
+
+    return {
+        config: {
+            ...payload.config,
+            width: newWidth,
+            height: newHeight
+        },
+        elevation: newElevation,
+        biomes: newBiomes,
+        lakes: newLakes,
+        political: {
+            factionMap: newFactionMap,
+            settlementMap: newSettlementMap,
+            roadMap: null, // No roads on global map
+            settlements: newSettlements
+        }
+    };
+}
+
 function exportData(payload: any) {
     const outDir = path.join(__dirname, '..', 'out');
     if (!fs.existsSync(outDir)) {
@@ -104,12 +210,16 @@ async function main() {
         political: politicalMap
     };
     
-    exportData(payload);
-    
-    console.log('Rendering static map background...');
-    await renderMapToImage(payload);
-    
+    console.log('Generating Regional Maps (Level 2) from HIGH-RES data...');
     await generateRegionalMaps(payload);
+    
+    console.log('Compressing Global Map by 10x...');
+    const compressedPayload = compressPayload(payload, 10);
+    
+    exportData(compressedPayload);
+    
+    console.log('Rendering static map background for Global Map...');
+    await renderMapToImage(compressedPayload);
 }
 
 main().catch(console.error);

@@ -2,9 +2,9 @@ import { createCanvas, loadImage, Image } from 'canvas';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Change scale: 1 grid unit = 6 pixels in the final image
+// Change scale: 1 grid unit = 15 pixels in the final image
 const TILE_SIZE = 15;
-const BASE_ASSET_HEIGHT = 65;
+const BASE_ASSET_HEIGHT = 25;
 
 // Helper to load all images from a directory
 async function loadImagesFromDir(dirPath: string): Promise<Image[]> {
@@ -104,8 +104,8 @@ export async function renderMapToImage(mapData: any) {
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
             if (mapData.elevation[y][x] <= mapData.config.oceanLevel && !mapData.lakes[y][x]) continue; // Skip ocean
-            if (mapData.political && mapData.political.settlementMap[y][x]) continue; // Skip settlements (rendered in SVG later)
-            if (mapData.political && mapData.political.roadMap[y][x]) continue; // Avoid placing big trees directly on roads
+            if (mapData.political && mapData.political.settlementMap && mapData.political.settlementMap[y][x]) continue;
+            if (mapData.political && mapData.political.roadMap && mapData.political.roadMap[y][x]) continue;
             
             const biome = mapData.biomes[y][x];
             let targetAssetList: Image[] | null = null;
@@ -118,20 +118,20 @@ export async function renderMapToImage(mapData: any) {
                 sizeMult = 1.0;
             } else if (biome === 'TUNDRA' || biome === 'TAIGA') {
                 targetAssetList = assets.pines;
-                density = 0.15;
-                sizeMult = 0.8;
+                density = 0.30;
+                sizeMult = 1.4
             } else if (biome === 'BARE' || biome === 'CLIFF') {
                 targetAssetList = assets.mounts;
                 density = 0.15;
                 sizeMult = 1.2;
             } else if (biome === 'TEMPERATE_DECIDUOUS_FOREST' || biome === 'TEMPERATE_RAIN_FOREST' || biome === 'TROPICAL_SEASONAL_FOREST') {
                 targetAssetList = assets.trees;
-                density = 0.15;
-                sizeMult = 0.8;
+                density = 0.30;
+                sizeMult = 1.4;
             } else if (biome === 'TROPICAL_RAIN_FOREST') {
                 targetAssetList = assets.jungles;
-                density = 0.18;
-                sizeMult = 0.9;
+                density = 0.4;
+                sizeMult = 1.4;
             } else if (biome === 'TEMPERATE_DESERT' || biome === 'SUBTROPICAL_DESERT' || biome === 'SCORCHED' || biome === 'BEACH') {
                 targetAssetList = assets.deserts;
                 density = 0.05;
@@ -146,13 +146,14 @@ export async function renderMapToImage(mapData: any) {
                 sizeMult = 0.6;
             } else if (biome === 'SHRUBLAND') {
                 targetAssetList = assets.shrubland;
-                density = 0.1;
-                sizeMult = 0.6;
+                density = 0.15;
+                sizeMult = 1.1;
             }
             
             if (targetAssetList && targetAssetList.length > 0) {
                 // Determine if we place an asset here based on pseudo-random density
-                if (pseudoRandom(mapData.config.political.seed, seedIndex++) < density) {
+                // Multiplied by 4.0 for the global map because smaller icons make it look empty
+                if (pseudoRandom(mapData.config.political.seed, seedIndex++) < (density * 4.0)) {
                     const imgIndex = Math.floor(pseudoRandom(mapData.config.political.seed, seedIndex++) * targetAssetList.length);
                     const img = targetAssetList[imgIndex];
                     
