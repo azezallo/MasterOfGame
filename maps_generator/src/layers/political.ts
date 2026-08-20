@@ -5,12 +5,14 @@ export interface Settlement {
     y: number;
     type: 'capital' | 'city' | 'village';
     factionId: number;
+    provinceId?: number; // Unique ID of the province this settlement is the center of
     parentId?: {x: number, y: number}; // The city/capital this village reports to, or the capital this city reports to
 }
 
 export interface PoliticalResult {
     settlementMap: ('capital' | 'city' | 'village' | null)[][];
     factionMap: (number | null)[][];
+    provinceMap: (number | null)[][];
     roadMap: boolean[][];
     settlements: Settlement[];
 }
@@ -28,7 +30,6 @@ function distance(x1: number, y1: number, x2: number, y2: number) {
 function findPath(startX: number, startY: number, endX: number, endY: number, config: MapGenerationConfig, elevationMap: number[][]): {x: number, y: number}[] {
     const { width, height, oceanLevel } = config;
     
-    // Using a simple object map instead of PriorityQueue for simplicity (slower but okay for small maps)
     const openSet = new Map<string, {x: number, y: number, f: number, g: number, parent: any}>();
     const closedSet = new Set<string>();
     
@@ -41,7 +42,6 @@ function findPath(startX: number, startY: number, endX: number, endY: number, co
     while (openSet.size > 0 && iterations < maxIterations) {
         iterations++;
         
-        // Find node with lowest f
         let currentKey = '';
         let lowestF = Infinity;
         for (const [key, node] of openSet.entries()) {
@@ -54,7 +54,6 @@ function findPath(startX: number, startY: number, endX: number, endY: number, co
         const current = openSet.get(currentKey)!;
         
         if (current.x === endX && current.y === endY) {
-            // Reconstruct path
             const path = [];
             let curr = current;
             while (curr.parent) {
@@ -83,12 +82,11 @@ function findPath(startX: number, startY: number, endX: number, endY: number, co
             const elev = elevationMap[ny][nx];
             let cost = 1;
             
-            // Heuristics: Water is very expensive (bridge), mountains are expensive
-            if (elev < oceanLevel) cost = 10; // Avoid water if possible
-            else if (elev > 0.8) cost = 5; // Avoid high mountains
-            else cost = 1; // Plains/Forests are okay
+            if (elev < oceanLevel) cost = 10;
+            else if (elev > 0.8) cost = 5;
+            else cost = 1;
             
-            if (Math.abs(dir.dx) + Math.abs(dir.dy) === 2) cost *= 1.414; // Diagonal
+            if (Math.abs(dir.dx) + Math.abs(dir.dy) === 2) cost *= 1.414;
             
             const tentativeG = current.g + cost;
             
@@ -104,7 +102,7 @@ function findPath(startX: number, startY: number, endX: number, endY: number, co
         }
     }
     
-    return []; // No path found
+    return [];
 }
 
 export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: number[][]): PoliticalResult {
@@ -113,6 +111,7 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
     
     const settlementMap: ('capital' | 'city' | 'village' | null)[][] = Array(height).fill(0).map(() => Array(width).fill(null));
     const factionMap: (number | null)[][] = Array(height).fill(0).map(() => Array(width).fill(null));
+    const provinceMap: (number | null)[][] = Array(height).fill(0).map(() => Array(width).fill(null));
     const roadMap: boolean[][] = Array(height).fill(0).map(() => Array(width).fill(false));
     
     const settlements: Settlement[] = [];
@@ -126,7 +125,7 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
         }
     }
     
-    if (landTiles.length === 0) return { settlementMap, factionMap, roadMap, settlements };
+    if (landTiles.length === 0) return { settlementMap, factionMap, provinceMap, roadMap, settlements };
 
     // 1. Generate Capitals (Faction Centers)
     let factionsCreated = 0;
@@ -134,7 +133,6 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
         const idx = Math.floor(pseudoRandom(political.seed, seedIndex++) * landTiles.length);
         const tile = landTiles[idx];
         
-        // Ensure distance from other capitals
         let tooClose = false;
         for (const s of settlements) {
             if (distance(tile.x, tile.y, s.x, s.y) < 15) {
@@ -166,7 +164,6 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
             }
         }
         
-        // If the closest capital is too far, it's wildlands (null)
         if (minDistance <= political.maxInfluenceRadius) {
             factionMap[tile.y][tile.x] = closestFaction;
         }
@@ -180,9 +177,9 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
         }
     }
 
+    const wildRegions = new Set<number>();
+    
     if (wildTiles.length > 0) {
-        // Tie region size to faction size, but make them a bit smaller (more chunks)
-        // A circle is PI * r^2. We'll use a smaller fraction to ensure we get enough chunks.
         const expectedArea = Math.PI * Math.pow(political.maxInfluenceRadius, 2) * 0.25;
         const numWildRegions = Math.max(2, Math.floor(wildTiles.length / expectedArea));
         
@@ -190,10 +187,11 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
         
         for (let i = 1; i <= numWildRegions; i++) {
             const idx = Math.floor(pseudoRandom(political.seed, seedIndex++) * wildTiles.length);
-            wildAnchors.push({x: wildTiles[idx].x, y: wildTiles[idx].y, id: -i}); // Negative IDs for wildlands
+            const id = -i;
+            wildAnchors.push({x: wildTiles[idx].x, y: wildTiles[idx].y, id});
+            wildRegions.add(id);
         }
         
-        // Lloyd's relaxation (3 passes) to evenly distribute the regions and make them roughly equal in size
         for (let pass = 0; pass < 3; pass++) {
             const anchorSums = new Map<number, {x: number, y: number, count: number}>();
             for (const a of wildAnchors) anchorSums.set(a.id, {x: 0, y: 0, count: 0});
@@ -213,97 +211,162 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
                 sum.y += tile.y;
                 sum.count++;
                 
-                // On the final pass, actually set the factionMap
                 if (pass === 2) {
                     factionMap[tile.y][tile.x] = closestAnchor;
                 }
             }
             
-            // Move anchors to the centroid of their assigned tiles
             if (pass < 2) {
                 for (const a of wildAnchors) {
                     const sum = anchorSums.get(a.id)!;
                     if (sum.count > 0) {
-                        a.x = sum.x / sum.count;
-                        a.y = sum.y / sum.count;
+                        a.x = Math.floor(sum.x / sum.count);
+                        a.y = Math.floor(sum.y / sum.count);
                     }
                 }
             }
         }
     }
     
-    // 3. Place Cities and Villages
+    // 3. Partition Factions and Wildlands into Provinces (Lloyd's relaxation)
+    let globalProvinceCounter = 1;
     const newSettlements: Settlement[] = [];
     
-    for (const cap of settlements) {
-        // Place Cities for this faction
-        const factionCities: Settlement[] = [];
-        let citiesPlaced = 0;
-        let attempts = 0;
-        
-        while (citiesPlaced < political.citiesPerFaction && attempts < 100) {
-            attempts++;
-            const idx = Math.floor(pseudoRandom(political.seed, seedIndex++) * landTiles.length);
-            const tile = landTiles[idx];
-            
-            if (factionMap[tile.y][tile.x] === cap.factionId) {
-                if (distance(tile.x, tile.y, cap.x, cap.y) > 5) {
-                    const city: Settlement = {
-                        x: tile.x, y: tile.y,
-                        type: 'city',
-                        factionId: cap.factionId,
-                        parentId: {x: cap.x, y: cap.y}
-                    };
-                    factionCities.push(city);
-                    newSettlements.push(city);
-                    citiesPlaced++;
-                }
-            }
+    // Group tiles by Faction/Wildland
+    const regionTiles = new Map<number, {x: number, y: number}[]>();
+    for (const tile of landTiles) {
+        const regionId = factionMap[tile.y][tile.x];
+        if (regionId !== null) {
+            if (!regionTiles.has(regionId)) regionTiles.set(regionId, []);
+            regionTiles.get(regionId)!.push(tile);
         }
+    }
+
+    // Process each region
+    for (const [regionId, tiles] of regionTiles.entries()) {
+        const isWild = regionId < 0;
         
-        // Place Villages around Capital
-        for (let i = 0; i < political.villagesPerCity; i++) {
-            const angle = pseudoRandom(political.seed, seedIndex++) * Math.PI * 2;
-            const dist = 3 + pseudoRandom(political.seed, seedIndex++) * 3; // 3 to 6 tiles away
-            const vx = Math.floor(cap.x + Math.cos(angle) * dist);
-            const vy = Math.floor(cap.y + Math.sin(angle) * dist);
-            
-            if (vx >= 0 && vx < width && vy >= 0 && vy < height && elevationMap[vy][vx] > oceanLevel) {
-                newSettlements.push({
-                    x: vx, y: vy,
-                    type: 'village',
-                    factionId: cap.factionId,
-                    parentId: {x: cap.x, y: cap.y}
+        // Determine number of provinces
+        let numProvinces = isWild ? 3 + Math.floor(pseudoRandom(political.seed, seedIndex++) * 3) : (political.citiesPerFaction + 1);
+        // Ensure we don't request more provinces than tiles
+        numProvinces = Math.min(numProvinces, tiles.length);
+        
+        const anchors: {x: number, y: number, id: number, isFixed: boolean, settlement?: Settlement}[] = [];
+        
+        if (!isWild) {
+            // Find the capital
+            const capital = settlements.find(s => s.factionId === regionId && s.type === 'capital');
+            if (capital) {
+                capital.provinceId = globalProvinceCounter;
+                anchors.push({
+                    x: capital.x, y: capital.y, 
+                    id: globalProvinceCounter++, 
+                    isFixed: true,
+                    settlement: capital
                 });
             }
         }
         
-        // Place Villages around each City
-        for (const city of factionCities) {
-            for (let i = 0; i < political.villagesPerCity; i++) {
-                const angle = pseudoRandom(political.seed, seedIndex++) * Math.PI * 2;
-                const dist = 2 + pseudoRandom(political.seed, seedIndex++) * 2; // 2 to 4 tiles away
-                const vx = Math.floor(city.x + Math.cos(angle) * dist);
-                const vy = Math.floor(city.y + Math.sin(angle) * dist);
+        // Add random anchors for the rest of the provinces
+        while (anchors.length < numProvinces) {
+            const idx = Math.floor(pseudoRandom(political.seed, seedIndex++) * tiles.length);
+            anchors.push({
+                x: tiles[idx].x, y: tiles[idx].y, 
+                id: globalProvinceCounter++, 
+                isFixed: false
+            });
+        }
+        
+        // Lloyd's relaxation for provinces (3 passes)
+        for (let pass = 0; pass < 3; pass++) {
+            const anchorSums = new Map<number, {x: number, y: number, count: number}>();
+            for (const a of anchors) anchorSums.set(a.id, {x: 0, y: 0, count: 0});
+            
+            for (const tile of tiles) {
+                let closestAnchor = -1;
+                let minDistance = Infinity;
+                for (const anchor of anchors) {
+                    const d = distance(tile.x, tile.y, anchor.x, anchor.y);
+                    if (d < minDistance) {
+                        minDistance = d;
+                        closestAnchor = anchor.id;
+                    }
+                }
+                const sum = anchorSums.get(closestAnchor)!;
+                sum.x += tile.x;
+                sum.y += tile.y;
+                sum.count++;
                 
-                if (vx >= 0 && vx < width && vy >= 0 && vy < height && elevationMap[vy][vx] > oceanLevel) {
-                    newSettlements.push({
-                        x: vx, y: vy,
-                        type: 'village',
-                        factionId: city.factionId,
-                        parentId: {x: city.x, y: city.y}
-                    });
+                if (pass === 2) {
+                    provinceMap[tile.y][tile.x] = closestAnchor;
+                }
+            }
+            
+            if (pass < 2) {
+                for (const a of anchors) {
+                    if (!a.isFixed) {
+                        const sum = anchorSums.get(a.id)!;
+                        if (sum.count > 0) {
+                            a.x = Math.floor(sum.x / sum.count);
+                            a.y = Math.floor(sum.y / sum.count);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Create City settlements at the final anchor positions (for factions only)
+        if (!isWild) {
+            const capital = settlements.find(s => s.factionId === regionId && s.type === 'capital');
+            for (const a of anchors) {
+                if (!a.isFixed) {
+                    const city: Settlement = {
+                        x: a.x, y: a.y,
+                        type: 'city',
+                        factionId: regionId,
+                        provinceId: a.id,
+                        parentId: capital ? {x: capital.x, y: capital.y} : undefined
+                    };
+                    newSettlements.push(city);
                 }
             }
         }
     }
-    
+
     settlements.push(...newSettlements);
+
+    // 4. Place Villages
+    const villages: Settlement[] = [];
+    for (const s of settlements) {
+        if (s.type === 'capital' || s.type === 'city') {
+            for (let i = 0; i < political.villagesPerCity; i++) {
+                const angle = pseudoRandom(political.seed, seedIndex++) * Math.PI * 2;
+                const dist = (s.type === 'capital' ? 3 : 2) + pseudoRandom(political.seed, seedIndex++) * 3;
+                const vx = Math.floor(s.x + Math.cos(angle) * dist);
+                const vy = Math.floor(s.y + Math.sin(angle) * dist);
+                
+                if (vx >= 0 && vx < width && vy >= 0 && vy < height && elevationMap[vy][vx] > oceanLevel) {
+                    // Find which province this village falls into and ensure it belongs to the same faction
+                    const fId = factionMap[vy][vx];
+                    const pId = provinceMap[vy][vx];
+                    if (fId === s.factionId) {
+                        villages.push({
+                            x: vx, y: vy,
+                            type: 'village',
+                            factionId: s.factionId,
+                            provinceId: pId !== null ? pId : undefined,
+                            parentId: {x: s.x, y: s.y}
+                        });
+                    }
+                }
+            }
+        }
+    }
+    settlements.push(...villages);
     
-    // 4. Mark settlement tiles (Multi-tile support)
+    // 5. Mark settlement tiles (Multi-tile support)
     for (const s of settlements) {
         if (s.type === 'capital') {
-            // 3x3
             for (let dy = -1; dy <= 1; dy++) {
                 for (let dx = -1; dx <= 1; dx++) {
                     const nx = s.x + dx;
@@ -314,7 +377,6 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
                 }
             }
         } else if (s.type === 'city') {
-            // 2x2
             for (let dy = 0; dy <= 1; dy++) {
                 for (let dx = 0; dx <= 1; dx++) {
                     const nx = s.x + dx;
@@ -325,12 +387,11 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
                 }
             }
         } else if (s.type === 'village') {
-            // 1x1
             settlementMap[s.y][s.x] = 'village';
         }
     }
     
-    // 5. Connect with Roads
+    // 6. Connect with Roads
     for (const s of settlements) {
         if (s.parentId) {
             const path = findPath(s.x, s.y, s.parentId.x, s.parentId.y, config, elevationMap);
@@ -340,18 +401,16 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
         }
     }
     
-    // 6. Connect Capitals together (International Trade Routes)
+    // 7. Connect Capitals together (International Trade Routes)
     const capitals = settlements.filter(s => s.type === 'capital');
     for (let i = 0; i < capitals.length; i++) {
         const c1 = capitals[i];
-        // Connect each capital to the next one in the array to form a complete network loop
         const c2 = capitals[(i + 1) % capitals.length];
-        
         const path = findPath(c1.x, c1.y, c2.x, c2.y, config, elevationMap);
         for (const p of path) {
             roadMap[p.y][p.x] = true;
         }
     }
     
-    return { settlementMap, factionMap, roadMap, settlements };
+    return { settlementMap, factionMap, provinceMap, roadMap, settlements };
 }

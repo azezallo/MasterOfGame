@@ -7,6 +7,7 @@ import { generateRivers, applyRiverMoisture } from './layers/hydrology';
 import { generateMagicMap } from './layers/magic';
 import { generatePoliticalMap } from './layers/political';
 import { renderMapToImage } from './render/mapRenderer';
+import { generateRegionalMaps } from './render/regionalRenderer';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -107,6 +108,8 @@ async function main() {
     
     console.log('Rendering static map background...');
     await renderMapToImage(payload);
+    
+    await generateRegionalMaps(payload);
 }
 
 main().catch(console.error);

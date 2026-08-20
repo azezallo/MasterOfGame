@@ -104,7 +104,7 @@ if (mapData.political && mapData.political.factionMap) {
         });
         
         path.addEventListener('click', () => {
-            alert(`Drill-down: Завантаження регіональної мапи для ${isWild ? 'Диких Земель' : `Фракції ${f}`}...`);
+            window.location.href = `regional_map.html?id=${f}`;
         });
         
         layerBorders.appendChild(path);
