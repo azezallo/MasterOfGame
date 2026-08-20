@@ -4,6 +4,7 @@ import * as path from 'path';
 
 // Change scale: 1 grid unit = 6 pixels in the final image
 const TILE_SIZE = 15;
+const BASE_ASSET_HEIGHT = 65;
 
 // Helper to load all images from a directory
 async function loadImagesFromDir(dirPath: string): Promise<Image[]> {
@@ -78,7 +79,8 @@ export async function renderMapToImage(mapData: any) {
         swamps: await loadImagesFromDir(path.join(assetsDir, 'swamp')),
         deserts: await loadImagesFromDir(path.join(assetsDir, 'deserts')),
         capitals: await loadImagesFromDir(path.join(assetsDir, 'capitals')),
-        cities: await loadImagesFromDir(path.join(assetsDir, 'cities'))
+        cities: await loadImagesFromDir(path.join(assetsDir, 'cities')),
+        shrubland: await loadImagesFromDir(path.join(assetsDir, 'shrubland')),
     };
     
     // 3. Draw Water Base (for ocean and lakes)
@@ -133,14 +135,18 @@ export async function renderMapToImage(mapData: any) {
             } else if (biome === 'TEMPERATE_DESERT' || biome === 'SUBTROPICAL_DESERT' || biome === 'SCORCHED' || biome === 'BEACH') {
                 targetAssetList = assets.deserts;
                 density = 0.05;
-                sizeMult = 0.8;
+                sizeMult = 0.9;
             } else if (biome === 'SWAMP') { 
                 targetAssetList = assets.swamps;
                 density = 0.1;
                 sizeMult = 0.7;
-            } else if (biome === 'GRASSLAND' || biome === 'SHRUBLAND') {
+            } else if (biome === 'GRASSLAND') {
                 targetAssetList = assets.hills;
                 density = 0.04;
+                sizeMult = 0.6;
+            } else if (biome === 'SHRUBLAND') {
+                targetAssetList = assets.shrubland;
+                density = 0.1;
                 sizeMult = 0.6;
             }
             
@@ -155,8 +161,7 @@ export async function renderMapToImage(mapData: any) {
                     const jitterY = (pseudoRandom(mapData.config.political.seed, seedIndex++) - 0.5) * TILE_SIZE * 2;
                     
                     // Use a base height instead of width to prevent tall assets from becoming massive
-                    const baseAssetHeight = 24; 
-                    const drawH = baseAssetHeight * sizeMult;
+                    const drawH = BASE_ASSET_HEIGHT * sizeMult;
                     const drawW = (img.width / img.height) * drawH;
                     
                     const drawX = x * TILE_SIZE + jitterX - drawW/2 + TILE_SIZE/2;
@@ -243,9 +248,8 @@ export async function renderMapToImage(mapData: any) {
             if (targetAssetList && targetAssetList.length > 0) {
                 const imgIndex = Math.floor(pseudoRandom(mapData.config.political.seed, seedIndex++) * targetAssetList.length);
                 const img = targetAssetList[imgIndex];
-                
-                const baseAssetHeight = 24;
-                const drawH = baseAssetHeight * sizeMult;
+
+                const drawH = BASE_ASSET_HEIGHT * sizeMult;
                 const drawW = (img.width / img.height) * drawH;
                 
                 const drawX = s.x * TILE_SIZE - drawW/2 + TILE_SIZE/2;

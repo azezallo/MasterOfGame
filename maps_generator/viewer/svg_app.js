@@ -3,7 +3,7 @@ if (typeof mapData === 'undefined') {
     alert("mapData не знайдено! Переконайтеся, що ви спершу запустили 'npm start'.");
 }
 
-const TILE_SIZE = 15; // Scale 1:6
+const TILE_SIZE = 15; // Matching backend scale
 const width = mapData.config.width;
 const height = mapData.config.height;
 
@@ -73,24 +73,24 @@ if (mapData.political && mapData.political.factionMap) {
     }
     
     for (const f in factionPaths) {
-        const isWild = (f === 'wild');
+        // F is a string here, parse it
+        const isWild = (f === 'wild' || parseInt(f) < 0);
         const path = document.createElementNS(svgNS, "path");
         path.setAttribute("d", factionPaths[f]);
         path.setAttribute("class", "faction-polygon");
         
-        // Wildlands have a greyish/transparent style, factions have colors
+        // Wildlands have a greyish style, factions have colors
         if (isWild) {
-            path.setAttribute("fill", "rgba(100, 100, 100, 0.1)");
-            path.setAttribute("stroke", "rgba(50, 50, 50, 0.5)");
+            path.setAttribute("fill", "#888888");
         } else {
-            const color = factionColors[f % factionColors.length];
+            const color = factionColors[parseInt(f) % factionColors.length];
             path.setAttribute("fill", color);
-            path.setAttribute("stroke", color);
         }
         
         path.addEventListener('mousemove', (e) => {
             if (isWild) {
-                tooltip.innerHTML = `<b>Дикі Землі (Wildlands)</b><br>Клікніть для переходу на регіональний рівень.`;
+                const wildId = f === 'wild' ? '' : Math.abs(parseInt(f));
+                tooltip.innerHTML = `<b>Дикі Землі ${wildId}</b><br>Клікніть для переходу на регіональний рівень.`;
             } else {
                 tooltip.innerHTML = `<b>Королівство Фракції ${f}</b><br>Клікніть для переходу на регіональний рівень.`;
             }

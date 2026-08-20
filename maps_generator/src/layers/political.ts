@@ -171,6 +171,66 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
             factionMap[tile.y][tile.x] = closestFaction;
         }
     }
+
+    // 2.5 Partition Wildlands into manageable chunks
+    const wildTiles: {x: number, y: number}[] = [];
+    for (const tile of landTiles) {
+        if (factionMap[tile.y][tile.x] === null) {
+            wildTiles.push(tile);
+        }
+    }
+
+    if (wildTiles.length > 0) {
+        // Tie region size to faction size, but make them a bit smaller (more chunks)
+        // A circle is PI * r^2. We'll use a smaller fraction to ensure we get enough chunks.
+        const expectedArea = Math.PI * Math.pow(political.maxInfluenceRadius, 2) * 0.25;
+        const numWildRegions = Math.max(2, Math.floor(wildTiles.length / expectedArea));
+        
+        const wildAnchors: {x: number, y: number, id: number}[] = [];
+        
+        for (let i = 1; i <= numWildRegions; i++) {
+            const idx = Math.floor(pseudoRandom(political.seed, seedIndex++) * wildTiles.length);
+            wildAnchors.push({x: wildTiles[idx].x, y: wildTiles[idx].y, id: -i}); // Negative IDs for wildlands
+        }
+        
+        // Lloyd's relaxation (3 passes) to evenly distribute the regions and make them roughly equal in size
+        for (let pass = 0; pass < 3; pass++) {
+            const anchorSums = new Map<number, {x: number, y: number, count: number}>();
+            for (const a of wildAnchors) anchorSums.set(a.id, {x: 0, y: 0, count: 0});
+            
+            for (const tile of wildTiles) {
+                let closestAnchor = -1;
+                let minDistance = Infinity;
+                for (const anchor of wildAnchors) {
+                    const d = distance(tile.x, tile.y, anchor.x, anchor.y);
+                    if (d < minDistance) {
+                        minDistance = d;
+                        closestAnchor = anchor.id;
+                    }
+                }
+                const sum = anchorSums.get(closestAnchor)!;
+                sum.x += tile.x;
+                sum.y += tile.y;
+                sum.count++;
+                
+                // On the final pass, actually set the factionMap
+                if (pass === 2) {
+                    factionMap[tile.y][tile.x] = closestAnchor;
+                }
+            }
+            
+            // Move anchors to the centroid of their assigned tiles
+            if (pass < 2) {
+                for (const a of wildAnchors) {
+                    const sum = anchorSums.get(a.id)!;
+                    if (sum.count > 0) {
+                        a.x = sum.x / sum.count;
+                        a.y = sum.y / sum.count;
+                    }
+                }
+            }
+        }
+    }
     
     // 3. Place Cities and Villages
     const newSettlements: Settlement[] = [];
