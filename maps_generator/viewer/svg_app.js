@@ -3,7 +3,7 @@ if (typeof mapData === 'undefined') {
     alert("mapData не знайдено! Переконайтеся, що ви спершу запустили 'npm start'.");
 }
 
-const TILE_SIZE = 4; // Scale 1:4
+const TILE_SIZE = 15; // Scale 1:6
 const width = mapData.config.width;
 const height = mapData.config.height;
 

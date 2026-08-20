@@ -45,7 +45,7 @@ export interface MapGenerationConfig {
 export const MapConfig: MapGenerationConfig = {
     // Map dimensions (1 pixel = 1 km)
     width: 300,
-    height: 200,
+    height: 1000,
     
     oceanLevel: 0.35, // Below this height is water
 
@@ -88,10 +88,10 @@ export const MapConfig: MapGenerationConfig = {
     
     political: {
         seed: 8887,
-        factionCount: 4,
-        citiesPerFaction: 3,
-        villagesPerCity: 2,
-        maxInfluenceRadius: 40
+        factionCount: 10,
+        citiesPerFaction: 6,
+        villagesPerCity: 4,
+        maxInfluenceRadius: 90
     },
     
     // If true, forces the edges of the map to drop off into the ocean

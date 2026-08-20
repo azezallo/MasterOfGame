@@ -9,9 +9,10 @@ export function generateTemperatureMap(config: MapGenerationConfig, elevationMap
     const x = Math.sin(temperature.seed) * 10000;
     const baseTemp = Math.abs(x - Math.floor(x)); 
     
-    // We assume 1 pixel = 1 km. A 100km span only changes temperature slightly.
-    // We map Y=0 to Y=height to a small gradient, e.g., 0.05 difference.
-    const gradientSpan = 0.05; 
+    // We assume 1 pixel = 1 km. 
+    // On Earth, Equator to Pole is ~10,000 km. In a fantasy map, we often want more biome diversity.
+    // Let's set it so that 1000 km gives a full 1.0 temperature swing (from Arctic to Desert).
+    const gradientSpan = height / 1000;
 
     const tempMap: number[][] = [];
 

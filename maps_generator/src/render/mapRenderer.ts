@@ -2,6 +2,9 @@ import { createCanvas, loadImage, Image } from 'canvas';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Change scale: 1 grid unit = 6 pixels in the final image
+const TILE_SIZE = 15;
+
 // Helper to load all images from a directory
 async function loadImagesFromDir(dirPath: string): Promise<Image[]> {
     const images: Image[] = [];
@@ -30,7 +33,7 @@ function pseudoRandom(seed: number, index: number): number {
 
 export async function renderMapToImage(mapData: any) {
     console.log('Starting high-res map rendering...');
-    const TILE_SIZE = 4; // Scale 1:4 (4 pixels per config tile)
+    // const TILE_SIZE = 4; // Scale 1:4 (4 pixels per config tile)
     const width = mapData.config.width;
     const height = mapData.config.height;
     
@@ -91,7 +94,8 @@ export async function renderMapToImage(mapData: any) {
     
     // 4. Asset Scattering (Sorted by Y to respect depth)
     // We create a list of objects to draw, then sort them by Y coordinate
-    const drawQueue: {img: Image, x: number, y: number, w: number, h: number}[] = [];
+    const envQueue: {img: Image, x: number, y: number, w: number, h: number}[] = [];
+    const cityQueue: {img: Image, x: number, y: number, w: number, h: number}[] = [];
     
     let seedIndex = 0;
     
@@ -108,35 +112,35 @@ export async function renderMapToImage(mapData: any) {
             
             if (biome === 'SNOW') {
                 targetAssetList = assets.mounts;
-                density = 0.6;
+                density = 0.15;
                 sizeMult = 1.0;
             } else if (biome === 'TUNDRA' || biome === 'TAIGA') {
                 targetAssetList = assets.pines;
-                density = 0.7;
+                density = 0.15;
                 sizeMult = 0.8;
-            } else if (biome === 'MOUNTAIN') {
+            } else if (biome === 'BARE' || biome === 'CLIFF') {
                 targetAssetList = assets.mounts;
-                density = 0.8;
+                density = 0.15;
                 sizeMult = 1.2;
-            } else if (biome === 'FOREST') {
+            } else if (biome === 'TEMPERATE_DECIDUOUS_FOREST' || biome === 'TEMPERATE_RAIN_FOREST' || biome === 'TROPICAL_SEASONAL_FOREST') {
                 targetAssetList = assets.trees;
-                density = 0.7;
+                density = 0.15;
                 sizeMult = 0.8;
-            } else if (biome === 'JUNGLE') {
+            } else if (biome === 'TROPICAL_RAIN_FOREST') {
                 targetAssetList = assets.jungles;
-                density = 0.8;
+                density = 0.18;
                 sizeMult = 0.9;
-            } else if (biome === 'DESERT') {
+            } else if (biome === 'TEMPERATE_DESERT' || biome === 'SUBTROPICAL_DESERT' || biome === 'SCORCHED' || biome === 'BEACH') {
                 targetAssetList = assets.deserts;
-                density = 0.2; // Sparse
+                density = 0.05;
                 sizeMult = 0.8;
-            } else if (biome === 'SWAMP') {
+            } else if (biome === 'SWAMP') { 
                 targetAssetList = assets.swamps;
-                density = 0.4;
+                density = 0.1;
                 sizeMult = 0.7;
-            } else if (biome === 'GRASSLAND' || biome === 'SAVANNA') {
+            } else if (biome === 'GRASSLAND' || biome === 'SHRUBLAND') {
                 targetAssetList = assets.hills;
-                density = 0.15; // Sparse hills
+                density = 0.04;
                 sizeMult = 0.6;
             }
             
@@ -158,7 +162,7 @@ export async function renderMapToImage(mapData: any) {
                     const drawX = x * TILE_SIZE + jitterX - drawW/2 + TILE_SIZE/2;
                     const drawY = y * TILE_SIZE + jitterY - drawH + TILE_SIZE/2;
                     
-                    drawQueue.push({
+                    envQueue.push({
                         img, 
                         x: drawX, 
                         y: drawY, 
@@ -170,7 +174,15 @@ export async function renderMapToImage(mapData: any) {
         }
     }
     
-    // Draw Roads directly to ctx before scattered objects so they appear under trees and cities
+    // Sort environment by Y coordinate for correct depth overlapping
+    envQueue.sort((a, b) => (a.y + a.h) - (b.y + b.h));
+    
+    console.log(`Drawing ${envQueue.length} scattered environment assets...`);
+    for (const item of envQueue) {
+        ctx.drawImage(item.img, item.x, item.y, item.w, item.h);
+    }
+    
+    // Draw Roads directly to ctx AFTER scattered environment objects so they appear on top of trees
     if (mapData.political && mapData.political.roadMap) {
         ctx.strokeStyle = '#5c3a21'; // Brown dirt road
         ctx.lineWidth = 3;
@@ -185,13 +197,25 @@ export async function renderMapToImage(mapData: any) {
                     const cx1 = x * TILE_SIZE + TILE_SIZE / 2;
                     const cy1 = y * TILE_SIZE + TILE_SIZE / 2;
                     
+                    // Right
                     if (x < width - 1 && mapData.political.roadMap[y][x+1]) {
                         ctx.moveTo(cx1, cy1);
-                        ctx.lineTo((x+1) * TILE_SIZE + TILE_SIZE / 2, cy1);
+                        ctx.lineTo(cx1 + TILE_SIZE, cy1);
                     }
+                    // Down
                     if (y < height - 1 && mapData.political.roadMap[y+1][x]) {
                         ctx.moveTo(cx1, cy1);
-                        ctx.lineTo(cx1, (y+1) * TILE_SIZE + TILE_SIZE / 2);
+                        ctx.lineTo(cx1, cy1 + TILE_SIZE);
+                    }
+                    // Down-Right
+                    if (x < width - 1 && y < height - 1 && mapData.political.roadMap[y+1][x+1]) {
+                        ctx.moveTo(cx1, cy1);
+                        ctx.lineTo(cx1 + TILE_SIZE, cy1 + TILE_SIZE);
+                    }
+                    // Down-Left
+                    if (x > 0 && y < height - 1 && mapData.political.roadMap[y+1][x-1]) {
+                        ctx.moveTo(cx1, cy1);
+                        ctx.lineTo(cx1 - TILE_SIZE, cy1 + TILE_SIZE);
                     }
                 }
             }
@@ -200,7 +224,7 @@ export async function renderMapToImage(mapData: any) {
         ctx.globalAlpha = 1.0;
     }
     
-    // Add Settlements to drawQueue
+    // Add Settlements to cityQueue
     if (mapData.political && mapData.political.settlements) {
         for (const s of mapData.political.settlements) {
             if (s.type === 'village') continue; // Do not render villages on global map
@@ -227,7 +251,7 @@ export async function renderMapToImage(mapData: any) {
                 const drawX = s.x * TILE_SIZE - drawW/2 + TILE_SIZE/2;
                 const drawY = s.y * TILE_SIZE - drawH + TILE_SIZE/2; // Center base on tile
                 
-                drawQueue.push({
+                cityQueue.push({
                     img, 
                     x: drawX, 
                     y: drawY, 
@@ -238,11 +262,11 @@ export async function renderMapToImage(mapData: any) {
         }
     }
     
-    // Sort by Y coordinate for correct depth overlapping
-    drawQueue.sort((a, b) => (a.y + a.h) - (b.y + b.h));
+    // Sort cities by Y coordinate and draw them ON TOP of everything
+    cityQueue.sort((a, b) => (a.y + a.h) - (b.y + b.h));
     
-    console.log(`Drawing ${drawQueue.length} scattered assets...`);
-    for (const item of drawQueue) {
+    console.log(`Drawing ${cityQueue.length} cities...`);
+    for (const item of cityQueue) {
         ctx.drawImage(item.img, item.x, item.y, item.w, item.h);
     }
     
