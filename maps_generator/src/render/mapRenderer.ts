@@ -81,18 +81,65 @@ export async function renderMapToImage(mapData: any) {
         capitals: await loadImagesFromDir(path.join(assetsDir, 'capitals')),
         cities: await loadImagesFromDir(path.join(assetsDir, 'cities')),
         shrubland: await loadImagesFromDir(path.join(assetsDir, 'shrubland')),
+        monsters: await loadImagesFromDir(path.join(assetsDir, 'monsters_and_ships')),
+        wind_rose: await loadImagesFromDir(path.join(assetsDir, 'wind_rose')),
     };
     
-    // 3. Draw Water Base (for ocean and lakes)
-    // We draw a semi-transparent blue overlay on the parchment for water
-    ctx.fillStyle = 'rgba(100, 150, 200, 0.4)';
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            if (mapData.elevation[y][x] <= mapData.config.oceanLevel || mapData.lakes[y][x]) {
-                ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    // 3. Draw Water Base with Bilinear Smoothing
+    const waterCanvas = createCanvas(canvasWidth, canvasHeight);
+    const waterCtx = waterCanvas.getContext('2d');
+    const imgData = waterCtx.createImageData(canvasWidth, canvasHeight);
+    const data = imgData.data;
+    
+    for (let py = 0; py < canvasHeight; py++) {
+        for (let px = 0; px < canvasWidth; px++) {
+            // Shift coordinates by -0.5 so grid points are in the center of the TILE_SIZE block
+            const cx = px / TILE_SIZE - 0.5;
+            const cy = py / TILE_SIZE - 0.5;
+            
+            const ix1 = Math.max(0, Math.floor(cx));
+            const iy1 = Math.max(0, Math.floor(cy));
+            const ix2 = Math.min(ix1 + 1, width - 1);
+            const iy2 = Math.min(iy1 + 1, height - 1);
+            
+            const tx = cx - ix1;
+            const ty = cy - iy1;
+            
+            const e11 = mapData.elevation[iy1][ix1];
+            const e21 = mapData.elevation[iy1][ix2];
+            const e12 = mapData.elevation[iy2][ix1];
+            const e22 = mapData.elevation[iy2][ix2];
+            
+            const elev = e11 * (1 - tx) * (1 - ty) +
+                         e21 * tx * (1 - ty) +
+                         e12 * (1 - tx) * ty +
+                         e22 * tx * ty;
+                         
+            const l11 = mapData.lakes[iy1][ix1] ? 1 : 0;
+            const l21 = mapData.lakes[iy1][ix2] ? 1 : 0;
+            const l12 = mapData.lakes[iy2][ix1] ? 1 : 0;
+            const l22 = mapData.lakes[iy2][ix2] ? 1 : 0;
+            
+            const lakeVal = l11 * (1 - tx) * (1 - ty) +
+                            l21 * tx * (1 - ty) +
+                            l12 * (1 - tx) * ty +
+                            l22 * tx * ty;
+                            
+            if (elev <= mapData.config.oceanLevel || lakeVal > 0.5) {
+                const idx = (py * canvasWidth + px) * 4;
+                data[idx] = 100;     // R
+                data[idx+1] = 150;   // G
+                data[idx+2] = 200;   // B
+                data[idx+3] = 255;   // Alpha
             }
         }
     }
+    waterCtx.putImageData(imgData, 0, 0);
+    
+    // Draw the water onto main canvas with opacity
+    ctx.globalAlpha = 0.4;
+    ctx.drawImage(waterCanvas, 0, 0);
+    ctx.globalAlpha = 1.0;
     
     // 4. Asset Scattering (Sorted by Y to respect depth)
     // We create a list of objects to draw, then sort them by Y coordinate
@@ -118,20 +165,20 @@ export async function renderMapToImage(mapData: any) {
                 sizeMult = 1.0;
             } else if (biome === 'TUNDRA' || biome === 'TAIGA') {
                 targetAssetList = assets.pines;
-                density = 0.30;
-                sizeMult = 1.4
+                density = 0.35;
+                sizeMult = 1.1;
             } else if (biome === 'BARE' || biome === 'CLIFF') {
                 targetAssetList = assets.mounts;
                 density = 0.15;
                 sizeMult = 1.2;
             } else if (biome === 'TEMPERATE_DECIDUOUS_FOREST' || biome === 'TEMPERATE_RAIN_FOREST' || biome === 'TROPICAL_SEASONAL_FOREST') {
                 targetAssetList = assets.trees;
-                density = 0.30;
-                sizeMult = 1.4;
+                density = 0.35;
+                sizeMult = 1.1;
             } else if (biome === 'TROPICAL_RAIN_FOREST') {
                 targetAssetList = assets.jungles;
                 density = 0.4;
-                sizeMult = 1.4;
+                sizeMult = 1.2;
             } else if (biome === 'TEMPERATE_DESERT' || biome === 'SUBTROPICAL_DESERT' || biome === 'SCORCHED' || biome === 'BEACH') {
                 targetAssetList = assets.deserts;
                 density = 0.05;
@@ -158,8 +205,9 @@ export async function renderMapToImage(mapData: any) {
                     const img = targetAssetList[imgIndex];
                     
                     // Jitter position so they don't align perfectly to the grid
-                    const jitterX = (pseudoRandom(mapData.config.political.seed, seedIndex++) - 0.5) * TILE_SIZE * 2;
-                    const jitterY = (pseudoRandom(mapData.config.political.seed, seedIndex++) - 0.5) * TILE_SIZE * 2;
+                    // limit to 0.8 to prevent spilling into water
+                    const jitterX = (pseudoRandom(mapData.config.political.seed, seedIndex++) - 0.5) * TILE_SIZE * 0.8;
+                    const jitterY = (pseudoRandom(mapData.config.political.seed, seedIndex++) - 0.5) * TILE_SIZE * 0.8;
                     
                     // Use a base height instead of width to prevent tall assets from becoming massive
                     const drawH = BASE_ASSET_HEIGHT * sizeMult;
@@ -167,6 +215,65 @@ export async function renderMapToImage(mapData: any) {
                     
                     const drawX = x * TILE_SIZE + jitterX - drawW/2 + TILE_SIZE/2;
                     const drawY = y * TILE_SIZE + jitterY - drawH + TILE_SIZE/2;
+                    
+                    envQueue.push({
+                        img, 
+                        x: drawX, 
+                        y: drawY, 
+                        w: drawW, 
+                        h: drawH
+                    });
+                }
+            }
+        }
+    }
+    
+    // 4.5. Ocean Assets Scattering
+    let monsterSeedIndex = 0;
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const isWater = (mapData.elevation[y][x] <= mapData.config.oceanLevel && !mapData.lakes[y][x]);
+            if (!isWater) continue;
+            
+            // Check that we are far enough from shore (radius 2)
+            let nearShore = false;
+            for (let dy = -2; dy <= 2; dy++) {
+                for (let dx = -2; dx <= 2; dx++) {
+                    const ny = y + dy;
+                    const nx = x + dx;
+                    if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+                        if (mapData.elevation[ny][nx] > mapData.config.oceanLevel) {
+                            nearShore = true;
+                        }
+                    } else {
+                        nearShore = true;
+                    }
+                }
+            }
+            
+            // Keep away from the wind rose in the top right corner
+            const px = x * TILE_SIZE;
+            const py = y * TILE_SIZE;
+            const canvasWidth = width * TILE_SIZE;
+            if (px > canvasWidth - 220 && py < 220) {
+                nearShore = true;
+            }
+            
+            if (!nearShore && assets.monsters && assets.monsters.length > 0) {
+                // Determine if we place an asset here
+                if (pseudoRandom(mapData.config.political.seed + 1234, monsterSeedIndex++) < 0.005) {
+                    const imgIndex = Math.floor(pseudoRandom(mapData.config.political.seed + 1234, monsterSeedIndex++) * assets.monsters.length);
+                    const img = assets.monsters[imgIndex];
+                    
+                    const sizeMult = 2.0;
+                    const drawH = BASE_ASSET_HEIGHT * sizeMult;
+                    const drawW = (img.width / img.height) * drawH;
+                    
+                    const offsetX = (pseudoRandom(mapData.config.political.seed + 1234, monsterSeedIndex++) - 0.5) * TILE_SIZE * 0.8;
+                    const offsetY = (pseudoRandom(mapData.config.political.seed + 1234, monsterSeedIndex++) - 0.5) * TILE_SIZE * 0.8;
+                    
+                    const drawX = x * TILE_SIZE - drawW/2 + TILE_SIZE/2 + offsetX;
+                    const drawY = y * TILE_SIZE - drawH + TILE_SIZE/2 + offsetY;
                     
                     envQueue.push({
                         img, 
@@ -273,6 +380,17 @@ export async function renderMapToImage(mapData: any) {
     console.log(`Drawing ${cityQueue.length} cities...`);
     for (const item of cityQueue) {
         ctx.drawImage(item.img, item.x, item.y, item.w, item.h);
+    }
+    
+    // Draw Wind Rose
+    if (assets.wind_rose && assets.wind_rose.length > 0) {
+        const imgIndex = Math.floor(pseudoRandom(mapData.config.political.seed, 9999) * assets.wind_rose.length);
+        const windRoseImg = assets.wind_rose[imgIndex];
+        const wrSize = 150; // pixels
+        // Draw in top right corner (or top left)
+        const wrX = canvasWidth - wrSize - 20;
+        const wrY = 20;
+        ctx.drawImage(windRoseImg, wrX, wrY, wrSize, wrSize);
     }
     
     // 5. Save to file

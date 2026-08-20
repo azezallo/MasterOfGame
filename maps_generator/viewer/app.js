@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const types = { 'capital': 'Столиця', 'city': 'Місто', 'village': 'Село' };
                         politicalText += `<br><b>Поселення: ${types[settlement]}</b>`;
                     }
-                    if (mapData.political.roadMap[y][x]) {
+                    if (mapData.political.roadMap && mapData.political.roadMap[y][x]) {
                         politicalText += `<br><i>Дорога</i>`;
                     }
                 }
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (mapData.political) {
                     // Roads
-                    if (mapData.political.roadMap[y][x]) {
+                    if (mapData.political.roadMap && mapData.political.roadMap[y][x]) {
                         const roadMarker = document.createElement('div');
                         roadMarker.style.width = '100%';
                         roadMarker.style.height = '100%';

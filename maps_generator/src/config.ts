@@ -44,7 +44,7 @@ export interface MapGenerationConfig {
 
 export const MapConfig: MapGenerationConfig = {
     // Map dimensions (1 pixel = 1 km)
-    width: 300,
+    width: 600,
     height: 1000,
     
     oceanLevel: 0.35, // Below this height is water

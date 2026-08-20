@@ -14,6 +14,7 @@ export interface PoliticalResult {
     factionMap: (number | null)[][];
     provinceMap: (number | null)[][];
     roadMap: boolean[][];
+    roadPaths?: {x: number, y: number}[][];
     settlements: Settlement[];
 }
 
@@ -392,9 +393,12 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
     }
     
     // 6. Connect with Roads
+    const roadPaths: {x: number, y: number}[][] = [];
+    
     for (const s of settlements) {
         if (s.parentId) {
             const path = findPath(s.x, s.y, s.parentId.x, s.parentId.y, config, elevationMap);
+            if (path.length > 0) roadPaths.push(path);
             for (const p of path) {
                 roadMap[p.y][p.x] = true;
             }
@@ -407,10 +411,18 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
         const c1 = capitals[i];
         const c2 = capitals[(i + 1) % capitals.length];
         const path = findPath(c1.x, c1.y, c2.x, c2.y, config, elevationMap);
+        if (path.length > 0) roadPaths.push(path);
         for (const p of path) {
             roadMap[p.y][p.x] = true;
         }
     }
     
-    return { settlementMap, factionMap, provinceMap, roadMap, settlements };
+    return {
+        factionMap,
+        provinceMap,
+        settlementMap,
+        roadMap,
+        roadPaths,
+        settlements
+    };
 }

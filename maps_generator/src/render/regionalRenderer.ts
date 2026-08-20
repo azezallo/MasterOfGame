@@ -2,9 +2,9 @@ import { createCanvas, loadImage, Image } from 'canvas';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Scale is 2x for Regional Maps
+// Scale is 2x for Regional Maps, but we compressed by 5x, so base height should be ~32
 const TILE_SIZE = 30;
-const BASE_ASSET_HEIGHT = 130;
+const BASE_ASSET_HEIGHT = 32;
 
 async function loadImagesFromDir(dirPath: string): Promise<Image[]> {
     const images: Image[] = [];
@@ -58,7 +58,8 @@ export async function generateRegionalMaps(payload: any) {
         capitals: await loadImagesFromDir(path.join(assetsDir, 'capitals')),
         cities: await loadImagesFromDir(path.join(assetsDir, 'cities')),
         shrubland: await loadImagesFromDir(path.join(assetsDir, 'shrubland')),
-        villages: await loadImagesFromDir(path.join(assetsDir, 'villages')) // Fallback to cities if missing
+        villages: await loadImagesFromDir(path.join(assetsDir, 'villages')),
+        monsters: await loadImagesFromDir(path.join(assetsDir, 'monsters_and_ships'))
     };
     if (assets.villages.length === 0) assets.villages = assets.cities;
 
@@ -100,6 +101,7 @@ export async function generateRegionalMaps(payload: any) {
         
         // Extract sliced matrices
         const sliceMatrix = (matrix: any[][]) => {
+            if (!matrix) return [];
             const sliced = [];
             for (let y = minY; y <= maxY; y++) {
                 sliced.push(matrix[y].slice(minX, maxX + 1));
@@ -127,6 +129,7 @@ export async function generateRegionalMaps(payload: any) {
                 provinceMap: sliceMatrix(payload.political.provinceMap),
                 settlementMap: sliceMatrix(payload.political.settlementMap),
                 roadMap: sliceMatrix(payload.political.roadMap),
+                roadPaths: payload.political.roadPaths,
                 settlements: payload.political.settlements
                     .filter((s: any) => s.x >= minX && s.x <= maxX && s.y >= minY && s.y <= maxY)
                     .map((s: any) => ({
@@ -158,12 +161,37 @@ export async function generateRegionalMaps(payload: any) {
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         }
         
-        // Water
-        ctx.fillStyle = 'rgba(100, 150, 200, 0.4)';
-        for (let y = 0; y < regionHeight; y++) {
-            for (let x = 0; x < regionWidth; x++) {
-                if (localPayload.elevation[y][x] <= localPayload.config.oceanLevel || localPayload.lakes[y][x]) {
+        const DEBUG_BIOME_COLORS = false; // Set to true to debug biome generation compression
+        
+        // Water and Biomes
+        if (DEBUG_BIOME_COLORS) {
+            const BIOME_COLORS: {[key: string]: string} = {
+                OCEAN: '#1C2E4A', BEACH: '#E6D2B5', CLIFF: '#5C5346', SCORCHED: '#555555',
+                BARE: '#888888', TUNDRA: '#C5D0D9', SNOW: '#FFFFFF', TAIGA: '#99AA77',
+                SHRUBLAND: '#889977', GRASSLAND: '#88AA55', TEMPERATE_DESERT: '#C9D29B',
+                TEMPERATE_DECIDUOUS_FOREST: '#679459', TEMPERATE_RAIN_FOREST: '#448855',
+                SUBTROPICAL_DESERT: '#D2B98B', TROPICAL_SEASONAL_FOREST: '#559944',
+                TROPICAL_RAIN_FOREST: '#337755', SWAMP: '#2f4f4f'
+            };
+            
+            for (let y = 0; y < regionHeight; y++) {
+                for (let x = 0; x < regionWidth; x++) {
+                    const biome = localPayload.biomes[y][x];
+                    if (localPayload.elevation[y][x] <= localPayload.config.oceanLevel || localPayload.lakes[y][x]) {
+                        ctx.fillStyle = BIOME_COLORS.OCEAN;
+                    } else {
+                        ctx.fillStyle = BIOME_COLORS[biome] || '#ff00ff';
+                    }
                     ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
+            }
+        } else {
+            ctx.fillStyle = 'rgba(100, 150, 200, 0.4)';
+            for (let y = 0; y < regionHeight; y++) {
+                for (let x = 0; x < regionWidth; x++) {
+                    if (localPayload.elevation[y][x] <= localPayload.config.oceanLevel || localPayload.lakes[y][x]) {
+                        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    }
                 }
             }
         }
@@ -199,23 +227,30 @@ export async function generateRegionalMaps(payload: any) {
                 let density = 0;
                 let sizeMult = 1.0;
                 
-                if (biome === 'SNOW') { targetAssetList = assets.mounts; density = 0.15; }
-                else if (biome === 'TUNDRA' || biome === 'TAIGA') { targetAssetList = assets.pines; density = 0.15; sizeMult = 0.8; }
-                else if (biome === 'BARE' || biome === 'CLIFF') { targetAssetList = assets.mounts; density = 0.15; sizeMult = 1.2; }
-                else if (biome === 'TEMPERATE_DECIDUOUS_FOREST' || biome === 'TEMPERATE_RAIN_FOREST' || biome === 'TROPICAL_SEASONAL_FOREST') { targetAssetList = assets.trees; density = 0.15; sizeMult = 0.8; }
-                else if (biome === 'TROPICAL_RAIN_FOREST') { targetAssetList = assets.jungles; density = 0.18; sizeMult = 0.9; }
-                else if (biome === 'TEMPERATE_DESERT' || biome === 'SUBTROPICAL_DESERT' || biome === 'SCORCHED' || biome === 'BEACH') { targetAssetList = assets.deserts; density = 0.05; sizeMult = 0.9; }
-                else if (biome === 'SWAMP') { targetAssetList = assets.swamps; density = 0.1; sizeMult = 0.7; }
-                else if (biome === 'GRASSLAND') { targetAssetList = assets.hills; density = 0.04; sizeMult = 0.6; }
-                else if (biome === 'SHRUBLAND') { targetAssetList = assets.shrubland; density = 0.1; sizeMult = 0.6; }
+                if (biome === 'SNOW') { targetAssetList = assets.mounts; density = 1.2; }
+                else if (biome === 'TUNDRA' || biome === 'TAIGA') { targetAssetList = assets.pines; density = 2.4; sizeMult = 1.1; }
+                else if (biome === 'BARE' || biome === 'CLIFF') { targetAssetList = assets.mounts; density = 1.2; sizeMult = 1.2; }
+                else if (biome === 'TEMPERATE_DECIDUOUS_FOREST' || biome === 'TEMPERATE_RAIN_FOREST' || biome === 'TROPICAL_SEASONAL_FOREST') { targetAssetList = assets.trees; density = 2.4; sizeMult = 1.1; }
+                else if (biome === 'TROPICAL_RAIN_FOREST') { targetAssetList = assets.jungles; density = 2.7; sizeMult = 1.2; }
+                else if (biome === 'TEMPERATE_DESERT' || biome === 'SUBTROPICAL_DESERT' || biome === 'SCORCHED' || biome === 'BEACH') { targetAssetList = assets.deserts; density = 0.4; sizeMult = 1.2; }
+                else if (biome === 'SWAMP') { targetAssetList = assets.swamps; density = 0.8; sizeMult = 0.7; }
+                else if (biome === 'GRASSLAND') { targetAssetList = assets.hills; density = 0.4; sizeMult = 0.6; }
+                else if (biome === 'SHRUBLAND') { targetAssetList = assets.shrubland; density = 1.0; sizeMult = 0.9; }
                 
                 if (targetAssetList && targetAssetList.length > 0) {
-                    if (pseudoRandom(hashSeed(gx, gy, 1), 0) < density) {
-                        const imgIndex = Math.floor(pseudoRandom(hashSeed(gx, gy, 2), 0) * targetAssetList.length);
+                    let assetsToSpawn = Math.floor(density);
+                    if (pseudoRandom(hashSeed(gx, gy, 1), 0) < (density - assetsToSpawn)) {
+                        assetsToSpawn++;
+                    }
+                    
+                    for (let i = 0; i < assetsToSpawn; i++) {
+                        const imgIndex = Math.floor(pseudoRandom(hashSeed(gx, gy, 2 + i), 0) * targetAssetList.length);
                         const img = targetAssetList[imgIndex];
                         
-                        const jitterX = (pseudoRandom(hashSeed(gx, gy, 3), 0) - 0.5) * TILE_SIZE * 2;
-                        const jitterY = (pseudoRandom(hashSeed(gx, gy, 4), 0) - 0.5) * TILE_SIZE * 2;
+                        // Jitter position so they don't align perfectly to the grid,
+                        // but limit to 0.8 to prevent spilling out of the tile and into the ocean.
+                        const jitterX = (pseudoRandom(hashSeed(gx, gy, 3 + i), 0) - 0.5) * TILE_SIZE * 0.8;
+                        const jitterY = (pseudoRandom(hashSeed(gx, gy, 4 + i), 0) - 0.5) * TILE_SIZE * 0.8;
                         
                         const drawH = BASE_ASSET_HEIGHT * sizeMult;
                         const drawW = (img.width / img.height) * drawH;
@@ -229,30 +264,100 @@ export async function generateRegionalMaps(payload: any) {
             }
         }
         
+        // Ocean Assets Scattering (Monsters & Ships)
+        const placedMonsters: {x: number, y: number, w: number, h: number}[] = [];
+        
+        for (let y = 0; y < regionHeight; y++) {
+            for (let x = 0; x < regionWidth; x++) {
+                const gx = x + minX;
+                const gy = y + minY;
+                
+                const isWater = (localPayload.elevation[y][x] <= localPayload.config.oceanLevel && !localPayload.lakes[y][x]);
+                if (!isWater) continue;
+                
+                // Check that we are far enough from shore (radius 2)
+                let nearShore = false;
+                for (let dy = -2; dy <= 2; dy++) {
+                    for (let dx = -2; dx <= 2; dx++) {
+                        const ny = y + dy;
+                        const nx = x + dx;
+                        if (ny >= 0 && ny < regionHeight && nx >= 0 && nx < regionWidth) {
+                            if (localPayload.elevation[ny][nx] > localPayload.config.oceanLevel) {
+                                nearShore = true;
+                            }
+                        }
+                    }
+                }
+                
+                if (!nearShore && assets.monsters && assets.monsters.length > 0) {
+                    // Density for 1-2 monsters per regional map (assume typical water portion of a region -> 0.0025)
+                    if (pseudoRandom(hashSeed(gx, gy, 1234), 0) < 0.0025) {
+                        const imgIndex = Math.floor(pseudoRandom(hashSeed(gx, gy, 1235), 0) * assets.monsters.length);
+                        const img = assets.monsters[imgIndex];
+                        
+                        const sizeMult = 4.0;
+                        const drawH = BASE_ASSET_HEIGHT * sizeMult;
+                        const drawW = (img.width / img.height) * drawH;
+                        
+                        const jitterX = (pseudoRandom(hashSeed(gx, gy, 1236), 0) - 0.5) * TILE_SIZE * 0.8;
+                        const jitterY = (pseudoRandom(hashSeed(gx, gy, 1237), 0) - 0.5) * TILE_SIZE * 0.8;
+                        
+                        const drawX = x * TILE_SIZE - drawW/2 + TILE_SIZE/2 + jitterX;
+                        const drawY = y * TILE_SIZE - drawH + TILE_SIZE/2 + jitterY;
+                        
+                        let intersects = false;
+                        for (const pm of placedMonsters) {
+                            const padding = 20; // minimum distance between monsters
+                            if (drawX < pm.x + pm.w + padding &&
+                                drawX + drawW > pm.x - padding &&
+                                drawY < pm.y + pm.h + padding &&
+                                drawY + drawH > pm.y - padding) {
+                                intersects = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!intersects) {
+                            placedMonsters.push({x: drawX, y: drawY, w: drawW, h: drawH});
+                            envQueue.push({ img, x: drawX, y: drawY, w: drawW, h: drawH });
+                        }
+                    }
+                }
+            }
+        }
+        
         envQueue.sort((a, b) => (a.y + a.h) - (b.y + b.h));
         for (const item of envQueue) {
             ctx.drawImage(item.img, item.x, item.y, item.w, item.h);
         }
         
-        // Roads
-        if (localPayload.political.roadMap) {
+        // Roads (drawn using actual path points for winding roads)
+        if (localPayload.political.roadPaths) {
             ctx.strokeStyle = '#5c3a21';
-            ctx.lineWidth = 6; // Thicker on regional map
+            ctx.lineWidth = 4;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.globalAlpha = 0.8;
             
             ctx.beginPath();
-            for (let y = 0; y < regionHeight; y++) {
-                for (let x = 0; x < regionWidth; x++) {
-                    if (localPayload.political.roadMap[y][x]) {
-                        const cx1 = x * TILE_SIZE + TILE_SIZE / 2;
-                        const cy1 = y * TILE_SIZE + TILE_SIZE / 2;
-                        
-                        if (x < regionWidth - 1 && localPayload.political.roadMap[y][x+1]) { ctx.moveTo(cx1, cy1); ctx.lineTo(cx1 + TILE_SIZE, cy1); }
-                        if (y < regionHeight - 1 && localPayload.political.roadMap[y+1][x]) { ctx.moveTo(cx1, cy1); ctx.lineTo(cx1, cy1 + TILE_SIZE); }
-                        if (x < regionWidth - 1 && y < regionHeight - 1 && localPayload.political.roadMap[y+1][x+1]) { ctx.moveTo(cx1, cy1); ctx.lineTo(cx1 + TILE_SIZE, cy1 + TILE_SIZE); }
-                        if (x > 0 && y < regionHeight - 1 && localPayload.political.roadMap[y+1][x-1]) { ctx.moveTo(cx1, cy1); ctx.lineTo(cx1 - TILE_SIZE, cy1 + TILE_SIZE); }
+            for (const path of localPayload.political.roadPaths) {
+                if (!path || path.length === 0) continue;
+                
+                // Only draw the path if at least one point is inside our bounding box,
+                // or just let Canvas clip it (Canvas clipping is very fast).
+                // But we need to convert global (compressed) x, y to local.
+                let first = true;
+                for (const p of path) {
+                    const localX = p.x - minX;
+                    const localY = p.y - minY;
+                    const cx = localX * TILE_SIZE + TILE_SIZE / 2;
+                    const cy = localY * TILE_SIZE + TILE_SIZE / 2;
+                    
+                    if (first) {
+                        ctx.moveTo(cx, cy);
+                        first = false;
+                    } else {
+                        ctx.lineTo(cx, cy);
                     }
                 }
             }
@@ -260,7 +365,7 @@ export async function generateRegionalMaps(payload: any) {
             ctx.globalAlpha = 1.0;
         }
         
-        // Settlements
+        // Add Settlements to cityQueue
         if (localPayload.political.settlements) {
             for (const s of localPayload.political.settlements) {
                 if (s.type === 'village') continue; // Do not render villages on regional map (wait for province map)

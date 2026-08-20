@@ -1,26 +1,33 @@
-# Етап 5 Завершено: Політична карта (Фракції, Міста, Дороги)
+# Drill-down: Регіональні Мапи та Провінції
 
-Я реалізував повноцінний політичний шар, який відповідає за розселення фракцій, кордони та логістику.
+Ми успішно реалізували перехід від глобального масштабу до рівня Регіонів (Фракцій / Диких Земель), налаштували стиснення, відображення ассетів та підготували фундамент для наступного рівня — Провінцій.
 
-## Що було зроблено
+## Що було зроблено (Рівень 2 - Регіональні мапи)
 
-1. **Генерація Поселень (Ієрархія та Багатотайловість)**:
-# Global Map Generation (Phase 6 - Completed)
+1. **Багаторівневе стиснення (Compression)**
+   - Щоб уникнути зависань браузера та величезних файлів, введено багаторівневе стиснення логічної матриці:
+     - **Рівень 1 (Глобальна мапа)**: Стискається у 10 разів (`10x`).
+     - **Рівень 2 (Регіональні мапи)**: Стискаються у 5 разів (`5x`).
+   - Усі файли згенерованих мап (`map_data.js`, `global_map_data.js`, `region_<id>_data.js`) зберігаються ізольовано, при цьому `map_data.js` залишається оригінальним 1x джерелом істини.
 
-## What was accomplished
-1. **Backend Canvas Renderer (`mapRenderer.ts`)**: Replaced frontend HTML div rendering with a Node.js script that bakes the `elevation`, `biomes`, and `political` matrices into a single high-resolution `rendered_map.jpg`.
-2. **Asset Scattering**: Added custom image scattering for biomes (mountains, pines, trees, deserts, jungles, swamps, hills) and cities based on a pseudo-random seed to guarantee consistent renders. Implemented Y-sorting for depth.
-3. **High DPI Scaling**: Increased `TILE_SIZE` to 15 and `BASE_ASSET_HEIGHT` to 65. This ensures the output JPG map is extremely high resolution and crisp, turning roads into thick paths and exposing beautiful details in city assets (like wooden scaffolds).
-4. **Hybrid SVG Frontend (`viewer/svg_map.html`, `viewer/svg_app.js`)**: Built an interactive viewer that places the baked JPG in the background, and overlays invisible/transparent SVG polygons and tooltips on top.
-5. **Wildlands Partitioning**: Updated the `political.ts` generator to chunk massive "unowned" territories into evenly sized, numbered Wildland Regions (tied to `maxInfluenceRadius` area) using Lloyd's relaxation.
-6. **UI Enhancements**: Removed hatched lines from the political map in favor of a 30% opaque solid fill color (with a 50% opacity hover effect). Wildlands were given a solid `#888888` hex color to correctly support CSS opacity inheritance.
+2. **Векторні дороги (Vector Roads)**
+   - Через стиснення матриць, дороги перетворювалися на "риштування" (scaffolding). Ми переписали `political.ts`, щоб алгоритм A* зберігав точні координати шляху (`roadPaths`).
+   - Тепер дороги на обох рівнях (1 та 2) відмальовуються як гладкі криві лінії (через Canvas), які точно огинають перешкоди.
 
-## Next Steps for New Agent Session
-- **Regional Maps (Drill-down)**: The user is preparing to move to the next level of the map (Regional/Faction level). When a user clicks on an SVG polygon (Kingdom or Wildland chunk), the system needs to generate or display a zoomed-in local map of that specific territory.
+3. **Масштабування та стилізація Ассетів (Asset Rendering)**
+   - Розроблено `regionalRenderer.ts` для окремої відмальовки регіональних мап.
+   - Оскільки регіональні мапи є більш деталізованими (5x стиснення замість 10x), ми **збільшили густину лісів та розмір іконок** (дерев, гір, джунглів, пустель), щоб заповнити простір.
+   - **Виправлено баг з водою**: Зменшено радіус розкиду (jitter) для ассетів на узбережжі, щоб дерева не вилазили у воду.
+   - Додано **Морських Монстрів та Кораблі**: Якщо в регіоні багато води, з невеликою вірогідністю генеруються величезні морські створіння з перевіркою на перетин (щоб не накладалися один на одного).
 
-## Як перевірити результат
+4. **Інтерактивний Viewer (UI)**
+   - З глобальної мапи (`svg_map.html`) при кліку на королівство або пустирище відбувається перехід на регіональну мапу (`regional_map.html`).
+   - На регіональній мапі з'являються SVG-полігони **Провінцій**, які рівномірно поділені між містами за допомогою алгоритму Ллойда.
 
-1. Відкрийте `d:\My\MasterOfGame\maps_generator\viewer\index.html` у вашому браузері.
-2. Перемкніться на шар **"Політична"**.
-3. Ви побачите світ, поділений на кольорові зони. Подивіться на павутину доріг, яка з'єднує дрібні села з містами, а міста — зі столицями!
-4. Наведіть мишку на різні маркери, щоб побачити інформацію у тултіпі.
+## Наступні кроки для іншого агента (Передача роботи)
+
+Наступне завдання — реалізація переходу на **Рівень 3 (Мапа Провінції)**:
+1. Зробити клікабельними SVG-полігони провінцій у файлі `regional_app.js`.
+2. При кліку на провінцію має відкриватися новий рівень деталізації (наприклад, `province_map.html`).
+3. Використовувати оригінальне джерело істини (`map_data.js` без стиснення) або створити новий тип стиснення для рендерингу провінції.
+4. Додати містам, поселенням і ресурсам унікальні механіки для цього рівня масштабу.
