@@ -92,7 +92,13 @@ if (mapData.political && mapData.political.factionMap) {
                 const wildId = f === 'wild' ? '' : Math.abs(parseInt(f));
                 tooltip.innerHTML = `<b>Дикі Землі ${wildId}</b><br>Клікніть для переходу на регіональний рівень.`;
             } else {
-                tooltip.innerHTML = `<b>Королівство Фракції ${f}</b><br>Клікніть для переходу на регіональний рівень.`;
+                const factionId = parseInt(f);
+                const factionObj = mapData.political.factions ? mapData.political.factions.find(fac => fac.id === factionId) : null;
+                const factionName = factionObj ? factionObj.name : `Фракція ${f}`;
+                const govMap = { 'monarchy': 'Монархія', 'republic': 'Республіка', 'theocracy': 'Теократія', 'tribal': 'Вождівство', 'federation': 'Федерація' };
+                const govText = factionObj && factionObj.government ? ` <span style="font-weight:normal; font-size:0.9em; opacity:0.8;">[${govMap[factionObj.government]}]</span>` : '';
+                
+                tooltip.innerHTML = `<b>${factionName}${govText}</b><br>Клікніть для переходу на регіональний рівень.`;
             }
             tooltip.style.display = 'block';
             tooltip.style.left = (e.pageX + 15) + 'px';
@@ -128,7 +134,13 @@ if (mapData.political && mapData.political.settlements) {
         
         circle.addEventListener('mousemove', (e) => {
             const types = { 'capital': 'Столиця', 'city': 'Місто' };
-            tooltip.innerHTML = `<b>${types[s.type]} (Фракція ${s.factionId})</b><br>Клікніть для переходу на рівень міста.`;
+            const factionObj = mapData.political.factions ? mapData.political.factions.find(fac => fac.id === s.factionId) : null;
+            const factionName = factionObj ? factionObj.name : `Фракція ${s.factionId}`;
+            const govMap = { 'monarchy': 'Монархія', 'republic': 'Республіка', 'theocracy': 'Теократія', 'tribal': 'Вождівство', 'federation': 'Федерація' };
+            const govText = factionObj && factionObj.government ? ` [${govMap[factionObj.government]}]` : '';
+            const settlementName = s.name ? s.name : `${types[s.type]} (Фракція ${s.factionId})`;
+            
+            tooltip.innerHTML = `<b>${settlementName}</b><br><i>${types[s.type]}, ${factionName}${govText}</i><br>Клікніть для переходу на рівень міста.`;
             tooltip.style.display = 'block';
             tooltip.style.left = (e.pageX + 15) + 'px';
             tooltip.style.top = (e.pageY + 15) + 'px';
@@ -140,7 +152,7 @@ if (mapData.political && mapData.political.settlements) {
         });
         
         circle.addEventListener('click', (e) => {
-            alert(`Drill-down: Завантаження локації для ${s.type} у координатах (${s.x}, ${s.y})...`);
+            alert(`Drill-down: Завантаження локації для ${s.name || s.type} у координатах (${s.x}, ${s.y})...`);
             e.stopPropagation();
         });
         

@@ -33,7 +33,21 @@ function initProvinceMap() {
     const container = document.getElementById('map-container');
     const tooltip = document.getElementById('tooltip');
     
-    document.getElementById('province-title').innerText = `Провінція ${provinceId}`;
+    let provinceTitle = `Провінція ${provinceId}`;
+    if (provinceData.political && provinceData.political.settlements) {
+        const city = provinceData.political.settlements.find(s => s.provinceId == provinceId && (s.type === 'city' || s.type === 'capital'));
+        if (city && city.name) {
+            provinceTitle = `Провінція ${city.name}`;
+            
+            const factionObj = provinceData.political.factions ? provinceData.political.factions.find(fac => fac.id === city.factionId) : null;
+            if (factionObj) {
+                const govMap = { 'monarchy': 'Монархія', 'republic': 'Республіка', 'theocracy': 'Теократія', 'tribal': 'Вождівство', 'federation': 'Федерація' };
+                const govText = factionObj.government ? ` [${govMap[factionObj.government]}]` : '';
+                provinceTitle += ` — ${factionObj.name}${govText}`;
+            }
+        }
+    }
+    document.getElementById('province-title').innerText = provinceTitle;
 
     // Create SVG Element
     const svgNS = "http://www.w3.org/2000/svg";
@@ -94,7 +108,13 @@ function initProvinceMap() {
             
             rect.addEventListener('mousemove', (e) => {
                 const types = { 'capital': 'Столиця', 'city': 'Місто', 'village': 'Село' };
-                tooltip.innerHTML = `<b>${types[s.type]} (Фракція ${s.factionId})</b><br>Клікніть для переходу на рівень поселення.`;
+                const factionObj = provinceData.political.factions ? provinceData.political.factions.find(fac => fac.id === s.factionId) : null;
+                const factionName = factionObj ? factionObj.name : `Фракція ${s.factionId}`;
+                const govMap = { 'monarchy': 'Монархія', 'republic': 'Республіка', 'theocracy': 'Теократія', 'tribal': 'Вождівство', 'federation': 'Федерація' };
+                const govText = factionObj && factionObj.government ? ` [${govMap[factionObj.government]}]` : '';
+                const settlementName = s.name ? s.name : `${types[s.type]}`;
+                
+                tooltip.innerHTML = `<b>${settlementName}</b><br><i>${types[s.type]}, ${factionName}${govText}</i><br>Клікніть для переходу на рівень поселення.`;
                 tooltip.style.display = 'block';
                 tooltip.style.left = (e.pageX + 15) + 'px';
                 tooltip.style.top = (e.pageY + 15) + 'px';
@@ -106,7 +126,7 @@ function initProvinceMap() {
             });
             
             rect.addEventListener('click', (e) => {
-                alert(`Drill-down: Завантаження локації для ${s.type} у глобальних координатах (${s.x}, ${s.y})... (Рівень 4)`);
+                alert(`Drill-down: Завантаження локації для ${s.name || s.type} у глобальних координатах (${s.x}, ${s.y})... (Рівень 4)`);
                 e.stopPropagation();
             });
             

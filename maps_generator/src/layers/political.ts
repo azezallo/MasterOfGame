@@ -1,7 +1,8 @@
 import { MapGenerationConfig } from '../types';
-import { Settlement, PoliticalResult } from '../types';
+import { Settlement, PoliticalResult, Faction } from '../types';
 import { pseudoRandom } from '../math/random';
 import { distance } from '../math/utils';
+import { generateSettlementName, generateFaction } from './nameGenerator';
 
 // Simple A* pathfinding
 function findPath(startX: number, startY: number, endX: number, endY: number, config: MapGenerationConfig, elevationMap: number[][]): {x: number, y: number}[] {
@@ -84,16 +85,17 @@ function findPath(startX: number, startY: number, endX: number, endY: number, co
 
 export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: number[][]): PoliticalResult {
     const { width, height, oceanLevel, political } = config;
+    
+    const settlementMap: ('capital' | 'city' | 'village' | null)[][] = Array(height).fill(null).map(() => Array(width).fill(null));
+    const factionMap: (number | null)[][] = Array(height).fill(null).map(() => Array(width).fill(null));
+    const provinceMap: (number | null)[][] = Array(height).fill(null).map(() => Array(width).fill(null));
+    const roadMap: boolean[][] = Array(height).fill(false).map(() => Array(width).fill(false));
+    const settlements: Settlement[] = [];
+    const factions: Faction[] = [];
+    
     let seedIndex = 0;
     
-    const settlementMap: ('capital' | 'city' | 'village' | null)[][] = Array(height).fill(0).map(() => Array(width).fill(null));
-    const factionMap: (number | null)[][] = Array(height).fill(0).map(() => Array(width).fill(null));
-    const provinceMap: (number | null)[][] = Array(height).fill(0).map(() => Array(width).fill(null));
-    const roadMap: boolean[][] = Array(height).fill(0).map(() => Array(width).fill(false));
-    
-    const settlements: Settlement[] = [];
     const landTiles: {x: number, y: number}[] = [];
-    
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
             if (elevationMap[y][x] > oceanLevel) {
@@ -102,10 +104,11 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
         }
     }
     
-    if (landTiles.length === 0) return { settlementMap, factionMap, provinceMap, roadMap, settlements };
+    if (landTiles.length === 0) return { settlementMap, factionMap, provinceMap, roadMap, settlements, factions };
 
     // 1. Generate Capitals (Faction Centers)
     let factionsCreated = 0;
+    let nameIdCounter = 0;
     while (factionsCreated < political.factionCount && seedIndex < 1000) {
         const idx = Math.floor(pseudoRandom(political.seed, seedIndex++) * landTiles.length);
         const tile = landTiles[idx];
@@ -122,7 +125,25 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
             settlements.push({
                 x: tile.x, y: tile.y,
                 type: 'capital',
+                name: generateSettlementName(political.seed, nameIdCounter++),
                 factionId: factionsCreated
+            });
+            
+            const factionData = generateFaction(political.seed, factionsCreated);
+            let actualGov = factionData.expectedGov;
+            
+            // 10% chance of a government mismatch (historical remnant)
+            const mismatchRand = pseudoRandom(political.seed + 1000, factionsCreated * 300);
+            if (mismatchRand < 0.10) {
+                const govs: import('../types').GovernmentType[] = ['monarchy', 'republic', 'theocracy', 'tribal', 'federation'];
+                const filtered = govs.filter(g => g !== factionData.expectedGov);
+                actualGov = filtered[Math.floor(pseudoRandom(political.seed + 1000, factionsCreated * 301) * filtered.length)];
+            }
+            
+            factions.push({
+                id: factionsCreated,
+                name: factionData.name,
+                government: actualGov
             });
             factionsCreated++;
         }
@@ -300,6 +321,7 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
                     const city: Settlement = {
                         x: a.x, y: a.y,
                         type: 'city',
+                        name: generateSettlementName(political.seed, nameIdCounter++),
                         factionId: regionId,
                         provinceId: a.id,
                         parentId: capital ? {x: capital.x, y: capital.y} : undefined
@@ -330,6 +352,7 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
                         villages.push({
                             x: vx, y: vy,
                             type: 'village',
+                            name: generateSettlementName(political.seed, nameIdCounter++),
                             factionId: s.factionId,
                             provinceId: pId !== null ? pId : undefined,
                             parentId: {x: s.x, y: s.y}
@@ -399,6 +422,7 @@ export function generatePoliticalMap(config: MapGenerationConfig, elevationMap: 
         settlementMap,
         roadMap,
         roadPaths,
-        settlements
+        settlements,
+        factions
     };
 }

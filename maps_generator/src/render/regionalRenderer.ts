@@ -88,6 +88,7 @@ export async function generateRegionalMaps(payload: any) {
                 settlementMap: sliceMatrix(payload.political.settlementMap),
                 roadMap: sliceMatrix(payload.political.roadMap),
                 roadPaths: payload.political.roadPaths,
+                factions: payload.political.factions,
                 settlements: payload.political.settlements
                     .filter((s: any) => s.x >= minX && s.x <= maxX && s.y >= minY && s.y <= maxY)
                     .map((s: any) => ({

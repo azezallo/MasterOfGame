@@ -34,9 +34,19 @@ function initRegionalMap() {
     const tooltip = document.getElementById('tooltip');
     
     const isWild = parseInt(regionId) < 0;
-    document.getElementById('region-title').innerText = isWild 
-        ? `Регіон: Дикі Землі ${Math.abs(regionId)}` 
-        : `Регіон: Королівство Фракції ${regionId}`;
+    
+    let regionTitle = `Регіон: Дикі Землі ${Math.abs(regionId)}`;
+    if (!isWild) {
+        const factionObj = regionData.political.factions ? regionData.political.factions.find(fac => fac.id === parseInt(regionId)) : null;
+        if (factionObj) {
+            const govMap = { 'monarchy': 'Монархія', 'republic': 'Республіка', 'theocracy': 'Теократія', 'tribal': 'Вождівство', 'federation': 'Федерація' };
+            const govText = factionObj.government ? ` [${govMap[factionObj.government]}]` : '';
+            regionTitle = `${factionObj.name}${govText}`;
+        } else {
+            regionTitle = `Регіон: Королівство Фракції ${regionId}`;
+        }
+    }
+    document.getElementById('region-title').innerText = regionTitle;
 
     // Create SVG Element
     const svgNS = "http://www.w3.org/2000/svg";
@@ -117,16 +127,26 @@ function initRegionalMap() {
             
             path.addEventListener('mousemove', (e) => {
                 let cityName = `Зона ${p}`;
+                let factionName = "";
                 if (!isWild) {
                     const city = regionData.political.settlements.find(s => s.provinceId == p && (s.type === 'city' || s.type === 'capital'));
-                    if (city) {
+                    const factionObj = regionData.political.factions ? regionData.political.factions.find(fac => fac.id === parseInt(regionId)) : null;
+                    if (factionObj) {
+                        const govMap = { 'monarchy': 'Монархія', 'republic': 'Республіка', 'theocracy': 'Теократія', 'tribal': 'Вождівство', 'federation': 'Федерація' };
+                        const govText = factionObj.government ? ` [${govMap[factionObj.government]}]` : '';
+                        factionName = `<br><i>${factionObj.name}${govText}</i>`;
+                    }
+                    
+                    if (city && city.name) {
+                        cityName = `Провінція ${city.name}`;
+                    } else if (city) {
                         cityName = city.type === 'capital' ? `Столична Провінція` : `Провінція Міста`;
                     } else {
                         cityName = `Провінція ${p}`;
                     }
                 }
                 
-                tooltip.innerHTML = `<b>${cityName}</b><br>Клікніть для переходу на локальний рівень (Рівень 3).`;
+                tooltip.innerHTML = `<b>${cityName}</b>${factionName}<br>Клікніть для переходу на локальний рівень (Рівень 3).`;
                 tooltip.style.display = 'block';
                 tooltip.style.left = (e.pageX + 15) + 'px';
                 tooltip.style.top = (e.pageY + 15) + 'px';
@@ -164,7 +184,13 @@ function initRegionalMap() {
             
             circle.addEventListener('mousemove', (e) => {
                 const types = { 'capital': 'Столиця', 'city': 'Місто', 'village': 'Село' };
-                tooltip.innerHTML = `<b>${types[s.type]} (Фракція ${s.factionId})</b><br>Клікніть для переходу на рівень поселення.`;
+                const factionObj = regionData.political.factions ? regionData.political.factions.find(fac => fac.id === s.factionId) : null;
+                const factionName = factionObj ? factionObj.name : `Фракція ${s.factionId}`;
+                const govMap = { 'monarchy': 'Монархія', 'republic': 'Республіка', 'theocracy': 'Теократія', 'tribal': 'Вождівство', 'federation': 'Федерація' };
+                const govText = factionObj && factionObj.government ? ` [${govMap[factionObj.government]}]` : '';
+                const settlementName = s.name ? s.name : `${types[s.type]}`;
+                
+                tooltip.innerHTML = `<b>${settlementName}</b><br><i>${types[s.type]}, ${factionName}${govText}</i><br>Клікніть для переходу на рівень поселення.`;
                 tooltip.style.display = 'block';
                 tooltip.style.left = (e.pageX + 15) + 'px';
                 tooltip.style.top = (e.pageY + 15) + 'px';
@@ -176,7 +202,7 @@ function initRegionalMap() {
             });
             
             circle.addEventListener('click', (e) => {
-                alert(`Drill-down: Завантаження локації для ${s.type} у глобальних координатах (${s.x}, ${s.y})...`);
+                alert(`Drill-down: Завантаження локації для ${s.name || s.type} у глобальних координатах (${s.x}, ${s.y})...`);
                 e.stopPropagation();
             });
             

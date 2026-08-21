@@ -46,7 +46,7 @@ export const MapConfig: MapGenerationConfig = {
     
     political: {
         seed: 8887,
-        factionCount: 3,
+        factionCount: 5,
         citiesPerFaction: 3,
         villagesPerCity: 4,
         maxInfluenceRadius: 45

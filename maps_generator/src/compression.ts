@@ -144,7 +144,8 @@ export function compressPayload(payload: WorldData, factor: number, keepRoadsAnd
             settlementMap: newSettlementMap,
             roadMap: newRoadMap || Array(newHeight).fill(0).map(() => Array(newWidth).fill(false)),
             roadPaths: newRoadPaths,
-            settlements: newSettlements
+            settlements: newSettlements,
+            factions: payload.political.factions
         }
     };
 }

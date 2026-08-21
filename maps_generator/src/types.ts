@@ -69,9 +69,18 @@ export interface Settlement {
     x: number;
     y: number;
     type: 'capital' | 'city' | 'village';
+    name: string;
     factionId: number;
     provinceId?: number;
     parentId?: {x: number, y: number};
+}
+
+export type GovernmentType = 'monarchy' | 'republic' | 'theocracy' | 'tribal' | 'federation';
+
+export interface Faction {
+    id: number;
+    name: string;
+    government: GovernmentType;
 }
 
 export interface PoliticalResult {
@@ -81,6 +90,7 @@ export interface PoliticalResult {
     roadMap: boolean[][];
     roadPaths?: {x: number, y: number}[][];
     settlements: Settlement[];
+    factions: Faction[];
 }
 
 export interface WorldData {
