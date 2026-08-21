@@ -1,46 +1,4 @@
-export interface MapGenerationConfig {
-    width: number;
-    height: number;
-    oceanLevel: number;
-    elevation: {
-        seed: number;
-        octaves: number;
-        persistence: number;
-        lacunarity: number;
-        scale: number;
-    };
-    temperature: {
-        seed: number; // Used to determine the base global temperature of this local map
-    };
-    moisture: {
-        seed: number;
-        octaves: number;
-        persistence: number;
-        lacunarity: number;
-        scale: number;
-        windDirection: { x: number, y: number }; // Used for rain shadow simulation
-    };
-    hydrology: {
-        riverCount: number;
-        minRiverStartElevation: number;
-        riverMoistureBonus: number;
-    };
-    magic: {
-        seed: number;
-        peaksCount: number;
-        valleysCount: number;
-        minDistance: number;
-        blurPasses: number;
-    };
-    political: {
-        seed: number;
-        factionCount: number;
-        citiesPerFaction: number;
-        villagesPerCity: number;
-        maxInfluenceRadius: number; // For Wildlands
-    };
-    islandMask: boolean;
-}
+import { MapGenerationConfig } from './types';
 
 export const MapConfig: MapGenerationConfig = {
     // Map dimensions (1 pixel = 1 km)
@@ -95,5 +53,10 @@ export const MapConfig: MapGenerationConfig = {
     },
     
     // If true, forces the edges of the map to drop off into the ocean
-    islandMask: true
+    islandMask: true,
+    
+    // Visual rendering settings
+    render: {
+        backgroundScale: 0.5 // Scale for map_bg.jpg texture
+    }
 };

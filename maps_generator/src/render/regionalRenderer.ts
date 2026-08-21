@@ -1,3 +1,6 @@
+import { loadImagesFromDir } from './assetLoader';
+import { pseudoRandom } from '../math/random';
+import { BiomeType } from '../types';
 import { createCanvas, loadImage, Image } from 'canvas';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -6,29 +9,9 @@ import * as path from 'path';
 const TILE_SIZE = 30;
 const BASE_ASSET_HEIGHT = 32;
 
-async function loadImagesFromDir(dirPath: string): Promise<Image[]> {
-    const images: Image[] = [];
-    if (!fs.existsSync(dirPath)) return images;
-    
-    const files = fs.readdirSync(dirPath);
-    for (const file of files) {
-        if (file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg')) {
-            const imgPath = path.join(dirPath, file);
-            try {
-                const img = await loadImage(imgPath);
-                images.push(img);
-            } catch (e) {
-                console.error(`Failed to load image ${imgPath}:`, e);
-            }
-        }
-    }
-    return images;
-}
 
-function pseudoRandom(seed: number, index: number): number {
-    const s = Math.sin(seed + index * 12.9898) * 43758.5453;
-    return s - Math.floor(s);
-}
+
+
 
 export async function generateRegionalMaps(payload: any) {
     console.log('Generating Regional Maps (Level 2)...');
@@ -149,7 +132,12 @@ export async function generateRegionalMaps(payload: any) {
         const ctx = canvas.getContext('2d');
         
         if (bgImg) {
-            const pattern = ctx.createPattern(bgImg, 'repeat');
+            const scale = localPayload.config.render.backgroundScale;
+            const offCanvas = createCanvas(Math.max(1, bgImg.width * scale), Math.max(1, bgImg.height * scale));
+            const offCtx = offCanvas.getContext('2d');
+            offCtx.drawImage(bgImg, 0, 0, bgImg.width * scale, bgImg.height * scale);
+            
+            const pattern = ctx.createPattern(offCanvas, 'repeat');
             if (pattern) {
                 // Shift pattern based on offset so it aligns continuously? 
                 // Pattern origin is always 0,0, but it's okay for parchment.
@@ -227,15 +215,15 @@ export async function generateRegionalMaps(payload: any) {
                 let density = 0;
                 let sizeMult = 1.0;
                 
-                if (biome === 'SNOW') { targetAssetList = assets.mounts; density = 1.2; }
-                else if (biome === 'TUNDRA' || biome === 'TAIGA') { targetAssetList = assets.pines; density = 2.4; sizeMult = 1.1; }
-                else if (biome === 'BARE' || biome === 'CLIFF') { targetAssetList = assets.mounts; density = 1.2; sizeMult = 1.2; }
-                else if (biome === 'TEMPERATE_DECIDUOUS_FOREST' || biome === 'TEMPERATE_RAIN_FOREST' || biome === 'TROPICAL_SEASONAL_FOREST') { targetAssetList = assets.trees; density = 2.4; sizeMult = 1.1; }
-                else if (biome === 'TROPICAL_RAIN_FOREST') { targetAssetList = assets.jungles; density = 2.7; sizeMult = 1.2; }
-                else if (biome === 'TEMPERATE_DESERT' || biome === 'SUBTROPICAL_DESERT' || biome === 'SCORCHED' || biome === 'BEACH') { targetAssetList = assets.deserts; density = 0.4; sizeMult = 1.2; }
-                else if (biome === 'SWAMP') { targetAssetList = assets.swamps; density = 0.8; sizeMult = 0.7; }
-                else if (biome === 'GRASSLAND') { targetAssetList = assets.hills; density = 0.4; sizeMult = 0.6; }
-                else if (biome === 'SHRUBLAND') { targetAssetList = assets.shrubland; density = 1.0; sizeMult = 0.9; }
+                if (biome === BiomeType.SNOW) { targetAssetList = assets.mounts; density = 1.2; }
+                else if (biome === BiomeType.TUNDRA || biome === BiomeType.TAIGA) { targetAssetList = assets.pines; density = 2.4; sizeMult = 1.1; }
+                else if (biome === BiomeType.BARE || biome === BiomeType.CLIFF) { targetAssetList = assets.mounts; density = 1.2; sizeMult = 1.2; }
+                else if (biome === BiomeType.TEMPERATE_DECIDUOUS_FOREST || biome === BiomeType.TEMPERATE_RAIN_FOREST || biome === BiomeType.TROPICAL_SEASONAL_FOREST) { targetAssetList = assets.trees; density = 2.4; sizeMult = 1.1; }
+                else if (biome === BiomeType.TROPICAL_RAIN_FOREST) { targetAssetList = assets.jungles; density = 2.7; sizeMult = 1.2; }
+                else if (biome === BiomeType.TEMPERATE_DESERT || biome === BiomeType.SUBTROPICAL_DESERT || biome === BiomeType.SCORCHED || biome === BiomeType.BEACH) { targetAssetList = assets.deserts; density = 0.4; sizeMult = 1.2; }
+                else if (biome === BiomeType.SWAMP) { targetAssetList = assets.swamps; density = 0.8; sizeMult = 0.7; }
+                else if (biome === BiomeType.GRASSLAND) { targetAssetList = assets.hills; density = 0.4; sizeMult = 0.6; }
+                else if (biome === BiomeType.SHRUBLAND) { targetAssetList = assets.shrubland; density = 1.0; sizeMult = 0.9; }
                 
                 if (targetAssetList && targetAssetList.length > 0) {
                     let assetsToSpawn = Math.floor(density);

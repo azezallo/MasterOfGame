@@ -137,7 +137,7 @@ function initRegionalMap() {
             });
             
             path.addEventListener('click', () => {
-                alert(`Drill-down: Завантаження провінції ${p} (Рівень 3)...`);
+                window.location.href = `province_map.html?id=${p}`;
             });
             
             layerBorders.appendChild(path);

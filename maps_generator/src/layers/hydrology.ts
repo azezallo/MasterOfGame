@@ -1,14 +1,10 @@
-import { MapGenerationConfig } from '../config';
+import { MapGenerationConfig } from '../types';
+import { hashRandom } from '../math/random';
 
 export interface HydrologyResult {
     riverMap: boolean[][];
     lakesMap: boolean[][];
-}
-
-// Random number generator using a simple hash based on seed and coordinates
-function pseudoRandom(seed: number, x: number, y: number, step: number): number {
-    const s = Math.sin(seed + x * 12.9898 + y * 78.233 + step * 43.123) * 43758.5453;
-    return s - Math.floor(s);
+    riverPaths?: {x: number, y: number}[][];
 }
 
 export function generateRivers(config: MapGenerationConfig, elevationMap: number[][]): HydrologyResult {
@@ -17,6 +13,7 @@ export function generateRivers(config: MapGenerationConfig, elevationMap: number
     // Initialize empty maps
     const riverMap: boolean[][] = Array(height).fill(0).map(() => Array(width).fill(false));
     const lakesMap: boolean[][] = Array(height).fill(0).map(() => Array(width).fill(false));
+    const riverPaths: {x: number, y: number}[][] = [];
 
     // Determine possible spring locations (high elevation)
     const possibleSprings: { x: number, y: number }[] = [];
@@ -36,8 +33,8 @@ export function generateRivers(config: MapGenerationConfig, elevationMap: number
     for (let i = 0; i < hydrology.riverCount; i++) {
         if (possibleSprings.length === 0) break;
         
-        // Pick a random index based on our pseudoRandom function
-        const randIndex = Math.floor(pseudoRandom(elevation.seed, i, i, step++) * possibleSprings.length);
+        // Pick a random index based on our hashRandom function
+        const randIndex = Math.floor(hashRandom(elevation.seed, i, i, step++) * possibleSprings.length);
         springs.push(possibleSprings[randIndex]);
         
         // Remove the picked spring to avoid duplicates
@@ -56,9 +53,11 @@ export function generateRivers(config: MapGenerationConfig, elevationMap: number
         
         // Prevent infinite loops if river gets stuck in a cycle
         let failsafe = 0;
+        const currentPath: {x: number, y: number}[] = [];
         
         while (failsafe < width * height) {
             riverMap[currentY][currentX] = true;
+            currentPath.push({x: currentX, y: currentY});
             
             // Reached ocean?
             if (elevationMap[currentY][currentX] <= oceanLevel) {
@@ -92,7 +91,7 @@ export function generateRivers(config: MapGenerationConfig, elevationMap: number
                 // Usually take the steepest path, but sometimes meander (take the 2nd steepest)
                 let choice = candidates[0];
                 if (candidates.length > 1) {
-                    const meanderChance = pseudoRandom(elevation.seed, currentX, currentY, failsafe);
+                    const meanderChance = hashRandom(elevation.seed, currentX, currentY, failsafe);
                     if (meanderChance > 0.6) {
                         choice = candidates[1];
                     }
@@ -112,9 +111,13 @@ export function generateRivers(config: MapGenerationConfig, elevationMap: number
             currentY = nextY;
             failsafe++;
         }
+        
+        if (currentPath.length > 0) {
+            riverPaths.push(currentPath);
+        }
     }
 
-    return { riverMap, lakesMap };
+    return { riverMap, lakesMap, riverPaths };
 }
 
 export function applyRiverMoisture(config: MapGenerationConfig, moistureMap: number[][], riverMap: boolean[][], lakesMap: boolean[][]) {
@@ -141,11 +144,11 @@ export function applyRiverMoisture(config: MapGenerationConfig, moistureMap: num
                                 newMoistureMap[ny][nx] += riverMoistureBonus; // 100% bonus for the river itself
                             } else if (distance === 1) {
                                 // Ragged inner banks: random multiplier between 0.8 and 1.2
-                                const noise = pseudoRandom(hydrology.minRiverStartElevation, nx, ny, 1);
+                                const noise = hashRandom(hydrology.minRiverStartElevation, nx, ny, 1);
                                 newMoistureMap[ny][nx] += riverMoistureBonus * (0.8 + noise * 0.4); 
                             } else if (distance === 2) {
                                 // Ragged outer banks: 50% chance to have some moisture spread
-                                const noise = pseudoRandom(hydrology.minRiverStartElevation, nx, ny, 2);
+                                const noise = hashRandom(hydrology.minRiverStartElevation, nx, ny, 2);
                                 if (noise > 0.5) {
                                     newMoistureMap[ny][nx] += riverMoistureBonus * 0.4;
                                 }

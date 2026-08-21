@@ -148,51 +148,7 @@ if (mapData.political && mapData.political.settlements) {
     }
 }
 
-// --- UI Controls ---
-
-const zoomSlider = document.getElementById('zoom-slider');
-const zoomValue = document.getElementById('zoom-value');
-
-function updateZoom() {
-    const scale = parseFloat(zoomSlider.value);
-    zoomValue.textContent = Math.round(scale * 100) + '%';
-    svg.style.transform = `scale(${scale})`;
-}
-
-zoomSlider.addEventListener('input', updateZoom);
-updateZoom();
-
-// Panning functionality
-let isDragging = false;
-let startX, startY;
-let scrollLeft, scrollTop;
-
-container.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    startX = e.pageX - container.offsetLeft;
-    startY = e.pageY - container.offsetTop;
-    scrollLeft = container.scrollLeft;
-    scrollTop = container.scrollTop;
-});
-
-container.addEventListener('mouseleave', () => { isDragging = false; });
-container.addEventListener('mouseup', () => { isDragging = false; });
-
-container.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    tooltip.style.display = 'none'; // Hide tooltip while dragging
-    const x = e.pageX - container.offsetLeft;
-    const y = e.pageY - container.offsetTop;
-    const walkX = (x - startX) * 1.5;
-    const walkY = (y - startY) * 1.5;
-    container.scrollLeft = scrollLeft - walkX;
-    container.scrollTop = scrollTop - walkY;
-});
-
-container.addEventListener('scroll', () => {
-    tooltip.style.display = 'none'; // Hide tooltip on scroll
-});
+setupPanZoom('map-container', 'map-svg', 'zoom-slider', 'zoom-value', 'tooltip');
 
 // Toggles
 document.getElementById('show-borders').addEventListener('change', (e) => {

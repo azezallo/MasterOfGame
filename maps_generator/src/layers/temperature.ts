@@ -1,4 +1,4 @@
-import { MapGenerationConfig } from '../config';
+import { MapGenerationConfig } from '../types';
 
 export function generateTemperatureMap(config: MapGenerationConfig, elevationMap: number[][]): number[][] {
     const { width, height, temperature, oceanLevel } = config;

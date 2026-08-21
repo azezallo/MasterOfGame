@@ -1,4 +1,4 @@
-import { MapGenerationConfig } from '../config';
+import { MapGenerationConfig } from '../types';
 import { PerlinNoise } from '../math/perlin';
 
 export function generateMoistureMap(config: MapGenerationConfig, elevationMap: number[][]): number[][] {

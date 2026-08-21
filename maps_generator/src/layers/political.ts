@@ -1,31 +1,7 @@
-import { MapGenerationConfig } from '../config';
-
-export interface Settlement {
-    x: number;
-    y: number;
-    type: 'capital' | 'city' | 'village';
-    factionId: number;
-    provinceId?: number; // Unique ID of the province this settlement is the center of
-    parentId?: {x: number, y: number}; // The city/capital this village reports to, or the capital this city reports to
-}
-
-export interface PoliticalResult {
-    settlementMap: ('capital' | 'city' | 'village' | null)[][];
-    factionMap: (number | null)[][];
-    provinceMap: (number | null)[][];
-    roadMap: boolean[][];
-    roadPaths?: {x: number, y: number}[][];
-    settlements: Settlement[];
-}
-
-function pseudoRandom(seed: number, index: number): number {
-    const s = Math.sin(seed + index * 12.9898) * 43758.5453;
-    return s - Math.floor(s);
-}
-
-function distance(x1: number, y1: number, x2: number, y2: number) {
-    return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-}
+import { MapGenerationConfig } from '../types';
+import { Settlement, PoliticalResult } from '../types';
+import { pseudoRandom } from '../math/random';
+import { distance } from '../math/utils';
 
 // Simple A* pathfinding
 function findPath(startX: number, startY: number, endX: number, endY: number, config: MapGenerationConfig, elevationMap: number[][]): {x: number, y: number}[] {

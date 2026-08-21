@@ -1,10 +1,6 @@
-import { MapGenerationConfig } from '../config';
-
-// Random number generator using a simple hash based on seed and coordinates
-function pseudoRandom(seed: number, index: number): number {
-    const s = Math.sin(seed + index * 12.9898) * 43758.5453;
-    return s - Math.floor(s);
-}
+import { MapGenerationConfig } from '../types';
+import { pseudoRandom } from '../math/random';
+import { distance } from '../math/utils';
 
 export function generateMagicMap(config: MapGenerationConfig): number[][] {
     const { width, height, magic } = config;
@@ -16,10 +12,6 @@ export function generateMagicMap(config: MapGenerationConfig): number[][] {
     const lockedMap: boolean[][] = Array(height).fill(0).map(() => Array(width).fill(false));
     
     const cores: {x: number, y: number}[] = [];
-    
-    function distance(x1: number, y1: number, x2: number, y2: number) {
-        return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-    }
     
     function isValidCoreLocation(x: number, y: number) {
         for (const core of cores) {

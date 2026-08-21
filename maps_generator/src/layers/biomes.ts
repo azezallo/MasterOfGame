@@ -1,23 +1,5 @@
-import { MapGenerationConfig } from '../config';
-
-export enum BiomeType {
-    OCEAN = 'OCEAN',
-    BEACH = 'BEACH',
-    CLIFF = 'CLIFF',
-    SCORCHED = 'SCORCHED',
-    BARE = 'BARE',
-    TUNDRA = 'TUNDRA',
-    SNOW = 'SNOW',
-    TAIGA = 'TAIGA',
-    SHRUBLAND = 'SHRUBLAND',
-    GRASSLAND = 'GRASSLAND',
-    TEMPERATE_DESERT = 'TEMPERATE_DESERT',
-    TEMPERATE_DECIDUOUS_FOREST = 'TEMPERATE_DECIDUOUS_FOREST',
-    TEMPERATE_RAIN_FOREST = 'TEMPERATE_RAIN_FOREST',
-    SUBTROPICAL_DESERT = 'SUBTROPICAL_DESERT',
-    TROPICAL_SEASONAL_FOREST = 'TROPICAL_SEASONAL_FOREST',
-    TROPICAL_RAIN_FOREST = 'TROPICAL_RAIN_FOREST'
-}
+import { MapGenerationConfig } from '../types';
+import { BiomeType } from '../types';
 
 export function getBiome(config: MapGenerationConfig, elevation: number, temperature: number, moisture: number, slope: number): BiomeType {
     if (elevation < config.oceanLevel) return BiomeType.OCEAN;

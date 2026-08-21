@@ -51,8 +51,11 @@ export async function renderMapToImage(mapData: any) {
         const bgPath = path.join(assetsDir, 'map_bg.jpg');
         if (fs.existsSync(bgPath)) {
             const bgImg = await loadImage(bgPath);
-            // Tile the background if it's smaller than the canvas
-            const pattern = ctx.createPattern(bgImg, 'repeat');
+            const scale = mapData.config.render.backgroundScale;
+            const offCanvas = createCanvas(Math.max(1, bgImg.width * scale), Math.max(1, bgImg.height * scale));
+            const offCtx = offCanvas.getContext('2d');
+            offCtx.drawImage(bgImg, 0, 0, bgImg.width * scale, bgImg.height * scale);
+            const pattern = ctx.createPattern(offCanvas, 'repeat');
             if (pattern) {
                 ctx.fillStyle = pattern;
                 ctx.fillRect(0, 0, canvasWidth, canvasHeight);
