@@ -1,30 +1,11 @@
 import { createCanvas, loadImage, Image } from 'canvas';
 import * as fs from 'fs';
 import * as path from 'path';
+import AssetManager from './assetManager';
 
 // Change scale: 1 grid unit = 15 pixels in the final image
 const TILE_SIZE = 15;
 const BASE_ASSET_HEIGHT = 25;
-
-// Helper to load all images from a directory
-async function loadImagesFromDir(dirPath: string): Promise<Image[]> {
-    const images: Image[] = [];
-    if (!fs.existsSync(dirPath)) return images;
-    
-    const files = fs.readdirSync(dirPath);
-    for (const file of files) {
-        if (file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg')) {
-            const imgPath = path.join(dirPath, file);
-            try {
-                const img = await loadImage(imgPath);
-                images.push(img);
-            } catch (e) {
-                console.error(`Failed to load image ${imgPath}:`, e);
-            }
-        }
-    }
-    return images;
-}
 
 // Random helper
 function pseudoRandom(seed: number, index: number): number {
@@ -34,7 +15,6 @@ function pseudoRandom(seed: number, index: number): number {
 
 export async function renderMapToImage(mapData: any) {
     console.log('Starting high-res map rendering...');
-    // const TILE_SIZE = 4; // Scale 1:4 (4 pixels per config tile)
     const width = mapData.config.width;
     const height = mapData.config.height;
     
@@ -44,13 +24,13 @@ export async function renderMapToImage(mapData: any) {
     const canvas = createCanvas(canvasWidth, canvasHeight);
     const ctx = canvas.getContext('2d');
     
-    const assetsDir = path.join(__dirname, '..', '..', 'viewer', 'assets');
+    // Load Assets via singleton
+    const assets = await AssetManager.loadAllAssets();
     
     // 1. Draw Background
     try {
-        const bgPath = path.join(assetsDir, 'map_bg.jpg');
-        if (fs.existsSync(bgPath)) {
-            const bgImg = await loadImage(bgPath);
+        if (assets.bgImg) {
+            const bgImg = assets.bgImg;
             const scale = mapData.config.render.backgroundScale;
             const offCanvas = createCanvas(Math.max(1, bgImg.width * scale), Math.max(1, bgImg.height * scale));
             const offCtx = offCanvas.getContext('2d');
@@ -66,27 +46,10 @@ export async function renderMapToImage(mapData: any) {
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         }
     } catch (e) {
-        console.log("No map_bg.jpg found, using solid color.");
+        console.log("Error drawing map_bg.jpg, using solid color.");
         ctx.fillStyle = '#e8d5a1';
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
     }
-    
-    // 2. Load Assets
-    console.log('Loading assets...');
-    const assets = {
-        mounts: await loadImagesFromDir(path.join(assetsDir, 'mounts')),
-        hills: await loadImagesFromDir(path.join(assetsDir, 'hills')),
-        trees: await loadImagesFromDir(path.join(assetsDir, 'trees')),
-        pines: await loadImagesFromDir(path.join(assetsDir, 'pines_trees')),
-        jungles: await loadImagesFromDir(path.join(assetsDir, 'jungles')),
-        swamps: await loadImagesFromDir(path.join(assetsDir, 'swamp')),
-        deserts: await loadImagesFromDir(path.join(assetsDir, 'deserts')),
-        capitals: await loadImagesFromDir(path.join(assetsDir, 'capitals')),
-        cities: await loadImagesFromDir(path.join(assetsDir, 'cities')),
-        shrubland: await loadImagesFromDir(path.join(assetsDir, 'shrubland')),
-        monsters: await loadImagesFromDir(path.join(assetsDir, 'monsters_and_ships')),
-        wind_rose: await loadImagesFromDir(path.join(assetsDir, 'wind_rose')),
-    };
     
     // 3. Draw Water Base with Bilinear Smoothing
     const waterCanvas = createCanvas(canvasWidth, canvasHeight);
@@ -163,28 +126,52 @@ export async function renderMapToImage(mapData: any) {
             let sizeMult = 1.0;
             
             if (biome === 'SNOW') {
-                targetAssetList = assets.mounts;
+                targetAssetList = assets.snow.length > 0 ? assets.snow : assets.mounts;
                 density = 0.15;
                 sizeMult = 1.0;
-            } else if (biome === 'TUNDRA' || biome === 'TAIGA') {
+            } else if (biome === 'TUNDRA') {
+                targetAssetList = assets.tundra.length > 0 ? assets.tundra : assets.pines;
+                density = 0.25;
+                sizeMult = 1.1;
+            } else if (biome === 'TAIGA') {
                 targetAssetList = assets.pines;
                 density = 0.35;
                 sizeMult = 1.1;
-            } else if (biome === 'BARE' || biome === 'CLIFF') {
-                targetAssetList = assets.mounts;
+            } else if (biome === 'BARE') {
+                targetAssetList = assets.bare_rocks.length > 0 ? assets.bare_rocks : assets.mounts;
                 density = 0.15;
                 sizeMult = 1.2;
-            } else if (biome === 'TEMPERATE_DECIDUOUS_FOREST' || biome === 'TEMPERATE_RAIN_FOREST' || biome === 'TROPICAL_SEASONAL_FOREST') {
+            } else if (biome === 'CLIFF') {
+                targetAssetList = assets.cliffs.length > 0 ? assets.cliffs : assets.mounts;
+                density = 0.2;
+                sizeMult = 1.2;
+            } else if (biome === 'TEMPERATE_DECIDUOUS_FOREST' || biome === 'TEMPERATE_RAIN_FOREST') {
                 targetAssetList = assets.trees;
+                density = 0.35;
+                sizeMult = 1.1;
+            } else if (biome === 'TROPICAL_SEASONAL_FOREST') {
+                targetAssetList = assets.tropical_season_forest.length > 0 ? assets.tropical_season_forest : assets.trees;
                 density = 0.35;
                 sizeMult = 1.1;
             } else if (biome === 'TROPICAL_RAIN_FOREST') {
                 targetAssetList = assets.jungles;
                 density = 0.4;
                 sizeMult = 1.2;
-            } else if (biome === 'TEMPERATE_DESERT' || biome === 'SUBTROPICAL_DESERT' || biome === 'SCORCHED' || biome === 'BEACH') {
+            } else if (biome === 'SUBTROPICAL_DESERT') {
                 targetAssetList = assets.deserts;
                 density = 0.05;
+                sizeMult = 0.9;
+            } else if (biome === 'TEMPERATE_DESERT') {
+                targetAssetList = assets.cold_desert.length > 0 ? assets.cold_desert : assets.deserts;
+                density = 0.05;
+                sizeMult = 0.9;
+            } else if (biome === 'SCORCHED') {
+                targetAssetList = assets.scorched.length > 0 ? assets.scorched : assets.deserts;
+                density = 0.1;
+                sizeMult = 1.0;
+            } else if (biome === 'BEACH') {
+                targetAssetList = assets.beach.length > 0 ? assets.beach : assets.deserts;
+                density = 0.1;
                 sizeMult = 0.9;
             } else if (biome === 'SWAMP') { 
                 targetAssetList = assets.swamps;
@@ -258,8 +245,10 @@ export async function renderMapToImage(mapData: any) {
             const px = x * TILE_SIZE;
             const py = y * TILE_SIZE;
             const canvasWidth = width * TILE_SIZE;
-            if (px > canvasWidth - 220 && py < 220) {
-                nearShore = true;
+            const expectedWrSize = Math.min(150, Math.max(50, canvasWidth * 0.15));
+            const exclusionZone = expectedWrSize * 1.5; // Give it a little buffer
+            if (px > canvasWidth - exclusionZone && py < exclusionZone) {
+                nearShore = true; // Act as if it's near shore to prevent monster spawn
             }
             
             if (!nearShore && assets.monsters && assets.monsters.length > 0) {
@@ -268,7 +257,9 @@ export async function renderMapToImage(mapData: any) {
                     const imgIndex = Math.floor(pseudoRandom(mapData.config.political.seed + 1234, monsterSeedIndex++) * assets.monsters.length);
                     const img = assets.monsters[imgIndex];
                     
-                    const sizeMult = 2.0;
+                    const baseMonsterScale = 2.0;
+                    // Scale down monsters on very small maps (if canvas < 1000px, gradually shrink to 1.0)
+                    const sizeMult = Math.max(1.0, Math.min(baseMonsterScale, baseMonsterScale * (canvasWidth / 1000)));
                     const drawH = BASE_ASSET_HEIGHT * sizeMult;
                     const drawW = (img.width / img.height) * drawH;
                     
@@ -389,10 +380,14 @@ export async function renderMapToImage(mapData: any) {
     if (assets.wind_rose && assets.wind_rose.length > 0) {
         const imgIndex = Math.floor(pseudoRandom(mapData.config.political.seed, 9999) * assets.wind_rose.length);
         const windRoseImg = assets.wind_rose[imgIndex];
-        const wrSize = 150; // pixels
-        // Draw in top right corner (or top left)
-        const wrX = canvasWidth - wrSize - 20;
-        const wrY = 20;
+        
+        // Dynamically scale the wind rose to a maximum of 150px or 15% of the canvas width
+        const wrSize = Math.min(150, Math.max(50, canvasWidth * 0.15)); 
+        
+        // Draw in top right corner
+        const padding = Math.min(20, canvasWidth * 0.05);
+        const wrX = canvasWidth - wrSize - padding;
+        const wrY = padding;
         ctx.drawImage(windRoseImg, wrX, wrY, wrSize, wrSize);
     }
     

@@ -1,17 +1,13 @@
-import { loadImagesFromDir } from './assetLoader';
+import AssetManager from './assetManager';
 import { pseudoRandom } from '../math/random';
 import { BiomeType } from '../types';
-import { createCanvas, loadImage, Image } from 'canvas';
+import { createCanvas, Image } from 'canvas';
 import * as fs from 'fs';
 import * as path from 'path';
 
 // Scale is 2x for Regional Maps, but we compressed by 5x, so base height should be ~32
 const TILE_SIZE = 30;
 const BASE_ASSET_HEIGHT = 32;
-
-
-
-
 
 export async function generateRegionalMaps(payload: any) {
     console.log('Generating Regional Maps (Level 2)...');
@@ -29,30 +25,9 @@ export async function generateRegionalMaps(payload: any) {
         }
     }
     
-    const assetsDir = path.join(__dirname, '..', '..', 'viewer', 'assets');
-    const assets = {
-        mounts: await loadImagesFromDir(path.join(assetsDir, 'mounts')),
-        hills: await loadImagesFromDir(path.join(assetsDir, 'hills')),
-        trees: await loadImagesFromDir(path.join(assetsDir, 'trees')),
-        pines: await loadImagesFromDir(path.join(assetsDir, 'pines_trees')),
-        jungles: await loadImagesFromDir(path.join(assetsDir, 'jungles')),
-        swamps: await loadImagesFromDir(path.join(assetsDir, 'swamp')),
-        deserts: await loadImagesFromDir(path.join(assetsDir, 'deserts')),
-        capitals: await loadImagesFromDir(path.join(assetsDir, 'capitals')),
-        cities: await loadImagesFromDir(path.join(assetsDir, 'cities')),
-        shrubland: await loadImagesFromDir(path.join(assetsDir, 'shrubland')),
-        villages: await loadImagesFromDir(path.join(assetsDir, 'villages')),
-        monsters: await loadImagesFromDir(path.join(assetsDir, 'monsters_and_ships'))
-    };
-    if (assets.villages.length === 0) assets.villages = assets.cities;
-
-    let bgImg: Image | null = null;
-    try {
-        const bgPath = path.join(assetsDir, 'map_bg.jpg');
-        if (fs.existsSync(bgPath)) {
-            bgImg = await loadImage(bgPath);
-        }
-    } catch(e) {}
+    // Load Assets via singleton
+    const assets = await AssetManager.loadAllAssets();
+    const bgImg = assets.bgImg;
 
     const outDir = path.join(__dirname, '..', '..', 'out');
 
@@ -215,12 +190,18 @@ export async function generateRegionalMaps(payload: any) {
                 let density = 0;
                 let sizeMult = 1.0;
                 
-                if (biome === BiomeType.SNOW) { targetAssetList = assets.mounts; density = 1.2; }
-                else if (biome === BiomeType.TUNDRA || biome === BiomeType.TAIGA) { targetAssetList = assets.pines; density = 2.4; sizeMult = 1.1; }
-                else if (biome === BiomeType.BARE || biome === BiomeType.CLIFF) { targetAssetList = assets.mounts; density = 1.2; sizeMult = 1.2; }
-                else if (biome === BiomeType.TEMPERATE_DECIDUOUS_FOREST || biome === BiomeType.TEMPERATE_RAIN_FOREST || biome === BiomeType.TROPICAL_SEASONAL_FOREST) { targetAssetList = assets.trees; density = 2.4; sizeMult = 1.1; }
+                if (biome === BiomeType.SNOW) { targetAssetList = assets.snow.length > 0 ? assets.snow : assets.mounts; density = 1.2; }
+                else if (biome === BiomeType.TUNDRA) { targetAssetList = assets.tundra.length > 0 ? assets.tundra : assets.pines; density = 1.8; sizeMult = 1.1; }
+                else if (biome === BiomeType.TAIGA) { targetAssetList = assets.pines; density = 2.4; sizeMult = 1.1; }
+                else if (biome === BiomeType.BARE) { targetAssetList = assets.bare_rocks.length > 0 ? assets.bare_rocks : assets.mounts; density = 1.2; sizeMult = 1.2; }
+                else if (biome === BiomeType.CLIFF) { targetAssetList = assets.cliffs.length > 0 ? assets.cliffs : assets.mounts; density = 1.5; sizeMult = 1.2; }
+                else if (biome === BiomeType.TEMPERATE_DECIDUOUS_FOREST || biome === BiomeType.TEMPERATE_RAIN_FOREST) { targetAssetList = assets.trees; density = 2.4; sizeMult = 1.1; }
+                else if (biome === BiomeType.TROPICAL_SEASONAL_FOREST) { targetAssetList = assets.tropical_season_forest.length > 0 ? assets.tropical_season_forest : assets.trees; density = 2.4; sizeMult = 1.1; }
                 else if (biome === BiomeType.TROPICAL_RAIN_FOREST) { targetAssetList = assets.jungles; density = 2.7; sizeMult = 1.2; }
-                else if (biome === BiomeType.TEMPERATE_DESERT || biome === BiomeType.SUBTROPICAL_DESERT || biome === BiomeType.SCORCHED || biome === BiomeType.BEACH) { targetAssetList = assets.deserts; density = 0.4; sizeMult = 1.2; }
+                else if (biome === BiomeType.SUBTROPICAL_DESERT) { targetAssetList = assets.deserts; density = 0.4; sizeMult = 1.2; }
+                else if (biome === BiomeType.TEMPERATE_DESERT) { targetAssetList = assets.cold_desert.length > 0 ? assets.cold_desert : assets.deserts; density = 0.4; sizeMult = 1.2; }
+                else if (biome === BiomeType.SCORCHED) { targetAssetList = assets.scorched.length > 0 ? assets.scorched : assets.deserts; density = 0.6; sizeMult = 1.1; }
+                else if (biome === BiomeType.BEACH) { targetAssetList = assets.beach.length > 0 ? assets.beach : assets.deserts; density = 0.6; sizeMult = 1.0; }
                 else if (biome === BiomeType.SWAMP) { targetAssetList = assets.swamps; density = 0.8; sizeMult = 0.7; }
                 else if (biome === BiomeType.GRASSLAND) { targetAssetList = assets.hills; density = 0.4; sizeMult = 0.6; }
                 else if (biome === BiomeType.SHRUBLAND) { targetAssetList = assets.shrubland; density = 1.0; sizeMult = 0.9; }

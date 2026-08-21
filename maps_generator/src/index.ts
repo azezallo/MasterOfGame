@@ -64,14 +64,20 @@ async function main() {
         political: politicalMap
     };
     
-    console.log('Compressing Payload by 5x for Regional Maps...');
-    const regionalPayload = compressPayload(payload, 5, true); // keepRoadsAndCities = true
+    // Calculate dynamic compression based on map size
+    const minDim = Math.min(MapConfig.width, MapConfig.height);
+    const scaleRatio = Math.min(1.0, minDim / 500);
+    const globalFactor = Math.round(3 + (10 - 3) * scaleRatio);
+    const regionalFactor = Math.round(2 + (5 - 2) * scaleRatio);
+
+    console.log(`Compressing Payload by ${regionalFactor}x for Regional Maps...`);
+    const regionalPayload = compressPayload(payload, regionalFactor, true); // keepRoadsAndCities = true
     
-    console.log('Generating Regional Maps (Level 2) from 5x compressed data...');
+    console.log(`Generating Regional Maps (Level 2) from ${regionalFactor}x compressed data...`);
     await generateRegionalMaps(regionalPayload);
     
-    console.log('Compressing Global Map by 10x...');
-    const compressedPayload = compressPayload(payload, 10, false); // Global map, no roads/cities
+    console.log(`Compressing Global Map by ${globalFactor}x...`);
+    const compressedPayload = compressPayload(payload, globalFactor, false); // Global map, no roads/cities
     
     // Export UNCOMPRESSED original data as source of truth
     exportData(payload, 'map_data.js');

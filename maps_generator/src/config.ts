@@ -2,14 +2,14 @@ import { MapGenerationConfig } from './types';
 
 export const MapConfig: MapGenerationConfig = {
     // Map dimensions (1 pixel = 1 km)
-    width: 600,
-    height: 1000,
+    width: 300,
+    height: 300,
     
     oceanLevel: 0.35, // Below this height is water
 
     // Perlin noise FBM settings for elevation
     elevation: {
-        seed: 12347,
+        seed: 12345,
         octaves: 6,
         persistence: 0.4,
         lacunarity: 2.0,
@@ -46,10 +46,10 @@ export const MapConfig: MapGenerationConfig = {
     
     political: {
         seed: 8887,
-        factionCount: 6,
-        citiesPerFaction: 6,
+        factionCount: 3,
+        citiesPerFaction: 3,
         villagesPerCity: 4,
-        maxInfluenceRadius: 90
+        maxInfluenceRadius: 45
     },
     
     // If true, forces the edges of the map to drop off into the ocean
